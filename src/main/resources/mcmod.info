@@ -1,0 +1,16 @@
+[
+{
+  "modid": "ratallofyou",
+  "name": "aftertime",
+  "description": "Ratted",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["AfterTime"],
+  "credits": "o",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
