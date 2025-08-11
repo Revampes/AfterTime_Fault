@@ -12,7 +12,7 @@ public class PearlCancel {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!ModConfig.pearlCancel) return;
+        if (!isModuleEnabled("Pearl Cancel")) return;
 
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 
@@ -22,5 +22,14 @@ public class PearlCancel {
         if (heldItem.getItem() == Items.ender_pearl) {
             event.setCanceled(true);
         }
+    }
+
+    private boolean isModuleEnabled(String moduleName) {
+        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
+            if (module.name.equals(moduleName)) {
+                return module.enabled;
+            }
+        }
+        return false;
     }
 }

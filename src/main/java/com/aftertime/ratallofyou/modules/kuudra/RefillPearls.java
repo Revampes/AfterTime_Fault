@@ -25,7 +25,7 @@ public class RefillPearls {
         tickCounter++;
 
         // Skip if player doesn't exist or mod is disabled
-        if (Minecraft.getMinecraft().thePlayer == null || !ModConfig.pearlRefill || !allowPearlRefill) {
+        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled("Pearl Refill") || !allowPearlRefill) {
             return;
         }
 
@@ -89,6 +89,15 @@ public class RefillPearls {
         if (pearlStack != null && pearlStack.stackSize >= 16) {
             lastInteractTime = System.currentTimeMillis();
         }
+    }
+
+    private boolean isModuleEnabled(String moduleName) {
+        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
+            if (module.name.equals(moduleName)) {
+                return module.enabled;
+            }
+        }
+        return false;
     }
 }
 

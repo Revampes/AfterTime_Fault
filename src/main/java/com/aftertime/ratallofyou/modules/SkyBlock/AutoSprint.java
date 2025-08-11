@@ -36,14 +36,14 @@ public class AutoSprint {
 
         // Check for sprint key press to toggle
         if (Keyboard.isKeyDown(mc.gameSettings.keyBindSprint.getKeyCode())) {
-            if (ModConfig.autoSprintEnabled && !temporaryDisabled) {
+            if (isModuleEnabled("Auto Sprint") && !temporaryDisabled) {
                 temporaryDisabled = true;
                 mc.thePlayer.addChatMessage(
                         new ChatComponentText(EnumChatFormatting.GOLD + "[RatAllOfYou] " +
                                 EnumChatFormatting.RED + "Auto Sprint Disabled")
                 );
                 cooldown = 10; // 0.5 second cooldown (20 ticks = 1 second)
-            } else if (ModConfig.autoSprintEnabled && temporaryDisabled) {
+            } else if (isModuleEnabled("Auto Sprint") && temporaryDisabled) {
                 temporaryDisabled = false;
                 mc.thePlayer.addChatMessage(
                         new ChatComponentText(EnumChatFormatting.GOLD + "[RatAllOfYou] " +
@@ -53,7 +53,7 @@ public class AutoSprint {
             }
         }
 
-        if (ModConfig.autoSprintEnabled && !temporaryDisabled) {
+        if (isModuleEnabled("Auto Sprint") && !temporaryDisabled) {
             KeyBinding.setKeyBindState(
                     mc.gameSettings.keyBindSprint.getKeyCode(),
                     true
@@ -79,5 +79,14 @@ public class AutoSprint {
             }
             wasEnabled = false;
         }
+    }
+
+    private boolean isModuleEnabled(String moduleName) {
+        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
+            if (module.name.equals(moduleName)) {
+                return module.enabled;
+            }
+        }
+        return false;
     }
 }

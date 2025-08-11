@@ -16,7 +16,7 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !ModConfig.invincibleTimerEnabled) return;
+        if (event.phase != TickEvent.Phase.END || !isModuleEnabled("Invincible Timer")) return;
 
         if (bonzoTime > 0) bonzoTime--;
         if (spiritTime > 0) spiritTime--;
@@ -29,7 +29,7 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!ModConfig.invincibleTimerEnabled) return;
+        if (!isModuleEnabled("Invincible Timer")) return;
 
         String message = event.message.getUnformattedText();
 
@@ -57,7 +57,7 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
-        if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !ModConfig.invincibleTimerEnabled) return;
+        if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled("Invincible Timer")) return;
 
         drawText("§9Bonzo: " + getStatusText(bonzoTime), 200, 200, 2);
         drawText("§fSpirit: " + getStatusText(spiritTime), 200, 218, 2);
@@ -79,5 +79,14 @@ public class InvincibleTimer {
                 y,
                 0xFFFFFF
         );
+    }
+
+    private boolean isModuleEnabled(String moduleName) {
+        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
+            if (module.name.equals(moduleName)) {
+                return module.enabled;
+            }
+        }
+        return false;
     }
 }

@@ -16,7 +16,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!ModConfig.phase3TimerEnabled) return;
+        if (!isModuleEnabled("Phase 3 Timer")) return;
 
         String message = event.message.getUnformattedText();
 
@@ -31,7 +31,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!ModConfig.phase3TimerEnabled || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
+        if (!isModuleEnabled("Phase 3 Timer") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
         ticks--;
 
         String time = String.format("%.2f", ticks / 20.0f);
@@ -50,5 +50,14 @@ public class GoldorStartTimer {
 
     public static void register() {
         MinecraftForge.EVENT_BUS.register(new GoldorStartTimer());
+    }
+
+    private boolean isModuleEnabled(String moduleName) {
+        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
+            if (module.name.equals(moduleName)) {
+                return module.enabled;
+            }
+        }
+        return false;
     }
 }

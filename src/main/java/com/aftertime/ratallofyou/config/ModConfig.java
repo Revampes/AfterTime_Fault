@@ -1,71 +1,103 @@
 package com.aftertime.ratallofyou.config;
 
-import cc.polyfrost.oneconfig.config.Config;
-import cc.polyfrost.oneconfig.config.annotations.Slider;
-import cc.polyfrost.oneconfig.config.annotations.Switch;
-import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.ModType;
+import java.io.*;
+import java.util.Properties;
 
-public class ModConfig extends Config {
-    @Switch(
-            name = "Enable Pearl Refill (Use at your own risk)",
-            description = "Refill ender pearls YES!",
-            category = "Kuudra"
-    )
-    public static boolean pearlRefill = false;
+public class ModConfig {
+    // Module metadata storage
+    public static class ModuleInfo {
+        public final String name;
+        public final String description;
+        public final String category;
+        public boolean enabled;
+        public float sliderValue; // For position adjustments
 
-    @Switch(
-            name = "Enable Invincible Timer (Currently not allow to move pos)",
-            description = "Show a timer for invincibility phases in dungeons",
-            category = "Dungeons"
-    )
-    public static boolean invincibleTimerEnabled = false;
+        public ModuleInfo(String name, String description, String category, boolean defaultState) {
+            this.name = name;
+            this.description = description;
+            this.category = category;
+            this.enabled = defaultState;
+            this.sliderValue = 0.5f; // Default slider position
+        }
 
-//    @Switch(
-//            name = "Enable PreGhost-Block",
-//            description = "?",
-//            category = "Dungeons"
-//    )
-//    public static boolean preGhostBlockEnabled = false;
-//
-//    @Switch(
-//            name = "Enable Ghost Blocks Debug",
-//            description = "Show debug messages for ghost blocks functionality",
-//            category = "Dungeons"
-//    )
-//    public static boolean ghostBlocksDebugEnabled = false;
+        public boolean hasSlider() {
+            return false; // Override in specific modules that need sliders
+        }
+    }
 
-    @Switch(
-            name = "Cancel Ender Pearl Interactions",
-            description = "Prevents using ender pearls on blocks",
-            category = "Kuudra"
-    )
-    public static boolean pearlCancel = false;
+    // Module definitions
+    public static final ModuleInfo[] MODULES = {
+            // Kuudra
+            new ModuleInfo("Pearl Refill", "Automatically refill ender pearls", "Kuudra", false),
+            new ModuleInfo("Pearl Cancel", "Allow pearl usage when facing floor", "Kuudra", false),
 
-//    @Switch(
-//            name = "Enable Crate Aura",
-//            description = "Automatically picks up crates in Kuudra",
-//            category = "Kuudra"
-//    )
-//    public static boolean crateAuraToggle = false;
+            // Dungeons
+            new ModuleInfo("Invincible Timer", "Show invincibility phase timers", "Dungeons", false),
+            new ModuleInfo("Phase 3 Timer", "Timer for phase 3 transitions", "Dungeons", false),
+            new ModuleInfo("Phase 3 Tick Timer", "Track instant damage intervals", "Dungeons", false) {
+                @Override
+                public boolean hasSlider() { return true; }
+            },
 
-    @Switch(
-            name = "Auto Sprint",
-            description = "?",
-            category = "SkyBlock"
-    )
-    public static boolean autoSprintEnabled = false;
+            // SkyBlock
+            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false)
+    };
 
-    @Switch(
-            name = "Phase III Instant Die Timer",
-            description = "Yes a timer if you gonna early enter",
-            category = "Dungeons"
-    )
-    public static boolean phase3TimerEnabled = false;
+    private static final File configFile = new File("config/ratallofyou.cfg");
 
+    public static void loadConfig() {
+        if (!configFile.exists()) {
+            saveConfig();
+            return;
+        }
 
-    public ModConfig() {
-        super(new Mod("Rate All Of You", ModType.SKYBLOCK), "ratallofyou.json");
-        initialize();
+        Properties props = new Properties();
+        InputStream input = null;
+        try {
+            input = new FileInputStream(configFile);
+            props.load(input);
+
+            for (ModuleInfo module : MODULES) {
+                String key = module.name.replace(" ", "_").toLowerCase();
+                module.enabled = Boolean.parseBoolean(props.getProperty(key + "_enabled", String.valueOf(module.enabled)));
+                module.sliderValue = Float.parseFloat(props.getProperty(key + "_slider", String.valueOf(module.sliderValue)));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void saveConfig() {
+        Properties props = new Properties();
+
+        for (ModuleInfo module : MODULES) {
+            String key = module.name.replace(" ", "_").toLowerCase();
+            props.setProperty(key + "_enabled", String.valueOf(module.enabled));
+            props.setProperty(key + "_slider", String.valueOf(module.sliderValue));
+        }
+
+        OutputStream output = null;
+        try {
+            output = new FileOutputStream(configFile);
+            props.store(output, "Rat All Of You Configuration");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
