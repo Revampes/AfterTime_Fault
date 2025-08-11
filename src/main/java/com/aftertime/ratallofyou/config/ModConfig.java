@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.config;
 
 import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
@@ -40,6 +41,28 @@ public class ModConfig extends Config {
             category = "Kuudra"
     )
     public static boolean pearlCancel = false;
+
+//    @Switch(
+//            name = "Enable Crate Aura",
+//            description = "Automatically picks up crates in Kuudra",
+//            category = "Kuudra"
+//    )
+//    public static boolean crateAuraToggle = false;
+
+    @Switch(
+            name = "Auto Sprint",
+            description = "?",
+            category = "SkyBlock"
+    )
+    public static boolean autoSprintEnabled = false;
+
+    @Switch(
+            name = "Phase III Instant Die Timer",
+            description = "Yes a timer if you gonna early enter",
+            category = "Dungeons"
+    )
+    public static boolean phase3TimerEnabled = false;
+
 
     public ModConfig() {
         super(new Mod("Rate All Of You", ModType.SKYBLOCK), "ratallofyou.json");
