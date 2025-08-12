@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.config;
+package com.aftertime.ratallofyou.UI;
 
 import java.io.*;
 import java.util.Properties;
@@ -10,37 +10,34 @@ public class ModConfig {
         public final String description;
         public final String category;
         public boolean enabled;
-        public float sliderValue; // For position adjustments
 
         public ModuleInfo(String name, String description, String category, boolean defaultState) {
             this.name = name;
             this.description = description;
             this.category = category;
             this.enabled = defaultState;
-            this.sliderValue = 0.5f; // Default slider position
-        }
-
-        public boolean hasSlider() {
-            return false; // Override in specific modules that need sliders
         }
     }
 
-    // Module definitions
     public static final ModuleInfo[] MODULES = {
             // Kuudra
-            new ModuleInfo("Pearl Refill", "Automatically refill ender pearls", "Kuudra", false),
-            new ModuleInfo("Pearl Cancel", "Allow pearl usage when facing floor", "Kuudra", false),
+            new ModuleInfo("Pearl Refill(Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false),
+            new ModuleInfo("Pearl Cancel(Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false),
 
             // Dungeons
-            new ModuleInfo("Invincible Timer", "Show invincibility phase timers", "Dungeons", false),
-            new ModuleInfo("Phase 3 Timer", "Timer for phase 3 transitions", "Dungeons", false),
-            new ModuleInfo("Phase 3 Tick Timer", "Track instant damage intervals", "Dungeons", false) {
-                @Override
-                public boolean hasSlider() { return true; }
-            },
+            new ModuleInfo("Invincible Timer", "Show invincibility phase timers", "Dungeons", true),
+            new ModuleInfo("Phase 3 Start CountDown", "Timer for phase 3 transitions", "Dungeons", false),
+            new ModuleInfo("Phase 3 Tick Timer", "Track instant damage intervals", "Dungeons", false),
+            new ModuleInfo("Dungeon Sweat Mode (Use at your own risk)", "Recommend only enable it in f7/m7", "Dungeons", false),
+            new ModuleInfo("Leap Announce", "Yes announce", "Dungeons", false),
+            new ModuleInfo("Key Highlighter", "Box Key (through wall)", "Dungeons", false),
+            new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false),
 
             // SkyBlock
-            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false)
+            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", true),
+
+            // GUI
+            new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false)
     };
 
     private static final File configFile = new File("config/ratallofyou.cfg");
@@ -52,7 +49,7 @@ public class ModConfig {
         }
 
         Properties props = new Properties();
-        InputStream input = null;
+        FileInputStream input = null;
         try {
             input = new FileInputStream(configFile);
             props.load(input);
@@ -60,7 +57,6 @@ public class ModConfig {
             for (ModuleInfo module : MODULES) {
                 String key = module.name.replace(" ", "_").toLowerCase();
                 module.enabled = Boolean.parseBoolean(props.getProperty(key + "_enabled", String.valueOf(module.enabled)));
-                module.sliderValue = Float.parseFloat(props.getProperty(key + "_slider", String.valueOf(module.sliderValue)));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -81,10 +77,9 @@ public class ModConfig {
         for (ModuleInfo module : MODULES) {
             String key = module.name.replace(" ", "_").toLowerCase();
             props.setProperty(key + "_enabled", String.valueOf(module.enabled));
-            props.setProperty(key + "_slider", String.valueOf(module.sliderValue));
         }
 
-        OutputStream output = null;
+        FileOutputStream output = null;
         try {
             output = new FileOutputStream(configFile);
             props.store(output, "Rat All Of You Configuration");

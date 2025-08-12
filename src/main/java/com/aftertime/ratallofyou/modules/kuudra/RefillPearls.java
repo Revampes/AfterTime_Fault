@@ -1,15 +1,12 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.scoreboard.*;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-
-import java.util.Collection;
 
 public class RefillPearls {
     private boolean allowPearlRefill = true;
@@ -25,7 +22,7 @@ public class RefillPearls {
         tickCounter++;
 
         // Skip if player doesn't exist or mod is disabled
-        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled("Pearl Refill") || !allowPearlRefill) {
+        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled("Pearl Refill(Use at your own risk") || !allowPearlRefill) {
             return;
         }
 
@@ -35,7 +32,7 @@ public class RefillPearls {
         ItemStack pearlStack = findPearlStack();
         if (pearlStack == null) {
             if (!hasShownNoPearlsWarning) {
-                Minecraft.getMinecraft().ingameGUI.displayTitle("§cNo Ender Pearls!", "", 5, 20, 5);
+                Minecraft.getMinecraft().ingameGUI.displayTitle("§cNo Ender Pearls in your sack!", "", 5, 20, 5);
                 hasShownNoPearlsWarning = true;
             }
             return;

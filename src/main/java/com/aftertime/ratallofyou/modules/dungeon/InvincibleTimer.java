@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.UI.UIDragger;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -13,10 +14,20 @@ public class InvincibleTimer {
     private int phoenixTime = 0;
     private String procText = " ";
     private long procTextEndTime = 0;
+    private static final String MODULE_NAME = "Invincible Timer";
+
+    // Initialize positions
+    public InvincibleTimer() {
+        // Register with default positions (200,200 for first line, others spaced vertically)
+        UIDragger.getInstance().registerElement(MODULE_NAME + " Bonzo", 200, 200);
+        UIDragger.getInstance().registerElement(MODULE_NAME + " Spirit", 200, 218);
+        UIDragger.getInstance().registerElement(MODULE_NAME + " Phoenix", 200, 236);
+        UIDragger.getInstance().registerElement(MODULE_NAME + " ProcText", 400, 300);
+    }
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !isModuleEnabled("Invincible Timer")) return;
+        if (event.phase != TickEvent.Phase.END || !isModuleEnabled(MODULE_NAME)) return;
 
         if (bonzoTime > 0) bonzoTime--;
         if (spiritTime > 0) spiritTime--;
@@ -29,25 +40,20 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isModuleEnabled("Invincible Timer")) return;
+        if (!isModuleEnabled(MODULE_NAME)) return;
 
         String message = event.message.getUnformattedText();
 
-        //bonzo
         if (message.contains("Bonzo's Mask saved your life")) {
             bonzoTime = 1800;
             procText = "§9Bonzo Mask Procced";
             procTextEndTime = System.currentTimeMillis() + 1500;
         }
-
-        //spirit
         else if (message.contains("Spirit Mask saved your life")) {
             spiritTime = 300;
             procText = "§fSpirit Mask Procced";
             procTextEndTime = System.currentTimeMillis() + 1500;
         }
-
-        //phoenix
         else if (message.contains("Phoenix Pet saved you")) {
             phoenixTime = 600;
             procText = "§cPhoenix Procced";
@@ -57,14 +63,21 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
-        if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled("Invincible Timer")) return;
+        if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled(MODULE_NAME)) return;
 
-        drawText("§9Bonzo: " + getStatusText(bonzoTime), 200, 200, 2);
-        drawText("§fSpirit: " + getStatusText(spiritTime), 200, 218, 2);
-        drawText("§cPhoenix: " + getStatusText(phoenixTime), 200, 236, 2);
+        // Get positions from UIDragger
+        UIDragger.UIPosition bonzoPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Bonzo");
+        UIDragger.UIPosition spiritPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Spirit");
+        UIDragger.UIPosition phoenixPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Phoenix");
+        UIDragger.UIPosition procPos = UIDragger.getInstance().getPosition(MODULE_NAME + " ProcText");
+
+        // Draw using draggable positions
+        drawText("§9Bonzo: " + getStatusText(bonzoTime), bonzoPos.x, bonzoPos.y, 2);
+        drawText("§fSpirit: " + getStatusText(spiritTime), spiritPos.x, spiritPos.y, 2);
+        drawText("§cPhoenix: " + getStatusText(phoenixTime), phoenixPos.x, phoenixPos.y, 2);
 
         if (!procText.equals(" ")) {
-            drawText(procText, 400, 300, 4);
+            drawText(procText, procPos.x, procPos.y, 4);
         }
     }
 
@@ -73,6 +86,7 @@ public class InvincibleTimer {
     }
 
     private void drawText(String text, int x, int y, float scale) {
+        // Scale implementation if needed
         Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(
                 text,
                 x,

@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -12,7 +12,7 @@ public class PearlCancel {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!isModuleEnabled("Pearl Cancel")) return;
+        if (!isModuleEnabled("Pearl Cancel(Use at your own risk)")) return;
 
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 

@@ -1,20 +1,23 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.UI.UIDragger;
+import com.aftertime.ratallofyou.UI.UIHighlighter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import com.aftertime.ratallofyou.config.ModConfig.ModuleInfo;
+import org.lwjgl.input.Mouse;
 
 public class P3TickTimer {
     private int barrierTicks = 0;
     private boolean isTimerActive = false;
     private final Minecraft mc = Minecraft.getMinecraft();
+    private boolean isMouseOver = false;
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
@@ -22,17 +25,12 @@ public class P3TickTimer {
 
         String message = event.message.getUnformattedText();
 
-        // Goldor messages
+        // Trigger messages
         if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
-                message.equals("[BOSS] Goldor: What do you think you are doing there!")) {
+                message.equals("[BOSS] Goldor: What do you think you are doing there!") ||
+                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[ቾ⚒]?: (Bonzo|Phoenix) Procced!?(?: \\(3s\\))?")) {
             startTimer();
-        }
-        // Party proc messages
-        else if (message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[ቾ⚒]?: (Bonzo|Phoenix) Procced!?(?: \\(3s\\))?")) {
-            startTimer();
-        }
-        // Core opening
-        else if (message.equals("The Core entrance is opening!")) {
+        } else if (message.equals("The Core entrance is opening!")) {
             resetTimer();
         }
     }
@@ -47,51 +45,98 @@ public class P3TickTimer {
         }
     }
 
+    @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
-        if (!isModuleEnabled("Phase 3 Tick Timer") || !isTimerActive || event.type != RenderGameOverlayEvent.ElementType.ALL) return;
+        if (!isModuleEnabled("Phase 3 Tick Timer") || !isTimerActive ||
+                event.type != RenderGameOverlayEvent.ElementType.ALL) return;
 
         String time = String.format("%.2f", barrierTicks / 20.0f);
-        String formattedTime;
+        String formattedTime = getFormattedTime(time);
 
-        if (barrierTicks >= 40) { // 2+ seconds
-            formattedTime = EnumChatFormatting.GREEN + time;
-        } else if (barrierTicks >= 20) { // 1-2 seconds
-            formattedTime = EnumChatFormatting.YELLOW + time;
-        } else { // <1 second
-            formattedTime = EnumChatFormatting.RED + time;
+        UIDragger.UIPosition pos = UIDragger.getInstance().getPosition("Phase 3 Tick Timer");
+        if (pos == null) {
+            ScaledResolution res = new ScaledResolution(mc);
+            pos = new UIDragger.UIPosition(res.getScaledWidth() / 2, res.getScaledHeight() / 2);
+            UIDragger.getInstance().registerElement("Phase 3 Tick Timer", pos.x, pos.y);
         }
 
-        // Get position from module's slider value
-        ModuleInfo timerModule = getModule("Phase 3 Tick Timer");
-        if (timerModule != null) {
-            int x = (int)(timerModule.sliderValue * mc.displayWidth);
-            int y = (int)(0.75f * mc.displayHeight); // Fixed Y position or use another slider if needed
+        int textWidth = mc.fontRendererObj.getStringWidth(formattedTime);
+        int renderX = pos.x - textWidth / 2;
+        int renderY = pos.y;
 
-            mc.fontRendererObj.drawStringWithShadow(
-                    formattedTime,
-                    x,
-                    y,
-                    0xFFFFFF
-            );
+        // Check if mouse is over
+        isMouseOver = isMouseOver(renderX, renderY, textWidth, mc.fontRendererObj.FONT_HEIGHT);
+
+        // Draw the timer
+        mc.fontRendererObj.drawStringWithShadow(formattedTime, renderX, renderY, 0xFFFFFF);
+
+        // Show drag handle when in move mode
+        if (UIHighlighter.isInMoveMode()) {
+            mc.fontRendererObj.drawStringWithShadow("≡", renderX + textWidth + 2, renderY, 0xAAAAAA);
+            drawRect(renderX - 2, renderY - 2, renderX + textWidth + 2, renderY + 10, 0x60FFFF00);
         }
     }
 
-    private ModuleInfo getModule(String name) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(name)) {
-                return module;
-            }
+    private String getFormattedTime(String time) {
+        if (barrierTicks >= 40) return EnumChatFormatting.GREEN + time;
+        if (barrierTicks >= 20) return EnumChatFormatting.YELLOW + time;
+        return EnumChatFormatting.RED + time;
+    }
+
+    private boolean isMouseOver(int x, int y, int width, int height) {
+        if (UIHighlighter.isInMoveMode()) {
+            ScaledResolution res = new ScaledResolution(mc);
+            int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
+            int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
+            return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
-        return null;
+        return false;
     }
 
     @SubscribeEvent
-    public void onWorldUnload(WorldEvent.Unload event) {
-        resetTimer();
+    public void onMouseInput(net.minecraftforge.client.event.MouseEvent event) {
+        if (!isModuleEnabled("Phase 3 Tick Timer") || !isTimerActive || !UIHighlighter.isInMoveMode()) return;
+
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution res = new ScaledResolution(mc);
+
+        // Get absolute mouse coordinates
+        int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
+        int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
+
+        UIDragger.UIPosition pos = UIDragger.getInstance().getPosition("Phase 3 Tick Timer");
+        if (pos == null) return;
+
+        if (Mouse.getEventButton() == 0) { // Left mouse button
+            if (Mouse.getEventButtonState()) { // Mouse pressed
+                if (isMouseOver(pos.x, pos.y, getElementWidth(), getElementHeight())) {
+                    UIDragger.getInstance().tryStartDrag("Phase 3 Tick Timer", mouseX, mouseY);
+                }
+            } else { // Mouse released
+                UIDragger.getInstance().updatePositions();
+            }
+        }
+
+        // Continue dragging if mouse is moving while button is down
+        if (Mouse.isButtonDown(0) && UIDragger.getInstance().isDragging()) {
+            UIDragger.getInstance().updateDragPosition(mouseX, mouseY);
+        }
+    }
+
+    private int getElementWidth() {
+        return 50; // Width of your timer display
+    }
+
+    private int getElementHeight() {
+        return mc.fontRendererObj.FONT_HEIGHT;
+    }
+
+    private void drawRect(int left, int top, int right, int bottom, int color) {
+        net.minecraft.client.gui.Gui.drawRect(left, top, right, bottom, color);
     }
 
     private void startTimer() {
-        barrierTicks = 60; // 3 seconds (60 ticks)
+        barrierTicks = 60;
         isTimerActive = true;
         mc.thePlayer.addChatMessage(new ChatComponentText(
                 EnumChatFormatting.GOLD + "[RatAllOfYou] " +
@@ -104,10 +149,6 @@ public class P3TickTimer {
         isTimerActive = false;
     }
 
-    public static void register() {
-        MinecraftForge.EVENT_BUS.register(new P3TickTimer());
-    }
-
     private boolean isModuleEnabled(String moduleName) {
         for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
             if (module.name.equals(moduleName)) {
@@ -115,5 +156,9 @@ public class P3TickTimer {
             }
         }
         return false;
+    }
+
+    public static void register() {
+        MinecraftForge.EVENT_BUS.register(new P3TickTimer());
     }
 }

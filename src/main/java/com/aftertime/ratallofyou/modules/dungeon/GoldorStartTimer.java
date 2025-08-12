@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -31,7 +31,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!isModuleEnabled("Phase 3 Timer") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
+        if (!isModuleEnabled("Goldor Start CountDown") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
         ticks--;
 
         String time = String.format("%.2f", ticks / 20.0f);
