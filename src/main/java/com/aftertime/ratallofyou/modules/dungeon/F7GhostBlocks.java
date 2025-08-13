@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
-import com.aftertime.ratallofyou.modules.utils.DungeonUtils;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockPos;

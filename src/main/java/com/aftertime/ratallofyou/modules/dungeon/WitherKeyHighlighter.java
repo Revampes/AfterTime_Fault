@@ -1,8 +1,8 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
-import com.aftertime.ratallofyou.modules.utils.DungeonUtils;
-import com.aftertime.ratallofyou.modules.utils.RenderUtils;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
+import com.aftertime.ratallofyou.utils.BoxRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -34,14 +34,14 @@ public class WitherKeyHighlighter {
                 String name = armorStand.getDisplayName().getUnformattedText();
 
                 if (name.contains("Wither Key")) {
-                    RenderUtils.drawEntityEspBox(
+                    BoxRenderer.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
                             0.8, 1.2,  // Width and height
                             1, 1, 0,   // Yellow color
                             0.2f       // Y offset
                     );
                 } else if (name.contains("Blood Key")) {
-                    RenderUtils.drawEntityEspBox(
+                    BoxRenderer.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
                             0.8, 1.2,  // Width and height
                             1, 0, 0,   // Red color

@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.UI;
 
 import com.aftertime.ratallofyou.UI.ModConfig.ModuleInfo;
+import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
@@ -27,6 +28,9 @@ public class ModSettingsGui extends GuiScreen {
     private static final int SCROLLBAR_COLOR = 0xFF555577;
     private static final int SCROLLBAR_HANDLE_COLOR = 0xFF8888AA;
     private static final int MOVE_GUI_COLOR = 0xDD252D5D;
+    private static final int COMMAND_PANEL_COLOR = 0xDD111933;
+    private static final int COMMAND_CHECKBOX_COLOR = 0xDD252D5D;
+    private static final int COMMAND_CHECKBOX_SELECTED_COLOR = 0xDD32CD32;
 
     // Layout
     private static final int GUI_WIDTH = 400;
@@ -40,11 +44,24 @@ public class ModSettingsGui extends GuiScreen {
     private int scrollBarWidth = 6;
     private int scrollBarHeight = 30;
     private int scrollBarX, scrollBarY;
+    private static final int COMMAND_SCROLLBAR_COLOR = 0xFF555577;
+    private static final int COMMAND_SCROLLBAR_HANDLE_COLOR = 0xFF8888AA;
+    private int commandScrollOffset = 0;
+    private int commandMaxScrollOffset = 0;
+    private boolean isCommandScrolling = false;
+    private int commandScrollBarX, commandScrollBarY;
+    private int commandScrollBarWidth = 6;
+    private int commandScrollBarHeight = 30;
+
 
     // State
     private String selectedCategory = "Kuudra";
     private List<GuiButton> categoryButtons = new ArrayList<GuiButton>();
     private List<ModuleButton> moduleButtons = new ArrayList<ModuleButton>();
+
+    private boolean showCommandSettings = false;
+    private ModuleInfo selectedCommandModule = null;
+    private List<CommandToggle> commandToggles = new ArrayList<CommandToggle>();
 
     @Override
     public void initGui() {
@@ -137,6 +154,13 @@ public class ModSettingsGui extends GuiScreen {
         module.enabled = !module.enabled;
         ModConfig.saveConfig();
         createModuleButtons();
+
+        if (module.name.equals("Party Commands")) {
+            selectedCommandModule = module;
+            initCommandToggles();
+        } else {
+            showCommandSettings = false;
+        }
     }
 
     @Override
@@ -144,6 +168,7 @@ public class ModSettingsGui extends GuiScreen {
         if (categoryButtons.contains(button)) {
             selectedCategory = button.displayString;
             scrollOffset = 0;
+            showCommandSettings = false;
             createModuleButtons();
         }
     }
@@ -153,10 +178,11 @@ public class ModSettingsGui extends GuiScreen {
         try {
             super.mouseClicked(mouseX, mouseY, mouseButton);
 
-            // Check scrollbar click
-            if (maxScrollOffset > 0 && mouseX >= scrollBarX && mouseX <= scrollBarX + scrollBarWidth &&
-                    mouseY >= scrollBarY && mouseY <= scrollBarY + (GUI_HEIGHT - 60)) {
-                isScrolling = true;
+            // Check command scrollbar click
+            if (showCommandSettings && commandMaxScrollOffset > 0 &&
+                    mouseX >= commandScrollBarX && mouseX <= commandScrollBarX + commandScrollBarWidth &&
+                    mouseY >= commandScrollBarY && mouseY <= commandScrollBarY + (GUI_HEIGHT - 60)) {
+                isCommandScrolling = true;
                 return;
             }
 
@@ -180,6 +206,17 @@ public class ModSettingsGui extends GuiScreen {
                     }
                 }
             }
+
+            // Check command toggles
+            if (showCommandSettings) {
+                for (CommandToggle toggle : commandToggles) {
+                    if (toggle.isMouseOver(mouseX, mouseY)) {
+                        toggle.enabled = !toggle.enabled;
+                        ChatCommands.setCommandEnabled(toggle.getConfigKey(), toggle.enabled);
+                        return;
+                    }
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -189,15 +226,25 @@ public class ModSettingsGui extends GuiScreen {
     protected void mouseReleased(int mouseX, int mouseY, int state) {
         super.mouseReleased(mouseX, mouseY, state);
         isScrolling = false;
+        isCommandScrolling = false;
     }
 
     @Override
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        if (isCommandScrolling && commandMaxScrollOffset > 0) {
+            float scrollableArea = GUI_HEIGHT - 60 - commandScrollBarHeight;
+            float scrollPos = Math.min(Math.max(mouseY - commandScrollBarY - (commandScrollBarHeight / 2), 0), scrollableArea);
+            commandScrollOffset = (int)((scrollPos / scrollableArea) * commandMaxScrollOffset);
+        }
         if (isScrolling && maxScrollOffset > 0) {
             float scrollableArea = GUI_HEIGHT - 60 - scrollBarHeight;
             float scrollPos = Math.min(Math.max(mouseY - scrollBarY - (scrollBarHeight / 2), 0), scrollableArea);
             scrollOffset = (int)((scrollPos / scrollableArea) * maxScrollOffset);
             createModuleButtons();
+        } else if (isCommandScrolling && commandMaxScrollOffset > 0) {
+            float scrollableArea = GUI_HEIGHT - 60 - commandScrollBarHeight;
+            float scrollPos = Math.min(Math.max(mouseY - commandScrollBarY - (commandScrollBarHeight / 2), 0), scrollableArea);
+            commandScrollOffset = (int)((scrollPos / scrollableArea) * commandMaxScrollOffset);
         }
     }
 
@@ -205,6 +252,15 @@ public class ModSettingsGui extends GuiScreen {
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
         int scroll = Mouse.getEventDWheel();
+
+        if (showCommandSettings && commandMaxScrollOffset > 0) {
+            if (scroll != 0) {
+                commandScrollOffset -= scroll > 0 ? 20 : -20; //Inverted for natural scrolling
+                commandScrollOffset = Math.max(0, Math.min(commandScrollOffset, commandMaxScrollOffset));
+                return;
+            }
+        }
+
         if (scroll != 0) {
             scrollOffset += scroll > 0 ? -20 : 20;
             scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
@@ -214,6 +270,9 @@ public class ModSettingsGui extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        // Get scale factor once at the start of the method
+        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
+
         // Draw background
         drawRect(guiLeft, guiTop, guiLeft + GUI_WIDTH, guiTop + GUI_HEIGHT, PANEL_COLOR);
         drawCenteredString(fontRendererObj, "§l§nRat All Of You", width / 2, guiTop + 10, TEXT_COLOR);
@@ -231,8 +290,7 @@ public class ModSettingsGui extends GuiScreen {
                     CATEGORY_BUTTON_COLOR);
         }
 
-        // Setup scissor for modules area
-        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
+        // Setup scissor for modules area (using the scale variable we already declared)
         int scissorX = guiLeft + 115;
         int scissorY = guiTop + 25;
         int scissorWidth = GUI_WIDTH - 120 - scrollBarWidth;
@@ -262,6 +320,46 @@ public class ModSettingsGui extends GuiScreen {
             drawRect(scrollBarX, handleY,
                     scrollBarX + scrollBarWidth, handleY + scrollBarHeight,
                     SCROLLBAR_HANDLE_COLOR);
+        }
+
+        // Draw command settings panel if enabled
+        if (showCommandSettings && selectedCommandModule != null) {
+            int panelX = guiLeft + GUI_WIDTH;
+            int panelWidth = 170;
+            int panelHeight = GUI_HEIGHT - 60;
+
+            // Draw panel background
+            drawRect(panelX, guiTop, panelX + panelWidth, guiTop + GUI_HEIGHT, COMMAND_PANEL_COLOR);
+
+            // Draw title
+            drawCenteredString(fontRendererObj, "Command Settings", panelX + panelWidth / 2, guiTop + 10, TEXT_COLOR);
+
+            // Setup scissor for command toggles area (reusing the existing scale variable)
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(panelX * scale, (height - (guiTop + 30 + panelHeight)) * scale,
+                    (panelWidth - commandScrollBarWidth - 5) * scale, panelHeight * scale);
+
+            // Draw toggles with scroll offset
+            for (CommandToggle toggle : commandToggles) {
+                toggle.draw(mouseX, mouseY + commandScrollOffset);
+            }
+
+            glDisable(GL_SCISSOR_TEST);
+
+            // Draw scrollbar if needed
+            if (commandMaxScrollOffset > 0) {
+                // Scrollbar track
+                drawRect(commandScrollBarX, commandScrollBarY,
+                        commandScrollBarX + commandScrollBarWidth, commandScrollBarY + panelHeight,
+                        COMMAND_SCROLLBAR_COLOR);
+
+                // Scrollbar handle
+                int handleY = commandScrollBarY + (int)(((float)commandScrollOffset / commandMaxScrollOffset) *
+                        (panelHeight - commandScrollBarHeight));
+                drawRect(commandScrollBarX, handleY,
+                        commandScrollBarX + commandScrollBarWidth, handleY + commandScrollBarHeight,
+                        COMMAND_SCROLLBAR_HANDLE_COLOR);
+            }
         }
 
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -315,6 +413,130 @@ public class ModSettingsGui extends GuiScreen {
             return mouseX >= x && mouseX <= x + width &&
                     mouseY >= y && mouseY <= y + height;
         }
+    }
+
+    private class CommandToggle {
+        private final String name;
+        private final String description;
+        private boolean enabled;
+        private final int x, y, width, height;
+
+        public CommandToggle(String name, String description, boolean enabled, int x, int y, int width, int height) {
+            this.name = name;
+            this.description = description;
+            this.enabled = enabled;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        public void draw(int mouseX, int mouseY) {
+            // Calculate visible position with scroll offset
+            int drawY = y - commandScrollOffset;
+
+            // Only draw if visible in the scroll area
+            if (drawY + height > guiTop + 30 && drawY < guiTop + GUI_HEIGHT - 30) {
+                // Draw background
+                drawRect(x, drawY, x + width, drawY + height,
+                        enabled ? COMMAND_CHECKBOX_SELECTED_COLOR : COMMAND_CHECKBOX_COLOR);
+
+                // Draw checkbox
+                drawRect(x + 5, drawY + 5, x + 15, drawY + 15, 0xFF000000);
+                if (enabled) {
+                    drawRect(x + 7, drawY + 7, x + 13, drawY + 13, 0xFFFFFFFF);
+                }
+
+                // Draw text
+                fontRendererObj.drawStringWithShadow(name, x + 20, drawY + (height - 8) / 2, TEXT_COLOR);
+
+                // Draw hover effect if mouse is over
+                if (isMouseOver(mouseX, mouseY)) {
+                    drawRect(x, drawY, x + width, drawY + height, 0x40FFFFFF);
+                }
+            }
+        }
+
+        public boolean isMouseOver(int mouseX, int mouseY) {
+            int drawY = y - commandScrollOffset;
+            return mouseX >= x && mouseX <= x + width &&
+                    mouseY >= drawY && mouseY <= drawY + height;
+        }
+
+        public String getConfigKey() {
+            return name.toLowerCase().replace(" ", "");
+        }
+    }
+
+    private void initCommandToggles() {
+        commandToggles.clear();
+
+        if (selectedCommandModule == null || !selectedCommandModule.name.equals("Party Commands")) {
+            showCommandSettings = false;
+            return;
+        }
+
+        showCommandSettings = true;
+        int commandX = guiLeft + GUI_WIDTH + 10;
+        int commandY = guiTop + 30 - commandScrollOffset; // Apply scroll offset
+        int commandWidth = 150;
+        int commandHeight = 20;
+        int panelHeight = GUI_HEIGHT - 60;
+
+        // Add all command toggles with current states
+        commandToggles.add(new CommandToggle("Warp", "Enable !warp command",
+                ChatCommands.isCommandEnabled("warp"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Warp Transfer", "Enable !warptransfer command",
+                ChatCommands.isCommandEnabled("warptransfer"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Coords", "Enable !coords command",
+                ChatCommands.isCommandEnabled("coords"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("All Invite", "Enable !allinvite command",
+                ChatCommands.isCommandEnabled("allinvite"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Boop", "Enable !boop command",
+                ChatCommands.isCommandEnabled("boop"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Coin Flip", "Enable !cf command",
+                ChatCommands.isCommandEnabled("cf"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("8Ball", "Enable !8ball command",
+                ChatCommands.isCommandEnabled("8ball"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Dice", "Enable !dice command",
+                ChatCommands.isCommandEnabled("dice"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Party Transfer", "Enable !pt command",
+                ChatCommands.isCommandEnabled("pt"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("TPS", "Enable !tps command",
+                ChatCommands.isCommandEnabled("tps"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Downtime", "Enable !dt command",
+                ChatCommands.isCommandEnabled("dt"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Queue Instance", "Enable dungeon queue commands",
+                ChatCommands.isCommandEnabled("queinstance"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Demote", "Enable !demote command",
+                ChatCommands.isCommandEnabled("demote"), commandX, commandY, commandWidth, commandHeight));
+        commandY += 25;
+        commandToggles.add(new CommandToggle("Promote", "Enable !promote command",
+                ChatCommands.isCommandEnabled("promote"), commandX, commandY, commandWidth, commandHeight));
+
+
+        int totalHeight = commandToggles.size() * 25;
+        commandMaxScrollOffset = Math.max(0, totalHeight - panelHeight);
+        commandScrollOffset = Math.min(commandScrollOffset, commandMaxScrollOffset);
+        commandScrollOffset = Math.max(0, commandScrollOffset);
+
+        // Position scrollbar
+        commandScrollBarX = commandX + commandWidth + 5;
+        commandScrollBarY = guiTop + 30;
+        commandScrollBarHeight = (int)((panelHeight / (float)Math.max(totalHeight, panelHeight)) * panelHeight);
+        commandScrollBarHeight = Math.max(20, Math.min(commandScrollBarHeight, panelHeight));
     }
 
     @Override

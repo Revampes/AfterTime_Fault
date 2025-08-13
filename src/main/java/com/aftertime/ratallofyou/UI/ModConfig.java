@@ -21,20 +21,26 @@ public class ModConfig {
 
     public static final ModuleInfo[] MODULES = {
             // Kuudra
-            new ModuleInfo("Pearl Refill(Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false),
-            new ModuleInfo("Pearl Cancel(Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false),
+            new ModuleInfo("Pearl Refill (Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false),
+            new ModuleInfo("Pearl Cancel (Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false),
+            new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies (Extremely ugly currently)", "Kuudra", false),
+            new ModuleInfo("Crate Highlighter", "Highlight Kuudra crates with ESP", "Kuudra", false),
 
             // Dungeons
-            new ModuleInfo("Invincible Timer", "Show invincibility phase timers", "Dungeons", true),
+            new ModuleInfo("Invincible Timer", "Show invincibility phase timers", "Dungeons", false),
             new ModuleInfo("Phase 3 Start CountDown", "Timer for phase 3 transitions", "Dungeons", false),
             new ModuleInfo("Phase 3 Tick Timer", "Track instant damage intervals", "Dungeons", false),
-            new ModuleInfo("Dungeon Sweat Mode (Use at your own risk)", "Recommend only enable it in f7/m7", "Dungeons", false),
+            new ModuleInfo("Dungeon Sweat Mode (Use at your own risk)", "Recommend only enable it in f7/m7 (Making new method for DungeonUtils", "Dungeons", false),
             new ModuleInfo("Leap Announce", "Yes announce", "Dungeons", false),
-            new ModuleInfo("Key Highlighter", "Box Key (through wall)", "Dungeons", false),
-            new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false),
+            new ModuleInfo("Key Highlighter", "Box Key (through wall!)", "Dungeons", false),
+            new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins (through wall!)", "Dungeons", false),
 
             // SkyBlock
-            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", true),
+            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false),
+            new ModuleInfo("Party Commands", "ehh (not working currently)", "SkyBlock", false),
+
+            // Render
+            new ModuleInfo("FullBright", "SHINE!", "Render", false),
 
             // GUI
             new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false)

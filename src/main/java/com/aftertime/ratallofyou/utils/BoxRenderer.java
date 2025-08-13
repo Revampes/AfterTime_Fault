@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.modules.utils;
+package com.aftertime.ratallofyou.utils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.AxisAlignedBB;
 import org.lwjgl.opengl.GL11;
 
-public class RenderUtils {
+public class BoxRenderer {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
     public static void drawEspBox(AxisAlignedBB box, float red, float green, float blue, float alpha, float lineWidth) {

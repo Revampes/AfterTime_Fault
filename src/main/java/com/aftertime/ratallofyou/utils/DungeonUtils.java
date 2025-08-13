@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.modules.utils;
+package com.aftertime.ratallofyou.utils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
