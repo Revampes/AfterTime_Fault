@@ -31,7 +31,7 @@ public class KuudraUtils {
         EntityArmorStand stand = (EntityArmorStand) entity;
         String name = stand.getDisplayName().getUnformattedText();
 
-        if (name.contains("SUPPLY RECEIVED")) return false;
+        if (name.contains("RECEIVED")) return false;
 
         // More robust name checking
         return name != null &&

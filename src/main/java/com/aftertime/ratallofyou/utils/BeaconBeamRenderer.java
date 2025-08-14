@@ -17,79 +17,89 @@ public class BeaconBeamRenderer {
     public static void renderBeaconBeam(Vec3 position, Color color, boolean depthCheck, float height, float partialTicks) {
         if (color.getAlpha() == 0) return;
 
-        float bottomOffset = 0;
-        float topOffset = bottomOffset + height;
+        try {
+            GlStateManager.pushAttrib();
+            GlStateManager.pushMatrix();
 
-        // Setup depth
-        if (!depthCheck) {
-            GlStateManager.disableDepth();
-        } else {
-            GlStateManager.enableDepth();
+            float bottomOffset = 0;
+            float topOffset = bottomOffset + height;
+
+            // Setup depth
+            if (!depthCheck) {
+                GlStateManager.disableDepth();
+            } else {
+                GlStateManager.enableDepth();
+            }
+
+            // Bind texture
+            mc.getTextureManager().bindTexture(beaconBeam);
+
+            // Texture parameters
+            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
+            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+
+            // Save and setup GL state
+            GlStateManager.pushMatrix();
+            GlStateManager.disableLighting();
+            GlStateManager.enableCull();
+            GlStateManager.enableTexture2D();
+            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+            GlStateManager.enableBlend();
+            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+
+            // Adjust for viewer position
+            GlStateManager.translate(
+                    -mc.getRenderManager().viewerPosX,
+                    -mc.getRenderManager().viewerPosY,
+                    -mc.getRenderManager().viewerPosZ
+            );
+
+            // Animation calculations
+            double time = mc.theWorld.getWorldTime() + partialTicks;
+            double d1 = MathHelper.func_181162_h(-time * 0.2 - Math.floor(-time * 0.1));
+            double d2 = time * 0.025 * -1.5;
+            double d4 = 0.5 + Math.cos(d2 + 2.356194490192345) * 0.2;
+            double d5 = 0.5 + Math.sin(d2 + 2.356194490192345) * 0.2;
+            double d6 = 0.5 + Math.cos(d2 + (Math.PI / 4)) * 0.2;
+            double d7 = 0.5 + Math.sin(d2 + (Math.PI / 4)) * 0.2;
+            double d8 = 0.5 + Math.cos(d2 + 3.9269908169872414) * 0.2;
+            double d9 = 0.5 + Math.sin(d2 + 3.9269908169872414) * 0.2;
+            double d10 = 0.5 + Math.cos(d2 + 5.497787143782138) * 0.2;
+            double d11 = 0.5 + Math.sin(d2 + 5.497787143782138) * 0.2;
+            double d14 = -1 + d1;
+            double d15 = height * 2.5 + d14;
+
+            // Get renderer instances
+            Tessellator tessellator = Tessellator.getInstance();
+            WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+
+            // Main beam rendering
+            worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+            addBeamVertices(worldRenderer, position, d4, d5, d6, d7, d8, d9, d10, d11, d14, d15, topOffset, bottomOffset, color);
+            tessellator.draw();
+
+            // Inner beam rendering
+            GlStateManager.disableCull();
+            double d12 = -1 + d1;
+            double d13 = height + d12;
+
+            worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+            addInnerBeamVertices(worldRenderer, position, d12, d13, topOffset, bottomOffset, color);
+            tessellator.draw();
+
+            // Restore GL state
+            GlStateManager.resetColor();
+            if (!depthCheck) {
+                GlStateManager.enableDepth();
+            }
+            GlStateManager.enableCull();
+            GlStateManager.popMatrix();
+            GlStateManager.popAttrib();
+        }   finally {
+            // Ensure these are always called in reverse order
+            GlStateManager.popAttrib();
+            GlStateManager.popMatrix();
         }
-
-        // Bind texture
-        mc.getTextureManager().bindTexture(beaconBeam);
-
-        // Texture parameters
-        GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
-        GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
-
-        // Save and setup GL state
-        GlStateManager.pushMatrix();
-        GlStateManager.disableLighting();
-        GlStateManager.enableCull();
-        GlStateManager.enableTexture2D();
-        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-
-        // Adjust for viewer position
-        GlStateManager.translate(
-                -mc.getRenderManager().viewerPosX,
-                -mc.getRenderManager().viewerPosY,
-                -mc.getRenderManager().viewerPosZ
-        );
-
-        // Animation calculations
-        double time = mc.theWorld.getWorldTime() + partialTicks;
-        double d1 = MathHelper.func_181162_h(-time * 0.2 - Math.floor(-time * 0.1));
-        double d2 = time * 0.025 * -1.5;
-        double d4 = 0.5 + Math.cos(d2 + 2.356194490192345) * 0.2;
-        double d5 = 0.5 + Math.sin(d2 + 2.356194490192345) * 0.2;
-        double d6 = 0.5 + Math.cos(d2 + (Math.PI / 4)) * 0.2;
-        double d7 = 0.5 + Math.sin(d2 + (Math.PI / 4)) * 0.2;
-        double d8 = 0.5 + Math.cos(d2 + 3.9269908169872414) * 0.2;
-        double d9 = 0.5 + Math.sin(d2 + 3.9269908169872414) * 0.2;
-        double d10 = 0.5 + Math.cos(d2 + 5.497787143782138) * 0.2;
-        double d11 = 0.5 + Math.sin(d2 + 5.497787143782138) * 0.2;
-        double d14 = -1 + d1;
-        double d15 = height * 2.5 + d14;
-
-        // Get renderer instances
-        Tessellator tessellator = Tessellator.getInstance();
-        WorldRenderer worldRenderer = tessellator.getWorldRenderer();
-
-        // Main beam rendering
-        worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-        addBeamVertices(worldRenderer, position, d4, d5, d6, d7, d8, d9, d10, d11, d14, d15, topOffset, bottomOffset, color);
-        tessellator.draw();
-
-        // Inner beam rendering
-        GlStateManager.disableCull();
-        double d12 = -1 + d1;
-        double d13 = height + d12;
-
-        worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-        addInnerBeamVertices(worldRenderer, position, d12, d13, topOffset, bottomOffset, color);
-        tessellator.draw();
-
-        // Restore GL state
-        GlStateManager.resetColor();
-        if (!depthCheck) {
-            GlStateManager.enableDepth();
-        }
-        GlStateManager.enableCull();
-        GlStateManager.popMatrix();
     }
 
     private static void addBeamVertices(WorldRenderer worldRenderer, Vec3 pos,

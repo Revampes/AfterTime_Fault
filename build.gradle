@@ -49,7 +49,7 @@ dependencies {
 
 task copyMod(type: Copy) {
     from("$buildDir/libs/ratallofyou-1.0.jar") // Replace with your actual jar name
-    into "C:/Users/user/AppData/Roaming/.minecraft/mods"
+    into "C:\\Users\\user\\AppData\\Roaming\\PrismLauncher\\instances\\1.8.9(1)\\minecraft\\mods"
 }
 
 build.finalizedBy copyMod

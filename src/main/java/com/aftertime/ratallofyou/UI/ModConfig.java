@@ -1,5 +1,7 @@
 package com.aftertime.ratallofyou.UI;
 
+import com.aftertime.ratallofyou.modules.render.NoDebuff;
+
 import java.io.*;
 import java.util.Properties;
 
@@ -37,11 +39,12 @@ public class ModConfig {
             new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false),
 
             // SkyBlock
-            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false),
             new ModuleInfo("Party Commands", "ehh (not working currently)", "SkyBlock", false),
+            new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false),
 
             // Render
             new ModuleInfo("FullBright", "SHINE!", "Render", false),
+            new ModuleInfo("No Debuff", "Removes negative effects", "Render", false),
 
             // GUI
             new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false)
@@ -49,22 +52,16 @@ public class ModConfig {
 
     private static final File configFile = new File("config/ratallofyou.cfg");
 
-    public static void loadConfig() {
+    public static Properties loadProperties() {
+        Properties props = new Properties();
         if (!configFile.exists()) {
-            saveConfig();
-            return;
+            return props;
         }
 
-        Properties props = new Properties();
         FileInputStream input = null;
         try {
             input = new FileInputStream(configFile);
             props.load(input);
-
-            for (ModuleInfo module : MODULES) {
-                String key = module.name.replace(" ", "_").toLowerCase();
-                module.enabled = Boolean.parseBoolean(props.getProperty(key + "_enabled", String.valueOf(module.enabled)));
-            }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -76,15 +73,35 @@ public class ModConfig {
                 }
             }
         }
+        return props;
+    }
+
+    public static void loadConfig() {
+        Properties props = loadProperties();
+
+        // Load module states
+        for (ModuleInfo module : MODULES) {
+            String key = module.name.replace(" ", "_").toLowerCase();
+            module.enabled = Boolean.parseBoolean(props.getProperty(key + "_enabled", String.valueOf(module.enabled)));
+        }
+
+        // Load NoDebuff settings
+        NoDebuff.loadConfig(props);
     }
 
     public static void saveConfig() {
         Properties props = new Properties();
 
+        // Save module states
         for (ModuleInfo module : MODULES) {
             String key = module.name.replace(" ", "_").toLowerCase();
             props.setProperty(key + "_enabled", String.valueOf(module.enabled));
         }
+
+        // Save NoDebuff settings
+        props.setProperty("nodebuff_noblindness", String.valueOf(NoDebuff.isNoBlindness()));
+        props.setProperty("nodebuff_nofire", String.valueOf(NoDebuff.isNoFire()));
+        props.setProperty("nodebuff_clearliquidvision", String.valueOf(NoDebuff.isClearLiquidVision()));
 
         FileOutputStream output = null;
         try {

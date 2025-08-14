@@ -9,6 +9,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
 import com.aftertime.ratallofyou.modules.dungeon.*;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.UI.UIDragger;
+import com.aftertime.ratallofyou.modules.render.NoDebuff;
 import com.aftertime.ratallofyou.modules.render.StarMobHighlighter;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils;
@@ -17,6 +18,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import scala.collection.parallel.ParIterableLike;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -42,7 +44,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new F7GhostBlocks());
         MinecraftForge.EVENT_BUS.register(new DungeonUtils());
         MinecraftForge.EVENT_BUS.register(new LeapAnnounce());
-        MinecraftForge.EVENT_BUS.register(new WitherKeyHighlighter());
+        MinecraftForge.EVENT_BUS.register(new KeyHighlighter());
         MinecraftForge.EVENT_BUS.register(new StarMobHighlighter());
         MinecraftForge.EVENT_BUS.register(new CrateBeam());
         MinecraftForge.EVENT_BUS.register(new CrateHighlighter());
@@ -50,11 +52,11 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new ChatCommands());
         MinecraftForge.EVENT_BUS.register(new Fullbright());
         MinecraftForge.EVENT_BUS.register(new SecretClicks());
+        MinecraftForge.EVENT_BUS.register(new NoDebuff());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());
         KeybindHandler.registerKeybinds();
-
         // Load UI positions
         UIDragger.getInstance().loadPositions();
     }
