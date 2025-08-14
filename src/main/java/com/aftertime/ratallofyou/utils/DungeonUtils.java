@@ -6,6 +6,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.List;
+
 public class DungeonUtils {
     private static boolean inDungeon = false;
     private static int dungeonFloor = 0;
@@ -18,18 +20,38 @@ public class DungeonUtils {
     }
 
     public static boolean isInDungeon() {
-        return inDungeon;
+        // Check both chat-based detection and scoreboard-based detection
+        return inDungeon || checkScoreboardForDungeon();
     }
 
     public static int getDungeonFloor() {
         return dungeonFloor;
     }
 
+    private static boolean checkScoreboardForDungeon() {
+        List<String> scoreBoardLines = Utils.getSidebarLines();
+        if (scoreBoardLines == null || scoreBoardLines.isEmpty()) {
+            return false;
+        }
+
+        int size = scoreBoardLines.size() - 1;
+        for (int i = 0; i < scoreBoardLines.size(); i++) {
+            String line = scoreBoardLines.get(size - i).toLowerCase();
+            if (Utils.containedByCharSequence(line, "dungeon cleared") ||
+                    (Utils.containedByCharSequence(line, "the catacombs") && !line.contains("to"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
         String message = event.message.getUnformattedText();
 
-        if (message.contains("Starting in") || message.contains("Here, I found this map when I first entered the dungeon.") || message.contains("The Catacombs (Floor-")) {
+        if (message.contains("Starting in") ||
+                message.contains("Here, I found this map when I first entered the dungeon.") ||
+                message.contains("The Catacombs (Floor-")) {
             inDungeon = true;
             dungeonFloor = parseFloor(message);
         }
@@ -46,7 +68,6 @@ public class DungeonUtils {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc == null || mc.theWorld == null) {
             if (wasInWorld) {
-                // We were in a world but now we're not (world swap)
                 endDungeon();
             }
             wasInWorld = false;
@@ -54,6 +75,11 @@ public class DungeonUtils {
         }
 
         wasInWorld = true;
+
+        // Additional check for when players leave dungeon without chat message
+        if (inDungeon && !checkScoreboardForDungeon()) {
+            endDungeon();
+        }
     }
 
     private static void endDungeon() {

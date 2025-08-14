@@ -2,15 +2,12 @@ package com.aftertime.ratallofyou;
 
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.render.Fullbright;
 import com.aftertime.ratallofyou.modules.SkyBlock.AutoSprint;
 import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
 import com.aftertime.ratallofyou.modules.dungeon.*;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
-import com.aftertime.ratallofyou.modules.kuudra.CrateBeam;
-import com.aftertime.ratallofyou.modules.kuudra.CrateHighlighter;
-import com.aftertime.ratallofyou.modules.kuudra.PearlCancel;
-import com.aftertime.ratallofyou.modules.kuudra.RefillPearls;
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.modules.render.StarMobHighlighter;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
@@ -20,7 +17,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import tv.twitch.chat.Chat;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -53,6 +49,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new PartyUtils());
         MinecraftForge.EVENT_BUS.register(new ChatCommands());
         MinecraftForge.EVENT_BUS.register(new Fullbright());
+        MinecraftForge.EVENT_BUS.register(new SecretClicks());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

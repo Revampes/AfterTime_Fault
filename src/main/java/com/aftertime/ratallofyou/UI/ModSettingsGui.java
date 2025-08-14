@@ -16,21 +16,22 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class ModSettingsGui extends GuiScreen {
     // Colors
-    private static final int BACKGROUND_COLOR = new Color(10, 15, 40).getRGB();
-    private static final int CATEGORY_COLOR = 0xDD1A2244;
-    private static final int MODULE_INACTIVE_COLOR = 0xDD252D5D;
-    private static final int MODULE_ACTIVE_COLOR = 0xDD32CD32;
-    private static final int TEXT_COLOR = 0xFFFFFFFF;
-    private static final int HIGHLIGHT_COLOR = new Color(100, 150, 255).getRGB();
-    private static final int PANEL_COLOR = 0xDD111933;
-    private static final int CATEGORY_BUTTON_COLOR = new Color(20, 25, 60).getRGB();
-    private static final int VERSION_COLOR = 0xFFAAAAAA;
-    private static final int SCROLLBAR_COLOR = 0xFF555577;
-    private static final int SCROLLBAR_HANDLE_COLOR = 0xFF8888AA;
-    private static final int MOVE_GUI_COLOR = 0xDD252D5D;
-    private static final int COMMAND_PANEL_COLOR = 0xDD111933;
-    private static final int COMMAND_CHECKBOX_COLOR = 0xDD252D5D;
-    private static final int COMMAND_CHECKBOX_SELECTED_COLOR = 0xDD32CD32;
+    private static final int BACKGROUND_COLOR = new Color(0, 0, 0).getRGB(); // Pure black
+    private static final int CATEGORY_COLOR = 0xFF111111; // Dark grey
+    private static final int MODULE_INACTIVE_COLOR = 0xFF333333; // Medium grey
+    private static final int MODULE_ACTIVE_COLOR = 0xFF006400; // Dark green
+    private static final int TEXT_COLOR = 0xFFFFFFFF; // White text
+    private static final int HIGHLIGHT_COLOR = 0xFF444444; // Grey highlight
+    private static final int PANEL_COLOR = 0xFF000000; // Black panels
+    private static final int CATEGORY_BUTTON_COLOR = 0xFF222222; // Dark grey buttons
+    private static final int SELECTED_CATEGORY_COLOR = 0xFF555555; // Grey for selected category
+    private static final int VERSION_COLOR = 0xFF888888; // Grey version text
+    private static final int SCROLLBAR_COLOR = 0xFF333333; // Dark grey scrollbar
+    private static final int SCROLLBAR_HANDLE_COLOR = 0xFF555555; // Medium grey handle
+    private static final int MOVE_GUI_COLOR = 0xFF333333; // Dark grey for move button
+    private static final int COMMAND_PANEL_COLOR = 0xFF111111; // Dark grey command panel
+    private static final int COMMAND_CHECKBOX_COLOR = 0xFF333333; // Dark grey checkbox
+    private static final int COMMAND_CHECKBOX_SELECTED_COLOR = 0xFF006400; // Dark green selected
 
     // Layout
     private static final int GUI_WIDTH = 400;
@@ -75,12 +76,14 @@ public class ModSettingsGui extends GuiScreen {
         // Create category buttons
         int categoryY = guiTop + 30;
         for (String category : getUniqueCategories()) {
+            // In initGui(), modify the category button creation:
             GuiButton btn = new GuiButton(-1, guiLeft + 10, categoryY, 100, 20, category) {
                 @Override
                 public void drawButton(Minecraft mc, int mouseX, int mouseY) {
                     if (this.visible) {
-                        drawRect(xPosition, yPosition, xPosition + width, yPosition + height, CATEGORY_BUTTON_COLOR);
-                        int textColor = selectedCategory.equals(displayString) ? 0xFFFF00 : 0xFFFFFF;
+                        int bgColor = selectedCategory.equals(displayString) ? SELECTED_CATEGORY_COLOR : CATEGORY_BUTTON_COLOR;
+                        drawRect(xPosition, yPosition, xPosition + width, yPosition + height, bgColor);
+                        int textColor = selectedCategory.equals(displayString) ? 0xFFFFFFFF : 0xCCCCCC;
                         this.drawCenteredString(mc.fontRendererObj, displayString, xPosition + width / 2, yPosition + (height - 8) / 2, textColor);
                     }
                 }
@@ -383,16 +386,19 @@ public class ModSettingsGui extends GuiScreen {
 
         public void draw(int mouseX, int mouseY) {
             // Draw background
-            int bgColor = module.name.equals("Move GUI Position")
-                    ? MOVE_GUI_COLOR
-                    : (module.enabled ? MODULE_ACTIVE_COLOR : MODULE_INACTIVE_COLOR);
+            int bgColor;
+            if (module.name.equals("Move GUI Position")) {
+                bgColor = MOVE_GUI_COLOR;
+            } else {
+                bgColor = module.enabled ? MODULE_ACTIVE_COLOR : MODULE_INACTIVE_COLOR;
+            }
 
             drawRect(x, y, x + width, y + height, bgColor);
 
             // Draw module name
             fontRendererObj.drawStringWithShadow(module.name, x + textPadding, y + textPadding, TEXT_COLOR);
 
-            // Draw description
+            // Draw description (grey text)
             List<String> descLines = fontRendererObj.listFormattedStringToWidth(module.description, width - textPadding * 2);
             for (int i = 0; i < descLines.size(); i++) {
                 fontRendererObj.drawString(
@@ -432,10 +438,8 @@ public class ModSettingsGui extends GuiScreen {
         }
 
         public void draw(int mouseX, int mouseY) {
-            // Calculate visible position with scroll offset
             int drawY = y - commandScrollOffset;
 
-            // Only draw if visible in the scroll area
             if (drawY + height > guiTop + 30 && drawY < guiTop + GUI_HEIGHT - 30) {
                 // Draw background
                 drawRect(x, drawY, x + width, drawY + height,
@@ -447,10 +451,10 @@ public class ModSettingsGui extends GuiScreen {
                     drawRect(x + 7, drawY + 7, x + 13, drawY + 13, 0xFFFFFFFF);
                 }
 
-                // Draw text
+                // Draw text (white)
                 fontRendererObj.drawStringWithShadow(name, x + 20, drawY + (height - 8) / 2, TEXT_COLOR);
 
-                // Draw hover effect if mouse is over
+                // Hover effect
                 if (isMouseOver(mouseX, mouseY)) {
                     drawRect(x, drawY, x + width, drawY + height, 0x40FFFFFF);
                 }

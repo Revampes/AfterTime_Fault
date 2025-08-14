@@ -36,16 +36,16 @@ public class WitherKeyHighlighter {
                 if (name.contains("Wither Key")) {
                     BoxRenderer.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
-                            0.8, 1.2,  // Width and height
+                            0.8, 1.0,  // Width and height
                             1, 1, 0,   // Yellow color
-                            0.2f       // Y offset
+                            1.0f       // Y offset
                     );
                 } else if (name.contains("Blood Key")) {
                     BoxRenderer.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
-                            0.8, 1.2,  // Width and height
+                            0.8, 1.0,  // Width and height
                             1, 0, 0,   // Red color
-                            0.2f       // Y offset
+                            1.0f       // Y offset
                     );
                 }
             }

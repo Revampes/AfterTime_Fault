@@ -34,6 +34,7 @@ public class ModConfig {
             new ModuleInfo("Leap Announce", "Yes announce", "Dungeons", false),
             new ModuleInfo("Key Highlighter", "Box Key (through wall!)", "Dungeons", false),
             new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins (through wall!)", "Dungeons", false),
+            new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false),
 
             // SkyBlock
             new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false),
