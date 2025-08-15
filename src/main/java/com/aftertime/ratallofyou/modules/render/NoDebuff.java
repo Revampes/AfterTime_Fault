@@ -8,6 +8,10 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 public class NoDebuff {
@@ -19,22 +23,22 @@ public class NoDebuff {
     // Setters that save config
     public static void setEnabled(boolean state) {
         enabled = state;
-        ModConfig.saveConfig();
+        saveConfig();
     }
 
     public static void setNoBlindness(boolean state) {
         noBlindness = state;
-        ModConfig.saveConfig();
+        saveConfig();
     }
 
     public static void setNoFire(boolean state) {
         noFire = state;
-        ModConfig.saveConfig();
+        saveConfig();
     }
 
     public static void setClearLiquidVision(boolean state) {
         clearLiquidVision = state;
-        ModConfig.saveConfig();
+        saveConfig();
     }
 
     // Getters
@@ -43,10 +47,44 @@ public class NoDebuff {
     public static boolean isNoFire() { return noFire; }
     public static boolean isClearLiquidVision() { return clearLiquidVision; }
 
-    public static void loadConfig(Properties props) {
-        noBlindness = Boolean.parseBoolean(props.getProperty("nodebuff_noblindness", "false"));
-        noFire = Boolean.parseBoolean(props.getProperty("nodebuff_nofire", "false"));
-        clearLiquidVision = Boolean.parseBoolean(props.getProperty("nodebuff_clearliquidvision", "false"));
+    public static void loadConfig() {
+        Properties props = new Properties();
+        File configFile = new File("config/ratallofyou_nodebuff.cfg");
+
+        try {
+            if (configFile.exists()) {
+                props.load(new FileInputStream(configFile));
+                enabled = Boolean.parseBoolean(props.getProperty("enabled", "false"));
+                noBlindness = Boolean.parseBoolean(props.getProperty("noBlindness", "false"));
+                noFire = Boolean.parseBoolean(props.getProperty("noFire", "false"));
+                clearLiquidVision = Boolean.parseBoolean(props.getProperty("clearLiquidVision", "false"));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveConfig() {
+        Properties props = new Properties();
+        File configFile = new File("config/ratallofyou_nodebuff.cfg");
+
+        try {
+            // Load existing properties if file exists
+            if (configFile.exists()) {
+                props.load(new FileInputStream(configFile));
+            }
+
+            // Set all properties
+            props.setProperty("enabled", String.valueOf(enabled));
+            props.setProperty("noBlindness", String.valueOf(noBlindness));
+            props.setProperty("noFire", String.valueOf(noFire));
+            props.setProperty("clearLiquidVision", String.valueOf(clearLiquidVision));
+
+            // Save to file
+            props.store(new FileOutputStream(configFile), "NoDebuff Settings");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @SubscribeEvent

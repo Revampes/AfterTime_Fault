@@ -12,7 +12,7 @@ public class PearlCancel {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!isModuleEnabled("Pearl Cancel (Use at your own risk)")) return;
+        if (!isModuleEnabled("Pearl Cancel (Use at your own risk!)")) return;
 
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 

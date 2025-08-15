@@ -12,6 +12,7 @@ import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.modules.render.NoDebuff;
 import com.aftertime.ratallofyou.modules.render.StarMobHighlighter;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
+import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
@@ -53,6 +54,8 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new Fullbright());
         MinecraftForge.EVENT_BUS.register(new SecretClicks());
         MinecraftForge.EVENT_BUS.register(new NoDebuff());
+        MinecraftForge.EVENT_BUS.register(new PearlLineups());
+        MinecraftForge.EVENT_BUS.register(new KuudraUtils());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

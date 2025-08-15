@@ -22,7 +22,7 @@ public class RefillPearls {
         tickCounter++;
 
         // Skip if player doesn't exist or mod is disabled
-        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled("Pearl Refill (Use at your own risk") || !allowPearlRefill) {
+        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled("Pearl Refill (Use at your own risk!)") || !allowPearlRefill) {
             return;
         }
 

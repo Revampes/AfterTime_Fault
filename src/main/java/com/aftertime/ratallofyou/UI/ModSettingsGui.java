@@ -203,6 +203,8 @@ public class ModSettingsGui extends GuiScreen {
             NoDebuff.setEnabled(module.enabled);
             // Don't automatically show settings
             if (!module.enabled) {
+                NoDebuff.loadConfig();
+            } else {
                 showCommandSettings = false;
                 selectedCommandModule = null;
             }

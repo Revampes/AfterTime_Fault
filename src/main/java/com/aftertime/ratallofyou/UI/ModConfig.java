@@ -27,6 +27,7 @@ public class ModConfig {
             new ModuleInfo("Pearl Cancel (Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false),
             new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies (Extremely ugly currently)", "Kuudra", false),
             new ModuleInfo("Crate Highlighter", "Highlight Kuudra crates with ESP", "Kuudra", false),
+            new ModuleInfo("Pearl Lineups", "Show pearl aim spots", "Kuudra", false),
 
             // Dungeons
             new ModuleInfo("Invincible Timer", "Show invincibility phase timers", "Dungeons", false),
@@ -85,8 +86,8 @@ public class ModConfig {
             module.enabled = Boolean.parseBoolean(props.getProperty(key + "_enabled", String.valueOf(module.enabled)));
         }
 
-        // Load NoDebuff settings
-        NoDebuff.loadConfig(props);
+        // Load NoDebuff config after main config
+        NoDebuff.loadConfig();
     }
 
     public static void saveConfig() {
@@ -97,11 +98,6 @@ public class ModConfig {
             String key = module.name.replace(" ", "_").toLowerCase();
             props.setProperty(key + "_enabled", String.valueOf(module.enabled));
         }
-
-        // Save NoDebuff settings
-        props.setProperty("nodebuff_noblindness", String.valueOf(NoDebuff.isNoBlindness()));
-        props.setProperty("nodebuff_nofire", String.valueOf(NoDebuff.isNoFire()));
-        props.setProperty("nodebuff_clearliquidvision", String.valueOf(NoDebuff.isClearLiquidVision()));
 
         FileOutputStream output = null;
         try {

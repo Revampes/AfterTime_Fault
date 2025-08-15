@@ -17,18 +17,17 @@ public class BeaconBeamRenderer {
     public static void renderBeaconBeam(Vec3 position, Color color, boolean depthCheck, float height, float partialTicks) {
         if (color.getAlpha() == 0) return;
 
-        try {
-            GlStateManager.pushAttrib();
-            GlStateManager.pushMatrix();
+        GlStateManager.pushMatrix();
+        GlStateManager.pushAttrib();
 
+        try {
             float bottomOffset = 0;
             float topOffset = bottomOffset + height;
 
             // Setup depth
+            GlStateManager.depthMask(false);
             if (!depthCheck) {
                 GlStateManager.disableDepth();
-            } else {
-                GlStateManager.enableDepth();
             }
 
             // Bind texture
@@ -38,14 +37,12 @@ public class BeaconBeamRenderer {
             GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
             GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
 
-            // Save and setup GL state
-            GlStateManager.pushMatrix();
+            // Setup GL state
             GlStateManager.disableLighting();
             GlStateManager.enableCull();
             GlStateManager.enableTexture2D();
-            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
             GlStateManager.enableBlend();
-            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 
             // Adjust for viewer position
             GlStateManager.translate(
@@ -88,14 +85,14 @@ public class BeaconBeamRenderer {
             tessellator.draw();
 
             // Restore GL state
-            GlStateManager.resetColor();
+            GlStateManager.enableCull();
+            GlStateManager.depthMask(true);
+            GlStateManager.enableLighting();
+            GlStateManager.disableBlend();
             if (!depthCheck) {
                 GlStateManager.enableDepth();
             }
-            GlStateManager.enableCull();
-            GlStateManager.popMatrix();
-            GlStateManager.popAttrib();
-        }   finally {
+        } finally {
             // Ensure these are always called in reverse order
             GlStateManager.popAttrib();
             GlStateManager.popMatrix();
