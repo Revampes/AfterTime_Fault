@@ -49,9 +49,7 @@ public class DungeonUtils {
     public void onChat(ClientChatReceivedEvent event) {
         String message = event.message.getUnformattedText();
 
-        if (message.contains("Starting in") ||
-                message.contains("Here, I found this map when I first entered the dungeon.") ||
-                message.contains("The Catacombs (Floor-")) {
+        if (message.contains("Here, I found this map when I first entered the dungeon.")) {
             inDungeon = true;
             dungeonFloor = parseFloor(message);
         }

@@ -85,7 +85,6 @@ public class KeyHighlighter {
     private void showTitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
         if (mc.thePlayer != null) {
             // Clear any existing titles first
-            mc.ingameGUI.displayTitle("", "", 0, 0, 0);
             mc.ingameGUI.displayTitle(title, subtitle, fadeIn, stay, fadeOut);
         }
     }

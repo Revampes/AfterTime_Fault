@@ -25,8 +25,8 @@ public class ModConfig {
             // Kuudra
             new ModuleInfo("Pearl Refill (Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false),
             new ModuleInfo("Pearl Cancel (Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false),
-            new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies (Extremely ugly currently)", "Kuudra", false),
-            new ModuleInfo("Crate Highlighter", "Highlight Kuudra crates with ESP", "Kuudra", false),
+            new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies", "Kuudra", false),
+            new ModuleInfo("Crate Highlighter", "Box Kuudra crates", "Kuudra", false),
             new ModuleInfo("Pearl Lineups", "Show pearl aim spots", "Kuudra", false),
 
             // Dungeons
@@ -40,7 +40,7 @@ public class ModConfig {
             new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false),
 
             // SkyBlock
-            new ModuleInfo("Party Commands", "ehh (not working currently)", "SkyBlock", false),
+            new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false),
             new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false),
 
             // Render

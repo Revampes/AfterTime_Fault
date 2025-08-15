@@ -38,15 +38,6 @@ minecraft {
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 
-repositories {
-    maven { url 'https://repo.polyfrost.cc/releases' }
-}
-
-dependencies {
-    compileOnly('cc.polyfrost:oneconfig-1.8.9-forge:0.2.2-alpha+')
-    implementation 'cc.polyfrost:oneconfig-wrapper-launchwrapper:1.0.0-beta+'
-}
-
 task copyMod(type: Copy) {
     from("$buildDir/libs/ratallofyou-1.0.jar") // Replace with your actual jar name
     into "C:\\Users\\user\\AppData\\Roaming\\PrismLauncher\\instances\\1.8.9(1)\\minecraft\\mods"
@@ -81,7 +72,6 @@ jar {
                 "ModSide": "CLIENT",
                 "TweakOrder": "0",
                 "ForceLoadAsMod": true,
-                "TweakClass": "cc.polyfrost.oneconfig.loader.stage0.LaunchWrapperTweaker"
         )
     }
 }

@@ -534,7 +534,8 @@ public class ModSettingsGui extends GuiScreen {
                 new CommandConfig("Downtime", "Enable !dt command"),
                 new CommandConfig("Queue Instance", "Enable dungeon queue commands"),
                 new CommandConfig("Demote", "Enable !demote command"),
-                new CommandConfig("Promote", "Enable !promote command")
+                new CommandConfig("Promote", "Enable !promote command"),
+                new CommandConfig("Disband", "Enable !disband command")
         );
 
         for (CommandConfig config : commandConfigs) {

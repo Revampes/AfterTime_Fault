@@ -34,37 +34,44 @@ public class BeaconBeamRenderer {
             mc.getTextureManager().bindTexture(beaconBeam);
 
             // Texture parameters
-            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
-            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, 10497.0f);
+            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, 10497.0f);
 
             // Setup GL state
             GlStateManager.disableLighting();
             GlStateManager.enableCull();
             GlStateManager.enableTexture2D();
             GlStateManager.enableBlend();
-            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+            GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
 
             // Adjust for viewer position
             GlStateManager.translate(
-                    -mc.getRenderManager().viewerPosX,
-                    -mc.getRenderManager().viewerPosY,
-                    -mc.getRenderManager().viewerPosZ
+                    position.xCoord - mc.getRenderManager().viewerPosX,
+                    position.yCoord - mc.getRenderManager().viewerPosY,
+                    position.zCoord - mc.getRenderManager().viewerPosZ
             );
 
             // Animation calculations
-            double time = mc.theWorld.getWorldTime() + partialTicks;
+            double time = mc.theWorld.getTotalWorldTime() + partialTicks;
             double d1 = MathHelper.func_181162_h(-time * 0.2 - Math.floor(-time * 0.1));
             double d2 = time * 0.025 * -1.5;
-            double d4 = 0.5 + Math.cos(d2 + 2.356194490192345) * 0.2;
-            double d5 = 0.5 + Math.sin(d2 + 2.356194490192345) * 0.2;
-            double d6 = 0.5 + Math.cos(d2 + (Math.PI / 4)) * 0.2;
-            double d7 = 0.5 + Math.sin(d2 + (Math.PI / 4)) * 0.2;
-            double d8 = 0.5 + Math.cos(d2 + 3.9269908169872414) * 0.2;
-            double d9 = 0.5 + Math.sin(d2 + 3.9269908169872414) * 0.2;
-            double d10 = 0.5 + Math.cos(d2 + 5.497787143782138) * 0.2;
-            double d11 = 0.5 + Math.sin(d2 + 5.497787143782138) * 0.2;
-            double d14 = -1 + d1;
+            double d4 = Math.cos(d2 + 2.356194490192345) * 0.2;
+            double d5 = Math.sin(d2 + 2.356194490192345) * 0.2;
+            double d6 = Math.cos(d2 + (Math.PI / 4.0)) * 0.2;
+            double d7 = Math.sin(d2 + (Math.PI / 4.0)) * 0.2;
+            double d8 = Math.cos(d2 + 3.9269908169872414) * 0.2;
+            double d9 = Math.sin(d2 + 3.9269908169872414) * 0.2;
+            double d10 = Math.cos(d2 + 5.497787143782138) * 0.2;
+            double d11 = Math.sin(d2 + 5.497787143782138) * 0.2;
+
+            double d14 = -1.0 + d1;
             double d15 = height * 2.5 + d14;
+
+            // Get color components
+            float r = color.getRed() / 255f;
+            float g = color.getGreen() / 255f;
+            float b = color.getBlue() / 255f;
+            float a = color.getAlpha() / 255f;
 
             // Get renderer instances
             Tessellator tessellator = Tessellator.getInstance();
@@ -72,16 +79,60 @@ public class BeaconBeamRenderer {
 
             // Main beam rendering
             worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-            addBeamVertices(worldRenderer, position, d4, d5, d6, d7, d8, d9, d10, d11, d14, d15, topOffset, bottomOffset, color);
+
+            // Outer beam vertices
+            worldRenderer.pos(d4, topOffset, d5).tex(1.0, d15).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d4, bottomOffset, d5).tex(1.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d6, bottomOffset, d7).tex(0.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d6, topOffset, d7).tex(0.0, d15).color(r, g, b, a).endVertex();
+
+            worldRenderer.pos(d10, topOffset, d11).tex(1.0, d15).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d10, bottomOffset, d11).tex(1.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d8, bottomOffset, d9).tex(0.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d8, topOffset, d9).tex(0.0, d15).color(r, g, b, a).endVertex();
+
+            worldRenderer.pos(d6, topOffset, d7).tex(1.0, d15).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d6, bottomOffset, d7).tex(1.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d10, bottomOffset, d11).tex(0.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d10, topOffset, d11).tex(0.0, d15).color(r, g, b, a).endVertex();
+
+            worldRenderer.pos(d8, topOffset, d9).tex(1.0, d15).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d8, bottomOffset, d9).tex(1.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d4, bottomOffset, d5).tex(0.0, d14).color(r, g, b, a).endVertex();
+            worldRenderer.pos(d4, topOffset, d5).tex(0.0, d15).color(r, g, b, a).endVertex();
+
             tessellator.draw();
 
-            // Inner beam rendering
+            // Inner glow rendering
             GlStateManager.disableCull();
-            double d12 = -1 + d1;
+            double d12 = -1.0 + d1;
             double d13 = height + d12;
 
             worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-            addInnerBeamVertices(worldRenderer, position, d12, d13, topOffset, bottomOffset, color);
+
+            float glowAlpha = 0.25f;
+            double glowRadius = 0.2;
+
+            worldRenderer.pos(-glowRadius, topOffset, -glowRadius).tex(1.0, d13).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(-glowRadius, bottomOffset, -glowRadius).tex(1.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(glowRadius, bottomOffset, -glowRadius).tex(0.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(glowRadius, topOffset, -glowRadius).tex(0.0, d13).color(r, g, b, glowAlpha).endVertex();
+
+            worldRenderer.pos(glowRadius, topOffset, glowRadius).tex(1.0, d13).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(glowRadius, bottomOffset, glowRadius).tex(1.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(-glowRadius, bottomOffset, glowRadius).tex(0.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(-glowRadius, topOffset, glowRadius).tex(0.0, d13).color(r, g, b, glowAlpha).endVertex();
+
+            worldRenderer.pos(glowRadius, topOffset, -glowRadius).tex(1.0, d13).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(glowRadius, bottomOffset, -glowRadius).tex(1.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(glowRadius, bottomOffset, glowRadius).tex(0.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(glowRadius, topOffset, glowRadius).tex(0.0, d13).color(r, g, b, glowAlpha).endVertex();
+
+            worldRenderer.pos(-glowRadius, topOffset, glowRadius).tex(1.0, d13).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(-glowRadius, bottomOffset, glowRadius).tex(1.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(-glowRadius, bottomOffset, -glowRadius).tex(0.0, d12).color(r, g, b, glowAlpha).endVertex();
+            worldRenderer.pos(-glowRadius, topOffset, -glowRadius).tex(0.0, d13).color(r, g, b, glowAlpha).endVertex();
+
             tessellator.draw();
 
             // Restore GL state
@@ -99,77 +150,6 @@ public class BeaconBeamRenderer {
         }
     }
 
-    private static void addBeamVertices(WorldRenderer worldRenderer, Vec3 pos,
-                                        double d4, double d5, double d6, double d7,
-                                        double d8, double d9, double d10, double d11,
-                                        double d14, double d15,
-                                        float topOffset, float bottomOffset, Color color) {
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = color.getAlpha() / 255f;
-
-        double x = pos.xCoord;
-        double y = pos.yCoord;
-        double z = pos.zCoord;
-
-        // Outer beam vertices
-        worldRenderer.pos(x + d4, y + topOffset, z + d5).tex(1.0, d15).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d4, y + bottomOffset, z + d5).tex(1.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d6, y + bottomOffset, z + d7).tex(0.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d6, y + topOffset, z + d7).tex(0.0, d15).color(r, g, b, a).endVertex();
-
-        worldRenderer.pos(x + d10, y + topOffset, z + d11).tex(1.0, d15).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d10, y + bottomOffset, z + d11).tex(1.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d8, y + bottomOffset, z + d9).tex(0.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d8, y + topOffset, z + d9).tex(0.0, d15).color(r, g, b, a).endVertex();
-
-        worldRenderer.pos(x + d6, y + topOffset, z + d7).tex(1.0, d15).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d6, y + bottomOffset, z + d7).tex(1.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d10, y + bottomOffset, z + d11).tex(0.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d10, y + topOffset, z + d11).tex(0.0, d15).color(r, g, b, a).endVertex();
-
-        worldRenderer.pos(x + d8, y + topOffset, z + d9).tex(1.0, d15).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d8, y + bottomOffset, z + d9).tex(1.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d4, y + bottomOffset, z + d5).tex(0.0, d14).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + d4, y + topOffset, z + d5).tex(0.0, d15).color(r, g, b, a).endVertex();
-    }
-
-    private static void addInnerBeamVertices(WorldRenderer worldRenderer, Vec3 pos,
-                                             double d12, double d13,
-                                             float topOffset, float bottomOffset, Color color) {
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = color.getAlpha() / 255f * 0.25f;
-
-        double x = pos.xCoord;
-        double y = pos.yCoord;
-        double z = pos.zCoord;
-
-        // Inner beam vertices
-        worldRenderer.pos(x + 0.2, y + topOffset, z + 0.2).tex(1.0, d13).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.2, y + bottomOffset, z + 0.2).tex(1.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.8, y + bottomOffset, z + 0.2).tex(0.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.8, y + topOffset, z + 0.2).tex(0.0, d13).color(r, g, b, a).endVertex();
-
-        worldRenderer.pos(x + 0.8, y + topOffset, z + 0.8).tex(1.0, d13).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.8, y + bottomOffset, z + 0.8).tex(1.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.2, y + bottomOffset, z + 0.8).tex(0.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.2, y + topOffset, z + 0.8).tex(0.0, d13).color(r, g, b, a).endVertex();
-
-        worldRenderer.pos(x + 0.8, y + topOffset, z + 0.2).tex(1.0, d13).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.8, y + bottomOffset, z + 0.2).tex(1.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.8, y + bottomOffset, z + 0.8).tex(0.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.8, y + topOffset, z + 0.8).tex(0.0, d13).color(r, g, b, a).endVertex();
-
-        worldRenderer.pos(x + 0.2, y + topOffset, z + 0.8).tex(1.0, d13).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.2, y + bottomOffset, z + 0.8).tex(1.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.2, y + bottomOffset, z + 0.2).tex(0.0, d12).color(r, g, b, a).endVertex();
-        worldRenderer.pos(x + 0.2, y + topOffset, z + 0.2).tex(0.0, d13).color(r, g, b, a).endVertex();
-    }
-
-    // Simple Color class if you don't have one
     public static class Color {
         private final int red;
         private final int green;

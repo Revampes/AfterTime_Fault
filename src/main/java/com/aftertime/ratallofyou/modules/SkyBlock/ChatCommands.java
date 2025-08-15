@@ -35,6 +35,7 @@ public class ChatCommands {
     private boolean queInstance = isCommandEnabled("queInstance");
     private boolean demote = isCommandEnabled("demote");
     private boolean promote = isCommandEnabled("promote");
+    private boolean disband = isCommandEnabled("disband");
 
     private final List<Pair> dtReason = new ArrayList<Pair>();
     private boolean isEnabled = false;
@@ -113,6 +114,7 @@ public class ChatCommands {
         queInstance = isCommandEnabled("queInstance");
         demote = isCommandEnabled("demote");
         promote = isCommandEnabled("promote");
+        disband = isCommandEnabled("disband");
 
         if (command.equals("help") || command.equals("h")) {
             List<String> availableCommands = new ArrayList<String>();
@@ -130,6 +132,7 @@ public class ChatCommands {
             if (queInstance && PartyUtils.isLeader()) availableCommands.add("m1-m7/f1-f7/t1-t5");
             if (demote && PartyUtils.isLeader()) availableCommands.add("demote [player]");
             if (promote && PartyUtils.isLeader()) availableCommands.add("promote [player]");
+            if (disband && PartyUtils.isLeader()) availableCommands.add("disband");
 
             partyMessage("Available commands: " + join(availableCommands, ", "));
         }
@@ -272,6 +275,11 @@ public class ChatCommands {
                 }
             }
         }
+        else if (command.equals("disband")) {
+            if (disband && PartyUtils.isLeader()) {
+                sendCommand("p disband");
+            }
+        }
         else {
             partyMessage("Unknown command. Use !help for available commands.");
         }
@@ -391,6 +399,8 @@ public class ChatCommands {
         } else if ("demote".equals(commandName)) {
             return false;
         } else if ("promote".equals(commandName)) {
+            return false;
+        } else if ("disband".equals(commandName)) {
             return false;
         } else {
             return true;

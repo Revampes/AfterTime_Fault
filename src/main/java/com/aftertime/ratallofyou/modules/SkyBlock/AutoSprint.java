@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.modules.SkyBlock;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -25,6 +26,10 @@ public class AutoSprint {
             messageSent = false;
             temporaryDisabled = false;
             cooldown = 0;
+            return;
+        }
+
+        if (mc.currentScreen != null) {
             return;
         }
 

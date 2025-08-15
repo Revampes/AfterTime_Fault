@@ -20,7 +20,7 @@ public class StarMobHighlighter {
     private static final Pattern starredPattern = Pattern.compile(".*§6✯.*§c❤.*");
 
     // Colors for different mob types
-    private static final float[] STAR_COLOR = {1f, 1f, 0f}; // Yellow
+    private static final float[] STAR_COLOR = {1f, 1f, 0f}; // YELLOW
     private static final float[] SHADOW_ASSASSIN_COLOR = {0.67f, 0f, 1f}; // Purple
 
     public static void register() {
@@ -44,22 +44,24 @@ public class StarMobHighlighter {
                 if (isStarredMob(name)) {
                     Entity mob = getMobEntity(armorStand);
                     if (mob != null) {
-                        BoxRenderer.drawEntityEspBox(
-                                mob.posX, mob.posY, mob.posZ,
-                                mob.width, mob.height,
+                        BoxRenderer.drawEntityBox(
+                                mob,
                                 STAR_COLOR[0], STAR_COLOR[1], STAR_COLOR[2],
-                                mob.isSneaking() ? -0.125f : 0f
+                                1.0f, // alpha
+                                2.0f, // line width
+                                event.partialTicks
                         );
                     }
                 }
             }
             else if (entity instanceof EntityPlayer && "Shadow Assassin".equals(((EntityPlayer) entity).getDisplayName().getUnformattedText())) {
                 EntityPlayer assassin = (EntityPlayer) entity;
-                BoxRenderer.drawEntityEspBox(
-                        assassin.posX, assassin.posY, assassin.posZ,
-                        assassin.width, assassin.height,
+                BoxRenderer.drawEntityBox(
+                        assassin,
                         SHADOW_ASSASSIN_COLOR[0], SHADOW_ASSASSIN_COLOR[1], SHADOW_ASSASSIN_COLOR[2],
-                        assassin.isSneaking() ? -0.125f : 0f
+                        1.0f, // alpha
+                        2.0f, // line width
+                        event.partialTicks
                 );
             }
         }

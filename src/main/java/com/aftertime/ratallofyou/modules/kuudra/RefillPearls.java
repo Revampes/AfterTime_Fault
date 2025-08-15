@@ -26,13 +26,12 @@ public class RefillPearls {
             return;
         }
 
-        // Only check every 10 ticks (0.5 seconds)
-        if (tickCounter % 10 != 0) return;
+        // Only check every 20 ticks (1 seconds)
+        if (tickCounter % 20 != 0) return;
 
         ItemStack pearlStack = findPearlStack();
         if (pearlStack == null) {
             if (!hasShownNoPearlsWarning) {
-                Minecraft.getMinecraft().ingameGUI.displayTitle("§cNo Ender Pearls in your sack!", "", 5, 20, 5);
                 hasShownNoPearlsWarning = true;
             }
             return;

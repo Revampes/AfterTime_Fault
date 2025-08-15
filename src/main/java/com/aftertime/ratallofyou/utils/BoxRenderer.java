@@ -4,7 +4,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.AxisAlignedBB;
 import org.lwjgl.opengl.GL11;
 
@@ -90,5 +92,43 @@ public class BoxRenderer {
                 x + width/2, y + yOffset + height, z + width/2
         );
         drawEspBox(box, red, green, blue, 1.0f, 2.0f);
+    }
+
+    public static void drawEntityBox(Entity entity, float red, float green, float blue, float alpha, float lineWidth, float partialTicks) {
+        final RenderManager renderManager = mc.getRenderManager();
+
+        // Save GL state
+        GlStateManager.pushMatrix();
+        GlStateManager.pushAttrib();
+
+        try {
+            // Setup rendering properties
+            GlStateManager.disableTexture2D();
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GlStateManager.depthMask(false);
+            GL11.glLineWidth(lineWidth);
+            GlStateManager.disableLighting();
+
+            // Calculate interpolated position (WORLD SPACE)
+            double x = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks;
+            double y = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
+            double z = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks;
+
+            // Get entity's bounding box (already in world space)
+            AxisAlignedBB box = entity.getEntityBoundingBox()
+                    .expand(0.05, 0.15, 0.05); // Slightly expand the box
+
+            // Draw the box (viewer position adjustment happens inside drawEspBox)
+            drawEspBox(box, red, green, blue, alpha, lineWidth);
+        } finally {
+            // Restore GL state
+            GlStateManager.depthMask(true);
+            GlStateManager.enableTexture2D();
+            GlStateManager.disableBlend();
+            GlStateManager.enableLighting();
+            GlStateManager.popAttrib();
+            GlStateManager.popMatrix();
+        }
     }
 }
