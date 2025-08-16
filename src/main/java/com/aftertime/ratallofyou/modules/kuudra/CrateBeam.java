@@ -1,8 +1,8 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.utils.BeaconBeamRenderer;
 import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
+import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Vec3;
@@ -23,12 +23,12 @@ public class CrateBeam {
                 float alpha = (float) Math.max(0.4, 1.0 - (distance / 100.0));
 
                 // Create a green color with distance-based alpha
-                BeaconBeamRenderer.Color beamColor = new BeaconBeamRenderer.Color(
+                RenderUtils.Color beamColor = new RenderUtils.Color(
                         0, 255, 0, (int)(alpha * 255)
                 );
 
                 // Render beacon beam at the entity's position
-                BeaconBeamRenderer.renderBeaconBeam(
+                RenderUtils.renderBeaconBeam(
                         new Vec3(entity.posX, entity.posY, entity.posZ),
                         beamColor,
                         true, // depth check

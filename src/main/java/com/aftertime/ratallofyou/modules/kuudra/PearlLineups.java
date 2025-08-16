@@ -1,8 +1,8 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
-import com.aftertime.ratallofyou.utils.HitBoxRenderer;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
+import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -55,7 +55,7 @@ public class PearlLineups {
         double z0 = z - halfSize;
         double z1 = z + halfSize;
 
-        HitBoxRenderer.renderBoxFromCorners(x0, y0, z0, x1, y1, z1,
+        RenderUtils.renderBoxFromCorners(x0, y0, z0, x1, y1, z1,
                 r, g, b, 1.0f, true, 2.0f, filled);
     }
 

@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
-import com.aftertime.ratallofyou.utils.BoxRenderer;
+import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.util.ChatComponentText;
@@ -64,14 +64,14 @@ public class KeyHighlighter {
                 String name = armorStand.getDisplayName().getUnformattedText();
 
                 if (name.contains("Wither Key")) {
-                    BoxRenderer.drawEntityEspBox(
+                    RenderUtils.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
                             0.8, 1.0,  // Width and height
                             0.0f, 0.0f, 0.0f,   // Yellow color (R,G,B)
                             1.0f       // Y offset
                     );
                 } else if (name.contains("Blood Key")) {
-                    BoxRenderer.drawEntityEspBox(
+                    RenderUtils.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
                             0.8, 1.0,  // Width and height
                             1.0f, 0.0f, 0.0f,   // Red color (R,G,B)

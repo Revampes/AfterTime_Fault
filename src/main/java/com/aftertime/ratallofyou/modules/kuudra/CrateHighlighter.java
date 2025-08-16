@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.modules.kuudra;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
-import com.aftertime.ratallofyou.utils.BoxRenderer;
+import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.AxisAlignedBB;
@@ -33,7 +33,7 @@ public class CrateHighlighter {
                 float green = 0.0f;
                 float blue = interactable ? 0.0f : 1.0f;
 
-                BoxRenderer.drawEspBox(
+                RenderUtils.drawEspBox(
                         box,
                         red, green, blue,
                         alpha,

@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
-import com.aftertime.ratallofyou.utils.HitBoxRenderer;
+import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -226,10 +226,10 @@ public class SecretClicks {
             GL11.glPolygonOffset(1.0f, -1.0f);
 
             // Draw solid box first (with lower alpha)
-            HitBoxRenderer.renderBlockHitbox(pos, r, g, b, a * 0.5f, true, 2f, true);
+            RenderUtils.renderBlockHitbox(pos, r, g, b, a * 0.5f, true, 2f, true);
 
             // Then draw outline
-            HitBoxRenderer.renderBlockHitbox(pos, r, g, b, a, true, 2f, false);
+            RenderUtils.renderBlockHitbox(pos, r, g, b, a, true, 2f, false);
         } finally {
             // Restore original GL state
             if (cullFace) GL11.glEnable(GL11.GL_CULL_FACE);

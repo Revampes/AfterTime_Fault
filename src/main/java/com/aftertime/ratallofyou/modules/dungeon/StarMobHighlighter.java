@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.render;
 
 import com.aftertime.ratallofyou.UI.ModConfig;
-import com.aftertime.ratallofyou.utils.BoxRenderer;
+import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.EntityWither;
@@ -44,7 +44,7 @@ public class StarMobHighlighter {
                 if (isStarredMob(name)) {
                     Entity mob = getMobEntity(armorStand);
                     if (mob != null) {
-                        BoxRenderer.drawEntityBox(
+                        RenderUtils.drawEntityBox(
                                 mob,
                                 STAR_COLOR[0], STAR_COLOR[1], STAR_COLOR[2],
                                 1.0f, // alpha
@@ -56,7 +56,7 @@ public class StarMobHighlighter {
             }
             else if (entity instanceof EntityPlayer && "Shadow Assassin".equals(((EntityPlayer) entity).getDisplayName().getUnformattedText())) {
                 EntityPlayer assassin = (EntityPlayer) entity;
-                BoxRenderer.drawEntityBox(
+                RenderUtils.drawEntityBox(
                         assassin,
                         SHADOW_ASSASSIN_COLOR[0], SHADOW_ASSASSIN_COLOR[1], SHADOW_ASSASSIN_COLOR[2],
                         1.0f, // alpha
