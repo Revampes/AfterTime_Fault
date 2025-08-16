@@ -1,14 +1,13 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Mouse;
@@ -18,10 +17,11 @@ public class P3TickTimer {
     private boolean isTimerActive = false;
     private final Minecraft mc = Minecraft.getMinecraft();
     private boolean isMouseOver = false;
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Phase 3 Tick Timer");
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
-        if (!isModuleEnabled("Phase 3 Tick Timer")) return;
+        if (!isModuleEnabled()) return;
 
         String message = event.message.getUnformattedText();
 
@@ -37,7 +37,7 @@ public class P3TickTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!isModuleEnabled("Phase 3 Tick Timer") || !isTimerActive || event.phase != TickEvent.Phase.START) return;
+        if (!isModuleEnabled() || !isTimerActive || event.phase != TickEvent.Phase.START) return;
 
         barrierTicks--;
         if (barrierTicks <= 0) {
@@ -47,7 +47,7 @@ public class P3TickTimer {
 
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
-        if (!isModuleEnabled("Phase 3 Tick Timer") || !isTimerActive ||
+        if (!isModuleEnabled() || !isTimerActive ||
                 event.type != RenderGameOverlayEvent.ElementType.ALL) return;
 
         String time = String.format("%.2f", barrierTicks / 20.0f);
@@ -95,7 +95,7 @@ public class P3TickTimer {
 
     @SubscribeEvent
     public void onMouseInput(net.minecraftforge.client.event.MouseEvent event) {
-        if (!isModuleEnabled("Phase 3 Tick Timer") || !isTimerActive || !UIHighlighter.isInMoveMode()) return;
+        if (!isModuleEnabled() || !isTimerActive || !UIHighlighter.isInMoveMode()) return;
 
         Minecraft mc = Minecraft.getMinecraft();
         ScaledResolution res = new ScaledResolution(mc);
@@ -149,16 +149,7 @@ public class P3TickTimer {
         isTimerActive = false;
     }
 
-    private boolean isModuleEnabled(String moduleName) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(moduleName)) {
-                return module.enabled;
-            }
-        }
-        return false;
-    }
-
-    public static void register() {
-        MinecraftForge.EVENT_BUS.register(new P3TickTimer());
+    private boolean isModuleEnabled() {
+        return MODULE_ENABLED.isEnabled();
     }
 }

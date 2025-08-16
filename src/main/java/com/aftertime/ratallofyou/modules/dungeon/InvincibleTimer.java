@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.UI.UIDragger;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -15,6 +15,7 @@ public class InvincibleTimer {
     private String procText = " ";
     private long procTextEndTime = 0;
     private static final String MODULE_NAME = "Invincible Timer";
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Invincible Timer");
 
     // Initialize positions
     public InvincibleTimer() {
@@ -27,7 +28,7 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !isModuleEnabled(MODULE_NAME)) return;
+        if (event.phase != TickEvent.Phase.END || !isModuleEnabled()) return;
 
         if (bonzoTime > 0) bonzoTime--;
         if (spiritTime > 0) spiritTime--;
@@ -40,7 +41,7 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isModuleEnabled(MODULE_NAME)) return;
+        if (!isModuleEnabled()) return;
 
         String message = event.message.getUnformattedText();
 
@@ -63,7 +64,7 @@ public class InvincibleTimer {
 
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
-        if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled(MODULE_NAME)) return;
+        if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled()) return;
 
         // Get positions from UIDragger
         UIDragger.UIPosition bonzoPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Bonzo");
@@ -95,12 +96,7 @@ public class InvincibleTimer {
         );
     }
 
-    private boolean isModuleEnabled(String moduleName) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(moduleName)) {
-                return module.enabled;
-            }
-        }
-        return false;
+    private boolean isModuleEnabled() {
+        return MODULE_ENABLED.isEnabled();
     }
 }

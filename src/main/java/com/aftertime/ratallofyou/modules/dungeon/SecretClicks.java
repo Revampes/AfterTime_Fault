@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.Utils;
@@ -12,7 +12,6 @@ import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -25,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class SecretClicks {
-    private static final String MODULE_NAME = "Show Secret Clicks";
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Show Secret Clicks");
     private static final String[] VALID_BLOCKS = {
             "minecraft:chest",
             "minecraft:lever",
@@ -41,10 +40,6 @@ public class SecretClicks {
     private final Map<String, HighlightedBlock> highlights = new HashMap<String, HighlightedBlock>();
     private boolean registered = false;
     private Color highlightColor = new Color(0, 255, 255, 128); // Default cyan color with alpha
-
-    public SecretClicks() {
-        MinecraftForge.EVENT_BUS.register(this);
-    }
 
     private static class HighlightedBlock {
         final BlockPos blockPos;
@@ -252,13 +247,6 @@ public class SecretClicks {
     }
 
     private boolean isModuleEnabled() {
-        if (ModConfig.MODULES == null) return false;
-
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module != null && MODULE_NAME.equals(module.name)) {
-                return module.enabled;
-            }
-        }
-        return false;
+        return MODULE_ENABLED.isEnabled();
     }
 }

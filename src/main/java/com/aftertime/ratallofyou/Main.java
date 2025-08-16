@@ -1,8 +1,9 @@
 package com.aftertime.ratallofyou;
 
+import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
-import com.aftertime.ratallofyou.UI.ModConfig;
 import com.aftertime.ratallofyou.modules.kuudra.*;
+import com.aftertime.ratallofyou.modules.render.EtherwarpOverlay;
 import com.aftertime.ratallofyou.modules.render.Fullbright;
 import com.aftertime.ratallofyou.modules.SkyBlock.AutoSprint;
 import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
@@ -10,7 +11,7 @@ import com.aftertime.ratallofyou.modules.dungeon.*;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.modules.render.NoDebuff;
-import com.aftertime.ratallofyou.modules.render.StarMobHighlighter;
+import com.aftertime.ratallofyou.modules.dungeon.StarMobHighlighter;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils;
@@ -28,7 +29,7 @@ public class Main {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        ModConfig.loadConfig();
+        ConfigStorage.loadAllConfigs();
     }
 
     @Mod.EventHandler
@@ -55,6 +56,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new NoDebuff());
         MinecraftForge.EVENT_BUS.register(new PearlLineups());
         MinecraftForge.EVENT_BUS.register(new KuudraUtils());
+        MinecraftForge.EVENT_BUS.register(new EtherwarpOverlay());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

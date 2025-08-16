@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class KeyHighlighter {
-    private static final String MODULE_NAME = "Key Highlighter";
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Key Highlighter");
     private static boolean bloodOpened = false;
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final Map<String, Boolean> keyTracking = new HashMap<String, Boolean>();
@@ -90,11 +90,6 @@ public class KeyHighlighter {
     }
 
     private boolean isModuleEnabled() {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(MODULE_NAME)) {
-                return module.enabled;
-            }
-        }
-        return false;
+        return MODULE_ENABLED.isEnabled();
     }
 }

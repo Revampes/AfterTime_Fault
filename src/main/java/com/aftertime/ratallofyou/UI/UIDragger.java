@@ -1,15 +1,13 @@
 package com.aftertime.ratallofyou.UI;
 
+import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
+
 import org.lwjgl.input.Mouse;
 
 public class UIDragger {
@@ -117,61 +115,10 @@ public class UIDragger {
     }
 
     public void savePositions() {
-        Properties props = new Properties();
-        File positionFile = new File("config/ratallofyou_positions.cfg");
-
-        for (Map.Entry<String, UIPosition> entry : elements.entrySet()) {
-            String key = entry.getKey().replace(" ", "_").toLowerCase();
-            props.setProperty(key + "_x", String.valueOf(entry.getValue().x));
-            props.setProperty(key + "_y", String.valueOf(entry.getValue().y));
-        }
-
-        FileOutputStream output = null;
-        try {
-            output = new FileOutputStream(positionFile);
-            props.store(output, "UI Positions Configuration");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (output != null) {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        ConfigStorage.savePositionsConfig();
     }
 
     public void loadPositions() {
-        File positionFile = new File("config/ratallofyou_positions.cfg");
-        if (!positionFile.exists()) return;
-
-        Properties props = new Properties();
-        FileInputStream input = null;
-        try {
-            input = new FileInputStream(positionFile);
-            props.load(input);
-            for (String moduleName : elements.keySet()) {
-                String key = moduleName.replace(" ", "_").toLowerCase();
-                try {
-                    int x = Integer.parseInt(props.getProperty(key + "_x", String.valueOf(elements.get(moduleName).x)));
-                    int y = Integer.parseInt(props.getProperty(key + "_y", String.valueOf(elements.get(moduleName).y)));
-                    elements.put(moduleName, new UIPosition(x, y));
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        ConfigStorage.loadPositionsConfig();
     }
 }

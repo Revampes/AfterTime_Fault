@@ -1,13 +1,13 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class LeapAnnounce {
-    private static final String MODULE_NAME = "Leap Announce";
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Leap Announce");
     private final Minecraft mc = Minecraft.getMinecraft();
 
     public static void register() {
@@ -47,11 +47,6 @@ public class LeapAnnounce {
     }
 
     private boolean isModuleEnabled() {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(MODULE_NAME)) {
-                return module.enabled;
-            }
-        }
-        return false;
+        return MODULE_ENABLED.isEnabled();
     }
 }

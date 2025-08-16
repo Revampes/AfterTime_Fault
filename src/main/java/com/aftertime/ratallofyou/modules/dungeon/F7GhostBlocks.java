@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class F7GhostBlocks {
-    private static final String MODULE_NAME = "Dungeon Sweat Mode (Use at your own risk)";
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Dungeon Sweat Mode (Use at your own risk)");
 //    private static final String CONFIG_PATH = "src/main/java/com/aftertime/ratallofyou/Config/floorConfig.json";
 
     // Block position maps
@@ -158,12 +158,7 @@ public class F7GhostBlocks {
     }
 
     private boolean isModuleEnabled() {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(MODULE_NAME)) {
-                return module.enabled;
-            }
-        }
-        return false;
+        return MODULE_ENABLED.isEnabled();
     }
 
     @SubscribeEvent

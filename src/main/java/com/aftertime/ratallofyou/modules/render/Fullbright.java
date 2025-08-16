@@ -1,12 +1,13 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class Fullbright {
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Fullbright");
     private static float originalGamma;
     private boolean wasEnabled = false;
 
@@ -19,7 +20,7 @@ public class Fullbright {
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
 
-        boolean currentlyEnabled = isEnabled();
+        boolean currentlyEnabled = isModuleEnabled();
         Minecraft mc = Minecraft.getMinecraft();
 
         if (currentlyEnabled) {
@@ -33,12 +34,7 @@ public class Fullbright {
         }
     }
 
-    private boolean isEnabled() {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals("FullBright")) {
-                return module.enabled;
-            }
-        }
-        return false;
+    private boolean isModuleEnabled() {
+        return MODULE_ENABLED.isEnabled();
     }
 }

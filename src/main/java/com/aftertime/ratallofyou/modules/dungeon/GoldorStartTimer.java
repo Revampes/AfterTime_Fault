@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -11,12 +11,14 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class GoldorStartTimer {
+    private static final BooleanSetting PHASE_3_TIMER_ENABLED = new BooleanSetting("Phase 3 Start CountDown");
+
     private int ticks = -1;
     private final Minecraft mc = Minecraft.getMinecraft();
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isModuleEnabled("Phase 3 Timer")) return;
+        if (!isModuleEnabled()) return;
 
         String message = event.message.getUnformattedText();
 
@@ -31,7 +33,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!isModuleEnabled("Goldor Start CountDown") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
+        if (!isModuleEnabled() || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
         ticks--;
 
         String time = String.format("%.2f", ticks / 20.0f);
@@ -52,12 +54,7 @@ public class GoldorStartTimer {
         MinecraftForge.EVENT_BUS.register(new GoldorStartTimer());
     }
 
-    private boolean isModuleEnabled(String moduleName) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(moduleName)) {
-                return module.enabled;
-            }
-        }
-        return false;
+    private boolean isModuleEnabled() {
+        return PHASE_3_TIMER_ENABLED.isEnabled();
     }
 }

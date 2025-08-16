@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 
 public class ChatCommands {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private static final String MODULE_NAME = "Party Commands";
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Party Commands");
     private static final Pattern PARTY_MSG_REGEX = Pattern.compile("^Party > (\\[[^]]*?])? ?(\\w{1,16})(?: [ቾ⚒])?: ?!(\\w+)(?: (.+))?$");
 
     // Command toggles
@@ -36,13 +36,13 @@ public class ChatCommands {
     private boolean demote = isCommandEnabled("demote");
     private boolean promote = isCommandEnabled("promote");
     private boolean disband = isCommandEnabled("disband");
+    private boolean ptandwarp = isCommandEnabled("ptandwarp");
 
     private final List<Pair> dtReason = new ArrayList<Pair>();
-    private boolean isEnabled = false;
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isEnabled("Party Commands")) {
+        if (!isModuleEnabled()) {
             return;
         }
 
@@ -115,6 +115,7 @@ public class ChatCommands {
         demote = isCommandEnabled("demote");
         promote = isCommandEnabled("promote");
         disband = isCommandEnabled("disband");
+        ptandwarp = isCommandEnabled("ptandwarp");
 
         if (command.equals("help") || command.equals("h")) {
             List<String> availableCommands = new ArrayList<String>();
@@ -133,6 +134,7 @@ public class ChatCommands {
             if (demote && PartyUtils.isLeader()) availableCommands.add("demote [player]");
             if (promote && PartyUtils.isLeader()) availableCommands.add("promote [player]");
             if (disband && PartyUtils.isLeader()) availableCommands.add("disband");
+            if (ptandwarp) availableCommands.add("ptandwarp");
 
             partyMessage("Available commands: " + join(availableCommands, ", "));
         }
@@ -280,6 +282,82 @@ public class ChatCommands {
                 sendCommand("p disband");
             }
         }
+        else if (command.equals("ptw") || command.equals("tw")) {
+            // Null check Minecraft and player
+            if (mc == null || mc.thePlayer == null || !ptandwarp) {
+                return;
+            }
+
+            // Only ignore if someone else sends without args
+            if (args == null && !sender.equalsIgnoreCase(mc.thePlayer.getName())) {
+                return;
+            }
+
+            // Create final copy of args for use in inner class
+            final String finalArgs = args;
+            final String finalSender = sender;
+
+            // 1-second cooldown before processing
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (finalArgs != null) {
+                        // Case with args - convert everything to lowercase
+                        String targetInput = finalArgs.toLowerCase();
+                        String myName = mc.thePlayer.getName().toLowerCase();
+
+                        if (targetInput.equals(myName)) {
+                            // If args matches my username
+                            partyMessage("!ptme");
+
+                            new Timer().schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    if (mc != null && mc.thePlayer != null) {
+                                        sendCommand("p warp");
+                                    }
+                                }
+                            }, 2000); // Additional 2s delay for warp
+                        } else {
+                            // Check if target exists in party (null-safe)
+                            List<String> partyMembers = PartyUtils.getPartyMembers();
+                            String foundMember = null;
+
+                            if (partyMembers != null) {
+                                for (String member : partyMembers) {
+                                    if (member != null && (member.toLowerCase().equals(targetInput) ||
+                                            member.toLowerCase().startsWith(targetInput))) {
+                                        foundMember = member;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (foundMember != null && PartyUtils.isLeader()) {
+                                // Transfer to target and request warp
+                                sendCommand("p transfer " + foundMember);
+
+                                new Timer().schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        if (mc != null && mc.thePlayer != null) {
+                                            partyMessage("!warp");
+                                        }
+                                    }
+                                }, 2000); // Additional 2s delay for warp request
+                            } else if (foundMember == null) {
+                                partyMessage("Player not found in party: " + finalArgs);
+                            }
+                        }
+                    } else {
+                        // Case without args - just warp if I'm leader
+                        if (PartyUtils.isLeader()) {
+                            sendCommand("p warp");
+                        }
+                    }
+                }
+            }, 1000); // Initial 1-second cooldown
+        }
         else {
             partyMessage("Unknown command. Use !help for available commands.");
         }
@@ -356,13 +434,8 @@ public class ChatCommands {
         }
     }
 
-    public static boolean isEnabled(String moduleName) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(MODULE_NAME)) {
-                return module.enabled;
-            }
-        }
-        return false;
+    private boolean isModuleEnabled() {
+        return MODULE_ENABLED.isEnabled();
     }
 
     public static void setCommandEnabled(String commandName, boolean enabled) {

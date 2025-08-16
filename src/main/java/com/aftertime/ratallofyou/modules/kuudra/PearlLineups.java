@@ -1,16 +1,17 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class PearlLineups {
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Pearl Lineups");
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
         // Check both module enabled and phase 1
-        if (!isModuleEnabled("Pearl Lineups") || !KuudraUtils.isPhase(1)) {
+        if (!isModuleEnabled() || !KuudraUtils.isPhase(1)) {
             return;
         }
 
@@ -59,12 +60,7 @@ public class PearlLineups {
                 r, g, b, 1.0f, true, 2.0f, filled);
     }
 
-    private static boolean isModuleEnabled(String moduleName) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(moduleName)) {
-                return module.enabled;
-            }
-        }
-        return false;
+    private boolean isModuleEnabled() {
+        return MODULE_ENABLED.isEnabled();
     }
 }

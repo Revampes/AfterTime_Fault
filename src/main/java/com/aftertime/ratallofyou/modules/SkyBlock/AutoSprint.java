@@ -1,8 +1,7 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.ModConfig;
+import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -11,6 +10,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 
 public class AutoSprint {
+    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Auto Sprint");
     private boolean wasEnabled = false;
     private boolean messageSent = false;
     private boolean temporaryDisabled = false;
@@ -41,14 +41,14 @@ public class AutoSprint {
 
         // Check for sprint key press to toggle
         if (Keyboard.isKeyDown(mc.gameSettings.keyBindSprint.getKeyCode())) {
-            if (isModuleEnabled("Auto Sprint") && !temporaryDisabled) {
+            if (isModuleEnabled() && !temporaryDisabled) {
                 temporaryDisabled = true;
                 mc.thePlayer.addChatMessage(
                         new ChatComponentText(EnumChatFormatting.GOLD + "[RatAllOfYou] " +
                                 EnumChatFormatting.RED + "Auto Sprint Disabled")
                 );
                 cooldown = 10; // 0.5 second cooldown (20 ticks = 1 second)
-            } else if (isModuleEnabled("Auto Sprint") && temporaryDisabled) {
+            } else if (isModuleEnabled() && temporaryDisabled) {
                 temporaryDisabled = false;
                 mc.thePlayer.addChatMessage(
                         new ChatComponentText(EnumChatFormatting.GOLD + "[RatAllOfYou] " +
@@ -58,7 +58,7 @@ public class AutoSprint {
             }
         }
 
-        if (isModuleEnabled("Auto Sprint") && !temporaryDisabled) {
+        if (isModuleEnabled() && !temporaryDisabled) {
             KeyBinding.setKeyBindState(
                     mc.gameSettings.keyBindSprint.getKeyCode(),
                     true
@@ -86,12 +86,7 @@ public class AutoSprint {
         }
     }
 
-    private boolean isModuleEnabled(String moduleName) {
-        for (ModConfig.ModuleInfo module : ModConfig.MODULES) {
-            if (module.name.equals(moduleName)) {
-                return module.enabled;
-            }
-        }
-        return false;
+    private boolean isModuleEnabled() {
+        return MODULE_ENABLED.isEnabled();
     }
 }
