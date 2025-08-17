@@ -51,15 +51,18 @@ public class EtherwarpOverlay {
         if (etherwarpOverlayOnlySneak && !mc.thePlayer.isSneaking()) return;
         if (!isHoldingAOTV()) return;
 
-        // Setup rendering state
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.disableDepth();
-        GL11.glLineWidth(2.0f);
+        // Save current state
+        GlStateManager.pushAttrib();
+        GlStateManager.pushMatrix();
 
         try {
+            // Setup rendering state
+            GlStateManager.disableTexture2D();
+            GlStateManager.enableBlend();
+            GlStateManager.disableAlpha();
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glLineWidth(2.0f);
+
             if (etherwarpSyncWithServer) {
                 doSyncedEther();
             } else {
@@ -67,10 +70,8 @@ public class EtherwarpOverlay {
             }
         } finally {
             // Restore rendering state
-            GlStateManager.enableDepth();
-            GlStateManager.enableTexture2D();
-            GlStateManager.disableBlend();
-            GlStateManager.enableAlpha();
+            GlStateManager.popMatrix();
+            GlStateManager.popAttrib();
         }
     }
 
@@ -276,32 +277,57 @@ public class EtherwarpOverlay {
         float maxY = y + 1 + PADDING;
         float maxZ = z + 1 + PADDING;
 
-        // Clear any existing color
-        GlStateManager.color(1, 1, 1, 1);
+        // Save current state
+        GlStateManager.pushMatrix();
+        GlStateManager.pushAttrib();
 
-        switch (etherwarpHighlightType) {
-            case 0: // Edges Only
-                RenderUtils.renderBoxFromCorners(
-                        minX, minY, minZ, maxX, maxY, maxZ,
-                        r, g, b, a, false, 2.0f, false
-                );
-                break;
-            case 2: // Filled Only
-                RenderUtils.renderBoxFromCorners(
-                        minX, minY, minZ, maxX, maxY, maxZ,
-                        r, g, b, a, false, 2.0f, true
-                );
-                break;
-            case 4: // Both
-                RenderUtils.renderBoxFromCorners(
-                        minX, minY, minZ, maxX, maxY, maxZ,
-                        r, g, b, a, false, 2.0f, false
-                );
-                RenderUtils.renderBoxFromCorners(
-                        minX, minY, minZ, maxX, maxY, maxZ,
-                        r, g, b, a/2, false, 2.0f, true
-                );
-                break;
+        try {
+            // Common setup
+            GlStateManager.disableTexture2D();
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glLineWidth(2.0f);
+
+            // Enable depth testing but disable depth writes for filled rendering
+            GlStateManager.enableDepth();
+
+            switch (etherwarpHighlightType) {
+                case 0: // Edges Only
+                    GlStateManager.depthMask(true);
+                    RenderUtils.renderBoxFromCorners(
+                            minX, minY, minZ, maxX, maxY, maxZ,
+                            r, g, b, a, false, 2.0f, false
+                    );
+                    break;
+
+                case 2: // Filled Only
+                    GlStateManager.depthMask(false); // Disable depth writes for filled
+                    RenderUtils.renderBoxFromCorners(
+                            minX, minY, minZ, maxX, maxY, maxZ,
+                            r, g, b, a, false, 2.0f, true
+                    );
+                    break;
+
+                case 4: // Both
+                    // First render filled (with depth writes disabled)
+                    GlStateManager.depthMask(false);
+                    RenderUtils.renderBoxFromCorners(
+                            minX, minY, minZ, maxX, maxY, maxZ,
+                            r, g, b, a/2, false, 2.0f, true
+                    );
+
+                    // Then render outline (with depth writes enabled)
+                    GlStateManager.depthMask(true);
+                    RenderUtils.renderBoxFromCorners(
+                            minX, minY, minZ, maxX, maxY, maxZ,
+                            r, g, b, a, false, 2.0f, false
+                    );
+                    break;
+            }
+        } finally {
+            // Restore state
+            GlStateManager.popAttrib();
+            GlStateManager.popMatrix();
         }
     }
 

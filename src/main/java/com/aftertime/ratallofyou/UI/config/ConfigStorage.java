@@ -50,6 +50,7 @@ public class ConfigStorage {
             // SkyBlock
             new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false),
             new ModuleInfo("Auto Sprint", "Automatically sprint when moving", "SkyBlock", false),
+            new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false),
 
             // Render
             new ModuleInfo("FullBright", "SHINE!", "Render", false),
@@ -236,6 +237,26 @@ public class ConfigStorage {
             props.setProperty(key, String.valueOf(config.enabled));
         }
         saveProperties(props, COMMANDS_CONFIG_FILE, "Command Settings Configuration");
+    }
+
+    public static List<String> getUniqueCategories() {
+        List<String> categories = new ArrayList<String>();
+        for (ModuleInfo module : MODULES) {
+            if (!categories.contains(module.category)) {
+                categories.add(module.category);
+            }
+        }
+        return categories;
+    }
+
+    public static List<ModuleInfo> getModulesByCategory(String category) {
+        List<ModuleInfo> filteredModules = new ArrayList<ModuleInfo>();
+        for (ModuleInfo module : MODULES) {
+            if (module.category.equals(category)) {
+                filteredModules.add(module);
+            }
+        }
+        return filteredModules;
     }
 
     public static List<CommandConfig> getCommandConfigs() {

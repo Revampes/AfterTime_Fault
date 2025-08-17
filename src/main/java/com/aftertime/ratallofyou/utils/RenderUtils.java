@@ -317,7 +317,7 @@ public class RenderUtils {
 
             if (filled) {
                 GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
-                GL11.glPolygonOffset(1.0f, -1.0f);
+                GL11.glPolygonOffset(1.0f, -2000000.0f);
 
                 Tessellator tessellator = Tessellator.getInstance();
                 WorldRenderer worldRenderer = tessellator.getWorldRenderer();
