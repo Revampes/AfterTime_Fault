@@ -238,26 +238,6 @@ public class ConfigStorage {
         saveProperties(props, COMMANDS_CONFIG_FILE, "Command Settings Configuration");
     }
 
-    public static List<String> getUniqueCategories() {
-        List<String> categories = new ArrayList<String>();
-        for (ModuleInfo module : MODULES) {
-            if (!categories.contains(module.category)) {
-                categories.add(module.category);
-            }
-        }
-        return categories;
-    }
-
-    public static List<ModuleInfo> getModulesByCategory(String category) {
-        List<ModuleInfo> filteredModules = new ArrayList<ModuleInfo>();
-        for (ModuleInfo module : MODULES) {
-            if (module.category.equals(category)) {
-                filteredModules.add(module);
-            }
-        }
-        return filteredModules;
-    }
-
     public static List<CommandConfig> getCommandConfigs() {
         return Collections.unmodifiableList(COMMAND_CONFIGS);
     }

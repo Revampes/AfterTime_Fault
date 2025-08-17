@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.UI;
 
 import com.aftertime.ratallofyou.UI.config.ConfigStorage;
-import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
 import com.aftertime.ratallofyou.modules.render.EtherwarpOverlay;
 import com.aftertime.ratallofyou.modules.render.NoDebuff;
 import net.minecraft.client.Minecraft;
@@ -10,17 +9,12 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import com.aftertime.ratallofyou.UI.config.ConfigStorage.ModuleInfo;
 
-import javax.imageio.ImageIO;
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import static org.lwjgl.opengl.GL11.*;
@@ -28,12 +22,10 @@ import static org.lwjgl.opengl.GL11.*;
 public class ModSettingsGui extends GuiScreen {
     // Constants
     private static final class Colors {
-        static final int BACKGROUND = new Color(0, 0, 0).getRGB();
         static final int CATEGORY = 0xFF111111;
         static final int MODULE_INACTIVE = 0xFF333333;
         static final int MODULE_ACTIVE = 0xFF006400;
         static final int TEXT = 0xFFFFFFFF;
-        static final int HIGHLIGHT = 0xFF444444;
         static final int PANEL = 0xFF000000;
         static final int CATEGORY_BUTTON = 0xFF222222;
         static final int SELECTED_CATEGORY = 0xFF555555;
@@ -45,12 +37,8 @@ public class ModSettingsGui extends GuiScreen {
         static final int COMMAND_CHECKBOX_SELECTED = 0xFF006400;
         static final int COMMAND_SCROLLBAR = 0xFF555577;
         static final int COMMAND_SCROLLBAR_HANDLE = 0xFF8888AA;
-        static final int NO_DEBUFF_PANEL = 0xFF111133;
-        static final int NO_DEBUFF_CHECKBOX = 0xFF333355;
-        static final int NO_DEBUFF_CHECKBOX_SELECTED = 0xFF006466;
         static final int COMMAND_PANEL = 0xFF222222; // Darker background
         static final int COMMAND_TEXT = 0xFFFFFFFF;
-        static final int COMMAND_HIGHLIGHT = 0xFF444444;
         static final int COMMAND_BORDER = 0xFF111111;
     }
 
@@ -108,20 +96,6 @@ public class ModSettingsGui extends GuiScreen {
 
         createCategoryButtons();
         createModuleButtons();
-    }
-
-    private void checkForEnabledCommandModules() {
-        for (ModuleInfo module : ConfigStorage.MODULES) {
-            if (module.enabled && (module.name.equals("Party Commands") || module.name.equals("No Debuff"))) {
-                selectedCommandModule = module;
-                if (module.name.equals("Party Commands")) {
-                    initCommandToggles();
-                } else if (module.name.equals("No Debuff")) {
-                    initNoDebuffToggles();
-                }
-                break;
-            }
-        }
     }
 
     private void createCategoryButtons() {
@@ -376,16 +350,6 @@ public class ModSettingsGui extends GuiScreen {
             EtherwarpOverlay.etherwarpOverlayOnlySneak = ConfigStorage.getEtherwarpConfigs().get(1).enabled;
             EtherwarpOverlay.etherwarpShowFailLocation = ConfigStorage.getEtherwarpConfigs().get(2).enabled;
         }
-    }
-
-    private ModuleButton getActiveModuleButton() {
-        if (selectedCommandModule == null) return null;
-        for (ModuleButton moduleBtn : moduleButtons) {
-            if (moduleBtn.getModule() == selectedCommandModule) {
-                return moduleBtn;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -648,28 +612,6 @@ public class ModSettingsGui extends GuiScreen {
         // Update scroll parameters
         int totalHeight = commandToggles.size() * 25;
         commandScroll.update(totalHeight, panelHeight - 25);
-    }
-
-    private class CommandConfig {
-        final String name;
-        final String description;
-
-        CommandConfig(String name, String description) {
-            this.name = name;
-            this.description = description;
-        }
-    }
-
-    private void addCommandToggle(String name, String description, int x, int y, int width, int height) {
-        commandToggles.add(new CommandToggle(
-                name,
-                description,
-                ChatCommands.isCommandEnabled(name.toLowerCase().replace(" ", "")),
-                x,
-                y,
-                width,
-                height
-        ));
     }
 
     @Override
@@ -987,27 +929,6 @@ public class ModSettingsGui extends GuiScreen {
         // Update scroll parameters
         int totalHeight = commandToggles.size() * 25;
         commandScroll.update(totalHeight, panelHeight - 25);
-    }
-
-    private void addNoDebuffToggle(String name, String description, int x, int y, int width, int height) {
-        boolean enabled = false;
-        if (name.equals("Remove Fire Overlay")) {
-            enabled = NoDebuff.isNoFire();
-        } else if (name.equals("Ignore Blindness")) {
-            enabled = NoDebuff.isNoBlindness();
-        } else if (name.equals("Clear Liquid Vision")) {
-            enabled = NoDebuff.isClearLiquidVision();
-        }
-
-        commandToggles.add(new CommandToggle(
-                name,
-                description,
-                enabled,
-                x,
-                y,
-                width,
-                height
-        ));
     }
 
     private void initEtherwarpToggles() {

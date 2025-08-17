@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.settings.BooleanSetting;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ChatComponentText;
@@ -21,7 +22,7 @@ public class P3TickTimer {
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
-        if (!isModuleEnabled()) return;
+        if (!isModuleEnabled() || !DungeonUtils.isInDungeon()) return;
 
         String message = event.message.getUnformattedText();
 
