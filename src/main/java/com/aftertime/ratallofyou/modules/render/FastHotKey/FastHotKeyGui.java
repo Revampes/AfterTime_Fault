@@ -13,6 +13,8 @@ public class FastHotKeyGui extends GuiScreen {
     private static final String[] COMMANDS = {"/ec", "/bp", "/trades", "/pets", "/wardrobe", "/eq"};
     private static final String[] LABELS = {"Ender Chest", "Storage", "Trades", "Pets", "Wardrobe", "Equipment"};
     private static final int REGION_COUNT = 6;
+    private static final float BASE_LINE_WIDTH = 5.0f;
+    private static final float HOVER_LINE_WIDTH = 10.0f;
 
     @Override
     public void initGui() {
@@ -30,25 +32,46 @@ public class FastHotKeyGui extends GuiScreen {
         centerX = width / 2;
         centerY = height / 2;
 
-        // Draw circle background (60% opacity dark gray)
-        drawFilledCircle(centerX, centerY, CIRCLE_RADIUS, 0x99000000);
+        // Draw black circle background (100% opacity)
+        drawFilledCircle(centerX, centerY, CIRCLE_RADIUS, 0xFF000000);
 
-        // Highlight hovered region (bright red for testing)
-        int hoveredRegion = getHoveredRegion(mouseX, mouseY);
-        if (hoveredRegion != -1) {
-            drawCircleSector(centerX, centerY, CIRCLE_RADIUS, hoveredRegion, 0x66FF0000);
-        }
+        // Draw cyan circumference with thick line
+        drawCircleOutline(centerX, centerY, CIRCLE_RADIUS, 0xFFFFFFFF, BASE_LINE_WIDTH);
 
-        // Draw white outline
-        drawCircleOutline(centerX, centerY, CIRCLE_RADIUS, 0xFFFFFFFF);
-
-        // Draw dividing lines
+        // Draw dividing lines with base thickness
         for (int i = 0; i < REGION_COUNT; i++) {
             double angle = Math.PI * 2 * i / REGION_COUNT;
             drawLine(centerX, centerY,
                     (int)(centerX + Math.cos(angle) * CIRCLE_RADIUS),
                     (int)(centerY + Math.sin(angle) * CIRCLE_RADIUS),
-                    0xFFFFFFFF);
+                    0xFFFFFFFF, BASE_LINE_WIDTH);
+        }
+
+        // Handle hover effect
+        // In the drawScreen method (hover effect section):
+        int hoveredRegion = getHoveredRegion(mouseX, mouseY);
+        if (hoveredRegion != -1) {
+            // Light grey background for hovered region
+            drawCircleSector(centerX, centerY, CIRCLE_RADIUS, hoveredRegion, 0x66AAAAAA);
+
+            // Red arc for hovered region with thicker line
+            drawCircleArc(centerX, centerY, CIRCLE_RADIUS, hoveredRegion, 0x99FF0000, HOVER_LINE_WIDTH);
+
+            // Get the angles for both radius lines of this sector
+            double startAngle = Math.PI * 2 * hoveredRegion / REGION_COUNT;
+            double endAngle = Math.PI * 2 * (hoveredRegion + 1) / REGION_COUNT;
+
+            // Draw left radius line (thick and red)
+            drawLine(centerX, centerY,
+                    (int)(centerX + Math.cos(startAngle) * CIRCLE_RADIUS),
+                    (int)(centerY + Math.sin(startAngle) * CIRCLE_RADIUS),
+                    0x99FF0000, HOVER_LINE_WIDTH);
+
+            // Draw right radius line (thick and red)
+            drawLine(centerX, centerY,
+                    (int)(centerX + Math.cos(endAngle) * CIRCLE_RADIUS),
+                    (int)(centerY + Math.sin(endAngle) * CIRCLE_RADIUS),
+                    0x99FF0000, HOVER_LINE_WIDTH);
         }
 
         // Draw labels
@@ -60,6 +83,32 @@ public class FastHotKeyGui extends GuiScreen {
         }
 
         super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
+    private void drawCircleArc(int x, int y, int radius, int region, int color, float thickness) {
+        float a = (float)(color >> 24 & 255) / 255.0F;
+        float r = (float)(color >> 16 & 255) / 255.0F;
+        float g = (float)(color >> 8 & 255) / 255.0F;
+        float b = (float)(color & 255) / 255.0F;
+
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(r, g, b, a);
+        GL11.glLineWidth(thickness);
+
+        double sectorSize = 2 * Math.PI / REGION_COUNT;
+        double startAngle = region * sectorSize;
+        double endAngle = (region + 1) * sectorSize;
+
+        GL11.glBegin(GL11.GL_LINE_STRIP);
+        for (double angle = startAngle; angle <= endAngle; angle += sectorSize/20) {
+            GL11.glVertex2d(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+        }
+        GL11.glVertex2d(x + Math.cos(endAngle) * radius, y + Math.sin(endAngle) * radius);
+        GL11.glEnd();
+
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_BLEND);
     }
 
     private void drawFilledCircle(int x, int y, int radius, int color) {
@@ -84,7 +133,7 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    private void drawCircleOutline(int x, int y, int radius, int color) {
+    private void drawCircleOutline(int x, int y, int radius, int color, float thickness) {
         float a = (float)(color >> 24 & 255) / 255.0F;
         float r = (float)(color >> 16 & 255) / 255.0F;
         float g = (float)(color >> 8 & 255) / 255.0F;
@@ -93,6 +142,7 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(r, g, b, a);
+        GL11.glLineWidth(thickness);
 
         GL11.glBegin(GL11.GL_LINE_LOOP);
         for (int i = 0; i <= 360; i++) {
@@ -131,7 +181,7 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    private void drawLine(int x1, int y1, int x2, int y2, int color) {
+    private void drawLine(int x1, int y1, int x2, int y2, int color, float thickness) {
         float a = (float)(color >> 24 & 255) / 255.0F;
         float r = (float)(color >> 16 & 255) / 255.0F;
         float g = (float)(color >> 8 & 255) / 255.0F;
@@ -140,6 +190,7 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(r, g, b, a);
+        GL11.glLineWidth(thickness);
 
         GL11.glBegin(GL11.GL_LINES);
         GL11.glVertex2i(x1, y1);
