@@ -42,6 +42,18 @@ public class ModSettingsGui extends GuiScreen {
         static final int COMMAND_PANEL = 0xFF222222;
         static final int COMMAND_TEXT = 0xFFFFFFFF;
         static final int COMMAND_BORDER = 0xFF111111;
+        // Fast Hotkey UI
+        static final int INPUT_BG = 0xFF222222;
+        static final int INPUT_FG = 0xFFFFFFFF;
+        static final int INPUT_PLACEHOLDER = 0xFFAAAAAA;
+        static final int BUTTON_BG = 0xFF2E2E2E;
+        static final int BUTTON_BG_HOVER = 0xFF3A3A3A;
+        static final int BUTTON_TEXT = 0xFFFFFFFF;
+        // New colored buttons
+        static final int BUTTON_GREEN = 0xFF2E7D32;
+        static final int BUTTON_GREEN_HOVER = 0xFF388E3C;
+        static final int BUTTON_RED = 0xFFC62828;
+        static final int BUTTON_RED_HOVER = 0xFFD32F2F;
     }
 
     private static final class Dimensions {
@@ -56,6 +68,15 @@ public class ModSettingsGui extends GuiScreen {
         static final int COMMAND_PANEL_X = MODULE_LIST_X + MODULE_LIST_WIDTH + 5;
         static final int COMMAND_PANEL_Y = 30;
         static final int COMMAND_PANEL_WIDTH = 150;
+        // Fast Hotkey layout
+        // Increased height to accommodate vertical layout (title + input) x2 and remove button
+        static final int FH_ROW_HEIGHT = 100;
+        static final int FH_INPUT_HEIGHT = 16;
+        static final int FH_INPUT_MIN_WIDTH = 60;
+        static final int FH_REMOVE_WIDTH = 60;
+        static final int FH_REMOVE_HEIGHT = 18;
+        static final int FH_ADD_HEIGHT = 20;
+        static final int FH_GAP_Y = 6;
     }
 
     // =============================================
@@ -74,6 +95,9 @@ public class ModSettingsGui extends GuiScreen {
     private long lastDeleteTime = 0;
     private boolean deleteKeyHeld = false;
 
+    // Fast Hotkey editor rows
+    private final List<FastRow> fastRows = new ArrayList<FastRow>();
+
     // =============================================
     // Core GUI Methods
     // =============================================
@@ -89,6 +113,7 @@ public class ModSettingsGui extends GuiScreen {
         this.commandScroll.reset();
         this.showCommandSettings = false;
         this.selectedCommandModule = null;
+        this.fastRows.clear();
 
         createCategoryButtons();
         createModuleButtons();
@@ -120,6 +145,22 @@ public class ModSettingsGui extends GuiScreen {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         handleInputFieldEditingState();
         handleScrollbarClicks(mouseX, mouseY);
+
+        // If Fast Hotkey panel is open, only consume clicks inside its panel area
+        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
+            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
+            int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
+            int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
+            int panelHeight = Dimensions.GUI_HEIGHT - 60;
+            boolean insidePanel = mouseX >= panelX && mouseX <= panelX + panelWidth &&
+                    mouseY >= panelY && mouseY <= panelY + panelHeight;
+            if (insidePanel) {
+                handleFastHotKeyClicks(mouseX, mouseY, mouseButton);
+                return; // do not propagate to module/category clicks when interacting inside panel
+            }
+        }
+
+        // Allow clicking categories/modules even when a settings panel is open
         handleCategoryButtonClicks();
         handleModuleButtonClicks(mouseX, mouseY);
         handleCommandToggleClicks(mouseX, mouseY);
@@ -140,6 +181,10 @@ public class ModSettingsGui extends GuiScreen {
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
+        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
+            handleFastHotKeyTyping(typedChar, keyCode);
+            return;
+        }
         handleDeleteKey(keyCode);
         handleColorInputTyping(typedChar, keyCode);
     }
@@ -231,6 +276,11 @@ public class ModSettingsGui extends GuiScreen {
         drawCenteredString(fontRendererObj, title,
                 panelX + panelWidth / 2, panelY + 5, Colors.COMMAND_TEXT);
 
+        if (selectedCommandModule.name.equals("Fast Hotkey")) {
+            drawFastHotKeyPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
+            return;
+        }
+
         drawCommandPanelContent(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
     }
 
@@ -241,6 +291,12 @@ public class ModSettingsGui extends GuiScreen {
         for (CommandToggle toggle : commandToggles) {
             if (toggle instanceof ColorInput) {
                 ((ColorInput)toggle).isEditing = false;
+            }
+        }
+        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
+            for (FastRow row : fastRows) {
+                row.labelInput.isEditing = false;
+                row.commandInput.isEditing = false;
             }
         }
     }
@@ -390,7 +446,7 @@ public class ModSettingsGui extends GuiScreen {
         for (ModuleInfo module : ConfigStorage.MODULES) {
             if (module.category.equals(selectedCategory)) {
                 filteredModules.add(module);
-                if (module.enabled && (module.name.equals("Party Commands") || module.name.equals("No Debuff"))) {
+                if (module.enabled && (module.name.equals("Party Commands") || module.name.equals("No Debuff") || module.name.equals("Etherwarp Overlay") || module.name.equals("Fast Hotkey"))) {
                     selectedCommandModule = module;
                 }
             }
@@ -452,6 +508,7 @@ public class ModSettingsGui extends GuiScreen {
         }
 
         commandToggles.clear();
+        fastRows.clear();
 
         switch (selectedCommandModule.name) {
             case "Party Commands":
@@ -462,6 +519,9 @@ public class ModSettingsGui extends GuiScreen {
                 break;
             case "Etherwarp Overlay":
                 initEtherwarpToggles();
+                break;
+            case "Fast Hotkey":
+                initFastHotkeyRows();
                 break;
             default:
                 showCommandSettings = false;
@@ -573,6 +633,18 @@ public class ModSettingsGui extends GuiScreen {
         commandScroll.update(totalHeight, panelHeight - 25);
     }
 
+    private void initFastHotkeyRows() {
+        // Build editor rows from stored entries
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+        for (ConfigStorage.FastHotKeyEntry e : entries) {
+            fastRows.add(new FastRow(e));
+        }
+        // Update scroll metrics based on current rows
+        int panelHeight = Dimensions.GUI_HEIGHT - 60;
+        int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+        commandScroll.update(totalHeight, panelHeight - 25);
+    }
+
     private void drawCommandPanelContent(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
         glEnable(GL_SCISSOR_TEST);
         glScissor(panelX * new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(),
@@ -600,6 +672,8 @@ public class ModSettingsGui extends GuiScreen {
             return "Command Settings";
         } else if (selectedCommandModule.name.equals("No Debuff")) {
             return "NoDebuff Settings";
+        } else if (selectedCommandModule.name.equals("Fast Hotkey")) {
+            return "Fast Hotkey Settings";
         } else {
             return "Etherwarp Settings";
         }
@@ -696,6 +770,18 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private void handleDeleteKeyAction() {
+        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
+            for (FastRow row : fastRows) {
+                if (row.labelInput.isEditing) {
+                    row.labelInput.handleKeyTyped((char)0, Keyboard.KEY_BACK);
+                    return;
+                }
+                if (row.commandInput.isEditing) {
+                    row.commandInput.handleKeyTyped((char)0, Keyboard.KEY_BACK);
+                    return;
+                }
+            }
+        }
         for (CommandToggle toggle : commandToggles) {
             if (toggle instanceof ColorInput && ((ColorInput)toggle).isEditing) {
                 ((ColorInput)toggle).handleKeyTyped((char)0, Keyboard.KEY_BACK);
@@ -745,8 +831,177 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     // =============================================
-    // Inner Component Classes
+    // Fast Hotkey editor drawing and input
     // =============================================
+    private void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
+        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(panelX * scale,
+                (height - (panelY + panelHeight)) * scale,
+                panelWidth * scale,
+                (panelHeight - 25) * scale);
+
+        int contentY = panelY + 25 - commandScroll.getOffset();
+        int x = panelX + 5;
+        int w = panelWidth - 10;
+
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+
+        // Ensure rows match entries count
+        if (fastRows.size() != entries.size()) {
+            fastRows.clear();
+            for (ConfigStorage.FastHotKeyEntry e : entries) fastRows.add(new FastRow(e));
+        }
+
+        for (int i = 0; i < fastRows.size(); i++) {
+            FastRow row = fastRows.get(i);
+            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
+            if (rowTop + Dimensions.FH_ROW_HEIGHT < panelY + 25 || rowTop > panelY + panelHeight) continue;
+
+            // Background line separator
+            drawRect(x, rowTop - 2, x + w, rowTop - 1, 0x33000000);
+
+            // Titles and inputs (vertical layout)
+            String labelTitle = "Command " + (i + 1) + " Label:";
+            String cmdTitle = "Command " + (i + 1) + " Command:";
+            int title1Y = rowTop + 2;
+            int labelInputY = title1Y + 12;
+            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
+            int commandInputY = title2Y + 12;
+
+            fontRendererObj.drawStringWithShadow(labelTitle, x, title1Y, Colors.COMMAND_TEXT);
+            fontRendererObj.drawStringWithShadow(cmdTitle, x, title2Y, Colors.COMMAND_TEXT);
+
+            // Inputs full width
+            int inputX = x;
+            int inputW = Math.max(Dimensions.FH_INPUT_MIN_WIDTH, w);
+            row.labelInput.draw(inputX, labelInputY, inputW, Dimensions.FH_INPUT_HEIGHT, fontRendererObj);
+            row.commandInput.draw(inputX, commandInputY, inputW, Dimensions.FH_INPUT_HEIGHT, fontRendererObj);
+
+            // Remove button (below inputs, left-aligned)
+            int removeX = inputX;
+            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
+            boolean hoverRemove = mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT;
+            drawRect(removeX, removeY, removeX + Dimensions.FH_REMOVE_WIDTH, removeY + Dimensions.FH_REMOVE_HEIGHT,
+                    hoverRemove ? Colors.BUTTON_RED_HOVER : Colors.BUTTON_RED);
+            drawCenteredString(fontRendererObj, "Remove", removeX + Dimensions.FH_REMOVE_WIDTH / 2, removeY + 5, Colors.BUTTON_TEXT);
+        }
+
+        // Add button
+        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int addX = x;
+        int addW = 60;
+        boolean canAdd = entries.size() < 12;
+        boolean hoverAdd = mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT;
+        drawRect(addX, addY, addX + addW, addY + Dimensions.FH_ADD_HEIGHT,
+                (hoverAdd && canAdd) ? Colors.BUTTON_GREEN_HOVER : Colors.BUTTON_GREEN);
+        int addTextColor = canAdd ? Colors.BUTTON_TEXT : 0xFFDDDDDD;
+        drawCenteredString(fontRendererObj, "Add", addX + addW / 2, addY + 6, addTextColor);
+
+        glDisable(GL_SCISSOR_TEST);
+
+        // Scrollbar
+        int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+        commandScroll.update(totalHeight, panelHeight - 25);
+        if (commandScroll.shouldRenderScrollbar()) {
+            commandScroll.updateScrollbarPosition(
+                    panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2,
+                    panelY + 25,
+                    panelHeight - 25
+            );
+            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
+        }
+    }
+
+    private void handleFastHotKeyClicks(int mouseX, int mouseY, int mouseButton) {
+        if (mouseButton != 0) return;
+        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
+        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
+        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
+        int panelHeight = Dimensions.GUI_HEIGHT - 60;
+
+        int x = panelX + 5;
+        int w = panelWidth - 10;
+        int contentY = panelY + 25 - commandScroll.getOffset();
+
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+
+        // Add button
+        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int addX = x;
+        int addW = 60;
+        if (entries.size() < 12 && mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT) {
+            ConfigStorage.FastHotKeyEntry e = new ConfigStorage.FastHotKeyEntry("", "");
+            entries.add(e);
+            fastRows.add(new FastRow(e));
+            ConfigStorage.saveFastHotKeyConfig();
+            int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+            commandScroll.update(totalHeight, panelHeight - 25);
+            return;
+        }
+
+        // Rows
+        for (int i = 0; i < fastRows.size(); i++) {
+            FastRow row = fastRows.get(i);
+            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
+
+            // Titles and inputs to compute remove button position
+            int title1Y = rowTop + 2;
+            int labelInputY = title1Y + 12;
+            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
+            int commandInputY = title2Y + 12;
+
+            // Remove button click (below inputs, left-aligned)
+            int removeX = x;
+            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
+            if (mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT) {
+                entries.remove(row.entry);
+                fastRows.remove(i);
+                ConfigStorage.saveFastHotKeyConfig();
+                int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+                commandScroll.update(totalHeight, panelHeight - 25);
+                return;
+            }
+
+            // Input clicks
+            int inputX = x;
+            int inputW = Math.max(Dimensions.FH_INPUT_MIN_WIDTH, w);
+            int labelY = labelInputY;
+            int commandY = commandInputY;
+
+            if (row.labelInput.isMouseOver(mouseX, mouseY, inputX, labelY, inputW, Dimensions.FH_INPUT_HEIGHT)) {
+                unfocusAllFastInputs();
+                row.labelInput.beginEditing(mouseX, inputX);
+                return;
+            }
+            if (row.commandInput.isMouseOver(mouseX, mouseY, inputX, commandY, inputW, Dimensions.FH_INPUT_HEIGHT)) {
+                unfocusAllFastInputs();
+                row.commandInput.beginEditing(mouseX, inputX);
+                return;
+            }
+        }
+    }
+
+    private void handleFastHotKeyTyping(char typedChar, int keyCode) {
+        for (FastRow row : fastRows) {
+            if (row.labelInput.isEditing) {
+                row.labelInput.handleKeyTyped(typedChar, keyCode);
+                return;
+            }
+            if (row.commandInput.isEditing) {
+                row.commandInput.handleKeyTyped(typedChar, keyCode);
+                return;
+            }
+        }
+    }
+
+    private void unfocusAllFastInputs() {
+        for (FastRow r : fastRows) {
+            r.labelInput.isEditing = false;
+            r.commandInput.isEditing = false;
+        }
+    }
+
     private class CategoryButton extends GuiButton {
         CategoryButton(String category, int x, int y) {
             super(-1, x, y, 100, 20, category);
@@ -796,7 +1051,8 @@ public class ModSettingsGui extends GuiScreen {
 
             if (module.enabled && (module.name.equals("Party Commands") ||
                     module.name.equals("No Debuff") ||
-                    module.name.equals("Etherwarp Overlay"))) {
+                    module.name.equals("Etherwarp Overlay") ||
+                    module.name.equals("Fast Hotkey"))) {
                 String settingsText = "Settings";
                 int textWidth = fontRenderer.getStringWidth(settingsText);
                 int textX = x + width - textWidth - Dimensions.TEXT_PADDING;
@@ -817,7 +1073,8 @@ public class ModSettingsGui extends GuiScreen {
         boolean isDropdownClicked(int mouseX, int mouseY) {
             if (!module.enabled || !(module.name.equals("Party Commands") ||
                     module.name.equals("No Debuff") ||
-                    module.name.equals("Etherwarp Overlay"))) {
+                    module.name.equals("Etherwarp Overlay") ||
+                    module.name.equals("Fast Hotkey"))) {
                 return false;
             }
             String settingsText = "Settings";
@@ -1149,4 +1406,111 @@ public class ModSettingsGui extends GuiScreen {
             }
         }
     }
+
+    // Generic text input for Fast Hotkey rows
+    private class TextInput {
+        String value;
+        boolean isEditing = false;
+        int cursorPosition = 0;
+        long cursorBlinkTimer = 0;
+        boolean cursorVisible = false;
+        int maxLen = 64;
+        final boolean allowSpaces;
+        final ValueChange onChange;
+
+        TextInput(String initial, boolean allowSpaces, ValueChange onChange) {
+            this.value = initial == null ? "" : initial;
+            this.cursorPosition = this.value.length();
+            this.allowSpaces = allowSpaces;
+            this.onChange = onChange;
+        }
+
+        void draw(int x, int y, int w, int h, FontRenderer fr) {
+            drawRect(x, y, x + w, y + h, Colors.INPUT_BG);
+            String display = value;
+            fr.drawStringWithShadow(display, x + 3, y + 4, Colors.INPUT_FG);
+
+            if (isEditing) {
+                cursorBlinkTimer += 10;
+                if (cursorBlinkTimer >= 1000) {
+                    cursorBlinkTimer = 0;
+                    cursorVisible = !cursorVisible;
+                }
+                if (cursorVisible) {
+                    int cx = x + 3 + fr.getStringWidth(display.substring(0, Math.min(cursorPosition, display.length())));
+                    drawRect(cx, y + 3, cx + 1, y + h - 3, Colors.INPUT_FG);
+                }
+            }
+        }
+
+        boolean isMouseOver(int mouseX, int mouseY, int x, int y, int w, int h) {
+            return mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+        }
+
+        void beginEditing(int mouseX, int textStartX) {
+            isEditing = true;
+            cursorBlinkTimer = 0;
+            cursorVisible = true;
+            // place cursor based on click x
+            int rel = Math.max(0, mouseX - (textStartX + 3));
+            int pos = 0;
+            while (pos < value.length()) {
+                int cw = fontRendererObj.getCharWidth(value.charAt(pos));
+                if (rel < cw / 2) break;
+                rel -= cw;
+                pos++;
+            }
+            cursorPosition = pos;
+        }
+
+        void handleKeyTyped(char typedChar, int keyCode) {
+            if (!isEditing) return;
+            if (keyCode == Keyboard.KEY_RETURN) {
+                isEditing = false;
+                return;
+            }
+            if (keyCode == Keyboard.KEY_BACK) {
+                if (cursorPosition > 0 && value.length() > 0) {
+                    value = value.substring(0, cursorPosition - 1) + value.substring(cursorPosition);
+                    cursorPosition--;
+                    onChange.onChange(value);
+                }
+            } else if (keyCode == Keyboard.KEY_LEFT) {
+                cursorPosition = Math.max(0, cursorPosition - 1);
+            } else if (keyCode == Keyboard.KEY_RIGHT) {
+                cursorPosition = Math.min(value.length(), cursorPosition + 1);
+            } else {
+                // Accept printable characters
+                if (typedChar >= 32 && typedChar != 127) {
+                    if (!allowSpaces && typedChar == ' ') return;
+                    if (value.length() >= maxLen) return;
+                    value = value.substring(0, cursorPosition) + typedChar + value.substring(cursorPosition);
+                    cursorPosition++;
+                    onChange.onChange(value);
+                }
+            }
+            cursorBlinkTimer = 0;
+            cursorVisible = true;
+        }
+    }
+
+    private interface ValueChange { void onChange(String newValue); }
+
+    private class FastRow {
+        final ConfigStorage.FastHotKeyEntry entry;
+        final TextInput labelInput;
+        final TextInput commandInput;
+        FastRow(ConfigStorage.FastHotKeyEntry entry) {
+            this.entry = entry;
+            this.labelInput = new TextInput(entry.label, true, (v) -> {
+                entry.label = v;
+                ConfigStorage.saveFastHotKeyConfig();
+            });
+            this.commandInput = new TextInput(entry.command, true, (v) -> {
+                entry.command = v;
+                ConfigStorage.saveFastHotKeyConfig();
+            });
+        }
+    }
 }
+

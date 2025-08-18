@@ -13,6 +13,8 @@ public class ConfigStorage {
     private static final File POSITIONS_CONFIG_FILE = new File("config/ratallofyou_positions.cfg");
     private static final File COMMANDS_CONFIG_FILE = new File("config/ratallofyou_commands.cfg");
     private static final File NODEBUFF_CONFIG_FILE = new File("config/ratallofyou_nodebuff.cfg");
+    // Added dedicated Fast Hotkey storage file
+    private static final File FASTHOTKEY_CONFIG_FILE = new File("config/ratallofyou_fast_hotkey.cfg");
 
     // Module metadata storage
     public static class ModuleInfo {
@@ -98,6 +100,16 @@ public class ConfigStorage {
         }
     }
 
+    // New Fast Hotkey entry model
+    public static class FastHotKeyEntry {
+        public String label;
+        public String command;
+        public FastHotKeyEntry(String label, String command) {
+            this.label = label == null ? "" : label;
+            this.command = command == null ? "" : command;
+        }
+    }
+
     // Command configurations
     private static final List<CommandConfig> COMMAND_CONFIGS = Arrays.asList(
             new CommandConfig("Warp", "Enable !warp command", false),
@@ -131,6 +143,9 @@ public class ConfigStorage {
             new EtherwarpConfig("Show fail location", "Show where etherwarp would fail", true),
             new EtherwarpConfig("Render Method", "Select how to render the overlay", true)
     );
+
+    // Fast Hotkey entries (max 12)
+    private static final List<FastHotKeyEntry> FAST_HOTKEY_ENTRIES = new ArrayList<FastHotKeyEntry>();
 
     public static Properties loadProperties(File file) {
         Properties props = new Properties();
@@ -179,6 +194,8 @@ public class ConfigStorage {
         loadPositionsConfig();
         loadCommandsConfig();
         loadNoDebuffConfig();
+        // Load Fast Hotkey definitions
+        loadFastHotKeyConfig();
     }
 
     public static void loadMainConfig() {
@@ -340,5 +357,39 @@ public class ConfigStorage {
                         EtherwarpOverlay.etherwarpOverlayFailColor.getAlpha());
 
         saveProperties(props, new File("config/ratallofyou_etherwarp.cfg"), "Etherwarp Overlay Configuration");
+    }
+
+    // ============================
+    // Fast Hotkey config
+    // ============================
+    public static List<FastHotKeyEntry> getFastHotKeyEntries() {
+        return FAST_HOTKEY_ENTRIES; // intentionally modifiable
+    }
+
+    public static void loadFastHotKeyConfig() {
+        FAST_HOTKEY_ENTRIES.clear();
+        Properties props = loadProperties(FASTHOTKEY_CONFIG_FILE);
+        int count = 0;
+        try {
+            count = Integer.parseInt(props.getProperty("count", "0"));
+        } catch (NumberFormatException ignored) {}
+        count = Math.max(0, Math.min(12, count));
+        for (int i = 0; i < count; i++) {
+            String label = props.getProperty("label_" + i, "");
+            String command = props.getProperty("command_" + i, "");
+            FAST_HOTKEY_ENTRIES.add(new FastHotKeyEntry(label, command));
+        }
+    }
+
+    public static void saveFastHotKeyConfig() {
+        Properties props = new Properties();
+        int count = Math.min(12, FAST_HOTKEY_ENTRIES.size());
+        props.setProperty("count", String.valueOf(count));
+        for (int i = 0; i < count; i++) {
+            FastHotKeyEntry e = FAST_HOTKEY_ENTRIES.get(i);
+            props.setProperty("label_" + i, e.label == null ? "" : e.label);
+            props.setProperty("command_" + i, e.command == null ? "" : e.command);
+        }
+        saveProperties(props, FASTHOTKEY_CONFIG_FILE, "Fast Hotkey Entries");
     }
 }

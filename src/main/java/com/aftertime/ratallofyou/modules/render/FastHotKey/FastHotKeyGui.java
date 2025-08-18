@@ -1,26 +1,26 @@
 package com.aftertime.ratallofyou.modules.render.FastHotKey;
 
+import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import java.io.IOException;
+import java.util.List;
 
 public class FastHotKeyGui extends GuiScreen {
     private static final int CIRCLE_RADIUS = 120;
     private int centerX;
     private int centerY;
-    private static final String[] COMMANDS = {"/ec", "/bp", "/trades", "/pets", "/wardrobe", "/eq"};
-    private static final String[] LABELS = {"Ender Chest", "Storage", "Trades", "Pets", "Wardrobe", "Equipment"};
-    private static final int REGION_COUNT = 6;
-    private static final float BASE_LINE_WIDTH = 5.0f;
-    private static final float HOVER_LINE_WIDTH = 10.0f;
+    private int regionCount = 0;
 
     @Override
     public void initGui() {
         super.initGui();
         this.centerX = width / 2;
         this.centerY = height / 2;
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+        this.regionCount = Math.min(12, entries.size());
     }
 
     @Override
@@ -35,51 +35,57 @@ public class FastHotKeyGui extends GuiScreen {
         // Draw black circle background (100% opacity)
         drawFilledCircle(centerX, centerY, CIRCLE_RADIUS, 0xFF000000);
 
-        // Draw cyan circumference with thick line
-        drawCircleOutline(centerX, centerY, CIRCLE_RADIUS, 0xFFFFFFFF, BASE_LINE_WIDTH);
+        // If no commands configured
+        if (regionCount == 0) {
+            String msg = "No Fast Hotkey commands configured";
+            String hint = "Open Mod Settings > Fast Hotkey > Settings to add up to 12";
+            drawCenteredString(fontRendererObj, msg, centerX, centerY - 10, 0xFFFFFF);
+            drawCenteredString(fontRendererObj, hint, centerX, centerY + 5, 0xAAAAAA);
+            super.drawScreen(mouseX, mouseY, partialTicks);
+            return;
+        }
 
-        // Draw dividing lines with base thickness
-        for (int i = 0; i < REGION_COUNT; i++) {
-            double angle = Math.PI * 2 * i / REGION_COUNT;
+        // Draw white circumference with thick line
+        drawCircleOutline(centerX, centerY, CIRCLE_RADIUS, 0xFFFFFFFF, 5.0f);
+
+        // Dividing lines
+        for (int i = 0; i < regionCount; i++) {
+            double angle = Math.PI * 2 * i / regionCount;
             drawLine(centerX, centerY,
                     (int)(centerX + Math.cos(angle) * CIRCLE_RADIUS),
                     (int)(centerY + Math.sin(angle) * CIRCLE_RADIUS),
-                    0xFFFFFFFF, BASE_LINE_WIDTH);
+                    0xFFFFFFFF, 5.0f);
         }
 
-        // Handle hover effect
-        // In the drawScreen method (hover effect section):
+        // Hover effect
         int hoveredRegion = getHoveredRegion(mouseX, mouseY);
         if (hoveredRegion != -1) {
-            // Light grey background for hovered region
             drawCircleSector(centerX, centerY, CIRCLE_RADIUS, hoveredRegion, 0x66AAAAAA);
+            drawCircleArc(centerX, centerY, CIRCLE_RADIUS, hoveredRegion, 0x99FF0000, 10.0f);
 
-            // Red arc for hovered region with thicker line
-            drawCircleArc(centerX, centerY, CIRCLE_RADIUS, hoveredRegion, 0x99FF0000, HOVER_LINE_WIDTH);
+            double startAngle = Math.PI * 2 * hoveredRegion / regionCount;
+            double endAngle = Math.PI * 2 * (hoveredRegion + 1) / regionCount;
 
-            // Get the angles for both radius lines of this sector
-            double startAngle = Math.PI * 2 * hoveredRegion / REGION_COUNT;
-            double endAngle = Math.PI * 2 * (hoveredRegion + 1) / REGION_COUNT;
-
-            // Draw left radius line (thick and red)
             drawLine(centerX, centerY,
                     (int)(centerX + Math.cos(startAngle) * CIRCLE_RADIUS),
                     (int)(centerY + Math.sin(startAngle) * CIRCLE_RADIUS),
-                    0x99FF0000, HOVER_LINE_WIDTH);
+                    0x99FF0000, 10.0f);
 
-            // Draw right radius line (thick and red)
             drawLine(centerX, centerY,
                     (int)(centerX + Math.cos(endAngle) * CIRCLE_RADIUS),
                     (int)(centerY + Math.sin(endAngle) * CIRCLE_RADIUS),
-                    0x99FF0000, HOVER_LINE_WIDTH);
+                    0x99FF0000, 10.0f);
         }
 
-        // Draw labels
-        for (int i = 0; i < REGION_COUNT; i++) {
-            double angle = Math.PI * 2 * i / REGION_COUNT + Math.PI/REGION_COUNT;
+        // Labels
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+        for (int i = 0; i < regionCount; i++) {
+            double angle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
             int x = (int)(centerX + Math.cos(angle) * CIRCLE_RADIUS * 0.7);
             int y = (int)(centerY + Math.sin(angle) * CIRCLE_RADIUS * 0.7);
-            drawCenteredString(fontRendererObj, LABELS[i], x, y, 0xFFFFFF);
+            String label = entries.get(i).label;
+            if (label == null || label.trim().isEmpty()) label = "Command " + (i + 1);
+            drawCenteredString(fontRendererObj, label, x, y, 0xFFFFFF);
         }
 
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -96,12 +102,12 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glColor4f(r, g, b, a);
         GL11.glLineWidth(thickness);
 
-        double sectorSize = 2 * Math.PI / REGION_COUNT;
+        double sectorSize = 2 * Math.PI / regionCount;
         double startAngle = region * sectorSize;
         double endAngle = (region + 1) * sectorSize;
 
         GL11.glBegin(GL11.GL_LINE_STRIP);
-        for (double angle = startAngle; angle <= endAngle; angle += sectorSize/20) {
+        for (double angle = startAngle; angle <= endAngle; angle += sectorSize / 20) {
             GL11.glVertex2d(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
         }
         GL11.glVertex2d(x + Math.cos(endAngle) * radius, y + Math.sin(endAngle) * radius);
@@ -165,13 +171,13 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(r, g, b, a);
 
-        double sectorSize = 2 * Math.PI / REGION_COUNT;
+        double sectorSize = 2 * Math.PI / regionCount;
         double startAngle = region * sectorSize;
         double endAngle = (region + 1) * sectorSize;
 
         GL11.glBegin(GL11.GL_TRIANGLE_FAN);
         GL11.glVertex2f(x, y);
-        for (double angle = startAngle; angle <= endAngle; angle += sectorSize/20) {
+        for (double angle = startAngle; angle <= endAngle; angle += sectorSize / 20) {
             GL11.glVertex2d(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
         }
         GL11.glVertex2d(x + Math.cos(endAngle) * radius, y + Math.sin(endAngle) * radius);
@@ -204,14 +210,14 @@ public class FastHotKeyGui extends GuiScreen {
     private int getHoveredRegion(int mouseX, int mouseY) {
         double dx = mouseX - centerX;
         double dy = mouseY - centerY;
-        double distance = Math.sqrt(dx*dx + dy*dy);
+        double distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > CIRCLE_RADIUS) return -1;
+        if (distance > CIRCLE_RADIUS || regionCount == 0) return -1;
 
         double angle = Math.atan2(dy, dx);
         if (angle < 0) angle += 2 * Math.PI;
 
-        return (int)(angle / (2 * Math.PI / REGION_COUNT));
+        return (int)(angle / (2 * Math.PI / regionCount));
     }
 
     @Override
@@ -228,7 +234,13 @@ public class FastHotKeyGui extends GuiScreen {
         if (mouseButton == 0) {
             int region = getHoveredRegion(mouseX, mouseY);
             if (region != -1) {
-                Minecraft.getMinecraft().thePlayer.sendChatMessage(COMMANDS[region]);
+                List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+                if (region < entries.size()) {
+                    String cmd = entries.get(region).command;
+                    if (cmd != null && !cmd.trim().isEmpty()) {
+                        Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                    }
+                }
                 mc.displayGuiScreen(null);
             }
         }
