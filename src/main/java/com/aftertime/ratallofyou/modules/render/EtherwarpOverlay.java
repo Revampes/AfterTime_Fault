@@ -51,27 +51,11 @@ public class EtherwarpOverlay {
         if (etherwarpOverlayOnlySneak && !mc.thePlayer.isSneaking()) return;
         if (!isHoldingAOTV()) return;
 
-        // Save current state
-        GlStateManager.pushAttrib();
-        GlStateManager.pushMatrix();
-
-        try {
-            // Setup rendering state
-            GlStateManager.disableTexture2D();
-            GlStateManager.enableBlend();
-            GlStateManager.disableAlpha();
-            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glLineWidth(2.0f);
-
-            if (etherwarpSyncWithServer) {
-                doSyncedEther();
-            } else {
-                doSmoothEther();
-            }
-        } finally {
-            // Restore rendering state
-            GlStateManager.popMatrix();
-            GlStateManager.popAttrib();
+        // Delegate to the specific renderer which manages GL state internally.
+        if (etherwarpSyncWithServer) {
+            doSyncedEther();
+        } else {
+            doSmoothEther();
         }
     }
 
@@ -325,6 +309,10 @@ public class EtherwarpOverlay {
                     break;
             }
         } finally {
+            // Ensure depth writes and texture are restored for the rest of the frame
+            GlStateManager.depthMask(true);
+            GlStateManager.enableTexture2D();
+
             // Restore state
             GlStateManager.popAttrib();
             GlStateManager.popMatrix();
@@ -347,3 +335,4 @@ public class EtherwarpOverlay {
         return MODULE_ENABLED.isEnabled();
     }
 }
+

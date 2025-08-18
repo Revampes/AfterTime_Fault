@@ -287,8 +287,8 @@ public class RenderUtils {
                                             double x1, double y1, double z1,
                                             float r, float g, float b, float a,
                                             boolean phase, float lineWidth, boolean filled) {
-        boolean cullFace = GL11.glGetBoolean(GL11.GL_CULL_FACE);
-        boolean depthTest = GL11.glGetBoolean(GL11.GL_DEPTH_TEST);
+        boolean cullFace = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
 
         try {
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);

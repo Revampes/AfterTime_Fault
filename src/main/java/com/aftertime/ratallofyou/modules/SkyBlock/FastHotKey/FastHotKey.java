@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.modules.render.FastHotKey;
+package com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey;
 
 import com.aftertime.ratallofyou.settings.BooleanSetting;
 import net.minecraft.client.Minecraft;

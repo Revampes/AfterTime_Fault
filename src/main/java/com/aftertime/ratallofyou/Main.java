@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou;
 
-import com.aftertime.ratallofyou.modules.render.FastHotKey.FastHotKey;
-import com.aftertime.ratallofyou.modules.render.FastHotKey.FastHotKeyGui;
+import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
+import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.kuudra.*;
