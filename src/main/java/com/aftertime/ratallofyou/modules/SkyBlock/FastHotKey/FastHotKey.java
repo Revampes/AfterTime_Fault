@@ -10,28 +10,25 @@ import org.lwjgl.input.Keyboard;
 
 public class FastHotKey {
     private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Fast Hotkey");
-    private final KeyBinding hotkey;
-    private boolean wasKeyDown = false;
+    // Expose a static keybinding so it can be remapped in Controls and referenced elsewhere
+    public static final KeyBinding HOTKEY = new KeyBinding("Open Fast Hotkey", Keyboard.KEY_G, "Rat All Of You");
 
     public FastHotKey() {
-        hotkey = new KeyBinding("Fast Hotkey", Keyboard.KEY_G, "Fast Hotkey");
-        ClientRegistry.registerKeyBinding(hotkey);
+        ClientRegistry.registerKeyBinding(HOTKEY);
     }
 
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
         if (!isModuleEnabled()) return;
 
-        boolean isKeyDown = Keyboard.isKeyDown(hotkey.getKeyCode());
-
-        if (isKeyDown && !wasKeyDown) { // Only trigger on key press, not hold
+        // Trigger only on key press events, respects user remapping
+        if (HOTKEY.isPressed()) {
             if (Minecraft.getMinecraft().currentScreen instanceof FastHotKeyGui) {
                 Minecraft.getMinecraft().displayGuiScreen(null);
             } else {
                 Minecraft.getMinecraft().displayGuiScreen(new FastHotKeyGui());
             }
         }
-        wasKeyDown = isKeyDown;
     }
 
     private static boolean isModuleEnabled() {

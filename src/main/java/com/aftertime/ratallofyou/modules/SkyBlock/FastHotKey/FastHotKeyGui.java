@@ -222,7 +222,8 @@ public class FastHotKeyGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (keyCode == Keyboard.KEY_G || keyCode == Keyboard.KEY_ESCAPE) {
+        // Close on Escape or the current Fast Hotkey binding
+        if (keyCode == Keyboard.KEY_ESCAPE || keyCode == FastHotKey.HOTKEY.getKeyCode()) {
             mc.displayGuiScreen(null);
             return;
         }
