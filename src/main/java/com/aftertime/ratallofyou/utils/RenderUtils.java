@@ -289,6 +289,10 @@ public class RenderUtils {
                                             boolean phase, float lineWidth, boolean filled) {
         boolean cullFace = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        boolean prevBlend = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean prevTex = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean prevLighting = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean prevDepthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
 
         try {
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
@@ -387,11 +391,13 @@ public class RenderUtils {
 
             tessellator.draw();
         } finally {
-            if (cullFace) GL11.glEnable(GL11.GL_CULL_FACE);
-            else GL11.glDisable(GL11.GL_CULL_FACE);
-
-            if (depthTest) GL11.glEnable(GL11.GL_DEPTH_TEST);
-            else GL11.glDisable(GL11.GL_DEPTH_TEST);
+            // Explicitly restore modified GL state to avoid leaking into other renderers
+            if (cullFace) GL11.glEnable(GL11.GL_CULL_FACE); else GL11.glDisable(GL11.GL_CULL_FACE);
+            if (depthTest) GL11.glEnable(GL11.GL_DEPTH_TEST); else GL11.glDisable(GL11.GL_DEPTH_TEST);
+            if (prevBlend) GlStateManager.enableBlend(); else GlStateManager.disableBlend();
+            if (prevTex) GlStateManager.enableTexture2D(); else GlStateManager.disableTexture2D();
+            if (prevLighting) GlStateManager.enableLighting(); else GlStateManager.disableLighting();
+            GlStateManager.depthMask(prevDepthMask);
 
             GlStateManager.popMatrix();
             GL11.glPopAttrib();
@@ -446,3 +452,4 @@ public class RenderUtils {
         tessellator.draw();
     }
 }
+

@@ -185,27 +185,20 @@ public class ModSettingsGui extends GuiScreen {
             handleFastHotKeyTyping(typedChar, keyCode);
             return;
         }
-        handleDeleteKey(keyCode);
+        // Remove global backspace handling; delegate to focused inputs only
         handleColorInputTyping(typedChar, keyCode);
     }
 
     @Override
     public void updateScreen() {
         super.updateScreen();
-        handleContinuousDelete();
+        // Remove continuous global delete behavior that caused runaway deletions
     }
 
-    @Override
-    public void handleMouseInput() throws IOException {
-        super.handleMouseInput();
-        handleMouseWheelScroll();
-    }
-
-    @Override
-    public boolean doesGuiPauseGame() {
-        return false;
-    }
-
+    // Remove unused global delete key helpers (kept for reference, no longer called)
+    private void handleDeleteKey(int keyCode) { /* no-op */ }
+    private void handleContinuousDelete() { /* no-op */ }
+    private void handleDeleteKeyAction() { /* no-op */ }
     // =============================================
     // Drawing Methods
     // =============================================
@@ -285,12 +278,183 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     // =============================================
+    // Fast Hotkey editor drawing and input
+    // =============================================
+    private void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
+        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(panelX * scale,
+                (height - (panelY + panelHeight)) * scale,
+                panelWidth * scale,
+                (panelHeight - 25) * scale);
+
+        int contentY = panelY + 25 - commandScroll.getOffset();
+        int x = panelX + 5;
+        int w = panelWidth - 10;
+
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+
+        // Ensure rows match entries count
+        if (fastRows.size() != entries.size()) {
+            fastRows.clear();
+            for (ConfigStorage.FastHotKeyEntry e : entries) fastRows.add(new FastRow(e));
+        }
+
+        for (int i = 0; i < fastRows.size(); i++) {
+            FastRow row = fastRows.get(i);
+            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
+            if (rowTop + Dimensions.FH_ROW_HEIGHT < panelY + 25 || rowTop > panelY + panelHeight) continue;
+
+            // Background line separator
+            drawRect(x, rowTop - 2, x + w, rowTop - 1, 0x33000000);
+
+            // Titles and inputs (vertical layout)
+            String labelTitle = "Command " + (i + 1) + " Label:";
+            String cmdTitle = "Command " + (i + 1) + " Command:";
+            int title1Y = rowTop + 2;
+            int labelInputY = title1Y + 12;
+            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
+            int commandInputY = title2Y + 12;
+
+            fontRendererObj.drawStringWithShadow(labelTitle, x, title1Y, Colors.COMMAND_TEXT);
+            fontRendererObj.drawStringWithShadow(cmdTitle, x, title2Y, Colors.COMMAND_TEXT);
+
+            // Inputs full width
+            int inputX = x;
+            int inputW = Math.max(Dimensions.FH_INPUT_MIN_WIDTH, w);
+            row.labelInput.draw(inputX, labelInputY, inputW, Dimensions.FH_INPUT_HEIGHT, fontRendererObj);
+            row.commandInput.draw(inputX, commandInputY, inputW, Dimensions.FH_INPUT_HEIGHT, fontRendererObj);
+
+            // Remove button (below inputs, left-aligned)
+            int removeX = inputX;
+            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
+            boolean hoverRemove = mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT;
+            drawRect(removeX, removeY, removeX + Dimensions.FH_REMOVE_WIDTH, removeY + Dimensions.FH_REMOVE_HEIGHT,
+                    hoverRemove ? Colors.BUTTON_RED_HOVER : Colors.BUTTON_RED);
+            drawCenteredString(fontRendererObj, "Remove", removeX + Dimensions.FH_REMOVE_WIDTH / 2, removeY + 5, Colors.BUTTON_TEXT);
+        }
+
+        // Add button
+        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int addX = x;
+        int addW = 60;
+        boolean canAdd = entries.size() < 12;
+        boolean hoverAdd = mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT;
+        drawRect(addX, addY, addX + addW, addY + Dimensions.FH_ADD_HEIGHT,
+                (hoverAdd && canAdd) ? Colors.BUTTON_GREEN_HOVER : Colors.BUTTON_GREEN);
+        int addTextColor = canAdd ? Colors.BUTTON_TEXT : 0xFFDDDDDD;
+        drawCenteredString(fontRendererObj, "Add", addX + addW / 2, addY + 6, addTextColor);
+
+        glDisable(GL_SCISSOR_TEST);
+
+        // Scrollbar
+        int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+        commandScroll.update(totalHeight, panelHeight - 25);
+        if (commandScroll.shouldRenderScrollbar()) {
+            commandScroll.updateScrollbarPosition(
+                    panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2,
+                    panelY + 25,
+                    panelHeight - 25
+            );
+            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
+        }
+    }
+
+    private void handleFastHotKeyClicks(int mouseX, int mouseY, int mouseButton) {
+        if (mouseButton != 0) return;
+        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
+        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
+        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
+        int panelHeight = Dimensions.GUI_HEIGHT - 60;
+
+        int x = panelX + 5;
+        int w = panelWidth - 10;
+        int contentY = panelY + 25 - commandScroll.getOffset();
+
+        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+
+        // Add button
+        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int addX = x;
+        int addW = 60;
+        if (entries.size() < 12 && mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT) {
+            ConfigStorage.FastHotKeyEntry e = new ConfigStorage.FastHotKeyEntry("", "");
+            entries.add(e);
+            fastRows.add(new FastRow(e));
+            ConfigStorage.saveFastHotKeyConfig();
+            int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+            commandScroll.update(totalHeight, panelHeight - 25);
+            return;
+        }
+
+        // Rows
+        for (int i = 0; i < fastRows.size(); i++) {
+            FastRow row = fastRows.get(i);
+            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
+
+            // Titles and inputs to compute remove button position
+            int title1Y = rowTop + 2;
+            int labelInputY = title1Y + 12;
+            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
+            int commandInputY = title2Y + 12;
+
+            // Remove button click (below inputs, left-aligned)
+            int removeX = x;
+            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
+            if (mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT) {
+                entries.remove(row.entry);
+                fastRows.remove(i);
+                ConfigStorage.saveFastHotKeyConfig();
+                int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+                commandScroll.update(totalHeight, panelHeight - 25);
+                return;
+            }
+
+            // Input clicks
+            int inputX = x;
+            int inputW = Math.max(Dimensions.FH_INPUT_MIN_WIDTH, w);
+            int labelY = labelInputY;
+            int commandY = commandInputY;
+
+            if (row.labelInput.isMouseOver(mouseX, mouseY, inputX, labelY, inputW, Dimensions.FH_INPUT_HEIGHT)) {
+                unfocusAllFastInputs();
+                row.labelInput.beginEditing(mouseX, inputX);
+                return;
+            }
+            if (row.commandInput.isMouseOver(mouseX, mouseY, inputX, commandY, inputW, Dimensions.FH_INPUT_HEIGHT)) {
+                unfocusAllFastInputs();
+                row.commandInput.beginEditing(mouseX, inputX);
+                return;
+            }
+        }
+    }
+
+    private void handleFastHotKeyTyping(char typedChar, int keyCode) {
+        for (FastRow row : fastRows) {
+            if (row.labelInput.isEditing) {
+                row.labelInput.handleKeyTyped(typedChar, keyCode);
+                return;
+            }
+            if (row.commandInput.isEditing) {
+                row.commandInput.handleKeyTyped(typedChar, keyCode);
+                return;
+            }
+        }
+    }
+
+    private void unfocusAllFastInputs() {
+        for (FastRow r : fastRows) {
+            r.labelInput.isEditing = false;
+            r.commandInput.isEditing = false;
+        }
+    }
+    // =============================================
     // Input Handling Methods
     // =============================================
     private void handleInputFieldEditingState() {
         for (CommandToggle toggle : commandToggles) {
             if (toggle instanceof ColorInput) {
-                ((ColorInput)toggle).isEditing = false;
+                ((ColorInput)toggle).unfocus();
             }
         }
         if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
@@ -303,9 +467,15 @@ public class ModSettingsGui extends GuiScreen {
 
     private void handleScrollbarClicks(int mouseX, int mouseY) {
         if (showCommandSettings && commandScroll.checkScrollbarClick(mouseX, mouseY)) {
+            commandScroll.beginScroll();
+            // position handle immediately to click point
+            commandScroll.handleDrag(mouseX, mouseY, null);
             return;
         }
         if (mainScroll.checkScrollbarClick(mouseX, mouseY)) {
+            mainScroll.beginScroll();
+            // update modules position on drag
+            mainScroll.handleDrag(mouseX, mouseY, this::createModuleButtons);
             return;
         }
     }
@@ -346,48 +516,15 @@ public class ModSettingsGui extends GuiScreen {
         commandScroll.handleDrag(mouseX, mouseY, null);
     }
 
-    private void handleDeleteKey(int keyCode) {
-        if (keyCode == Keyboard.KEY_BACK) {
-            if (!deleteKeyHeld) {
-                deleteKeyHeld = true;
-                lastDeleteTime = System.currentTimeMillis();
-                handleDeleteKeyAction();
-            }
-        } else {
-            deleteKeyHeld = false;
-        }
-    }
-
     private void handleColorInputTyping(char typedChar, int keyCode) {
         if (showCommandSettings && selectedCommandModule != null &&
                 selectedCommandModule.name.equals("Etherwarp Overlay")) {
             for (CommandToggle toggle : commandToggles) {
-                if (toggle instanceof ColorInput && ((ColorInput)toggle).isEditing) {
+                if (toggle instanceof ColorInput && ((ColorInput)toggle).isEditing()) {
                     ((ColorInput)toggle).handleKeyTyped(typedChar, keyCode);
                     return;
                 }
             }
-        }
-    }
-
-    private void handleContinuousDelete() {
-        if (deleteKeyHeld) {
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastDeleteTime > 500) {
-                if (currentTime - lastDeleteTime > 50) {
-                    handleDeleteKeyAction();
-                    lastDeleteTime = currentTime;
-                }
-            }
-        }
-    }
-
-    private void handleMouseWheelScroll() {
-        int scroll = Mouse.getEventDWheel();
-        if (showCommandSettings) {
-            commandScroll.handleWheelScroll(scroll);
-        } else {
-            mainScroll.handleWheelScroll(scroll, this::createModuleButtons);
         }
     }
 
@@ -460,8 +597,16 @@ public class ModSettingsGui extends GuiScreen {
 
         if (module.name.equals("No Debuff")) {
             NoDebuff.setEnabled(module.enabled);
-            if (!module.enabled) {
-                NoDebuff.loadConfig();
+            if (module.enabled) {
+                boolean fire = false, blind = false, liquid = false;
+                for (ConfigStorage.NoDebuffConfig cfg : ConfigStorage.getNoDebuffConfigs()) {
+                    if ("Remove Fire Overlay".equals(cfg.name)) fire = cfg.enabled;
+                    else if ("Ignore Blindness".equals(cfg.name)) blind = cfg.enabled;
+                    else if ("Clear Liquid Vision".equals(cfg.name)) liquid = cfg.enabled;
+                }
+                NoDebuff.setNoFire(fire);
+                NoDebuff.setNoBlindness(blind);
+                NoDebuff.setClearLiquidVision(liquid);
             } else {
                 showCommandSettings = false;
                 selectedCommandModule = null;
@@ -696,6 +841,23 @@ public class ModSettingsGui extends GuiScreen {
         return false;
     }
 
+    private void handleDropdownInteraction(MethodDropdown dropdown, int mouseX, int mouseY, int yPos) {
+        if (dropdown.isOpen) {
+            for (int i = 0; i < dropdown.methods.length; i++) {
+                int optionY = yPos + dropdown.height + (i * dropdown.height);
+                if (mouseY >= optionY && mouseY <= optionY + dropdown.height) {
+                    dropdown.selectMethod(i);
+                    dropdown.isOpen = false;
+                    return;
+                }
+            }
+            // Click outside options closes the dropdown
+            dropdown.isOpen = false;
+        } else {
+            dropdown.isOpen = true;
+        }
+    }
+
     private boolean handleColorInputClicks(int mouseX, int mouseY) {
         int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
         int contentY = panelY + 25 - commandScroll.getOffset();
@@ -706,7 +868,7 @@ public class ModSettingsGui extends GuiScreen {
                 int inputY = contentY + toggle.height + 8;
                 if (mouseX >= colorInput.x + 40 && mouseX <= colorInput.x + colorInput.width &&
                         mouseY >= inputY - 2 && mouseY <= inputY + 15) {
-                    handleColorInputClick(colorInput, mouseX);
+                    colorInput.beginEditing(mouseX);
                     return true;
                 }
             }
@@ -723,7 +885,13 @@ public class ModSettingsGui extends GuiScreen {
             if (!(toggle instanceof ColorInput) && !(toggle instanceof MethodDropdown)) {
                 if (toggle.isMouseOver(mouseX, mouseY, contentY)) {
                     toggle.toggle();
-                    updateEtherwarpConfig();
+                    if (selectedCommandModule != null) {
+                        if ("Etherwarp Overlay".equals(selectedCommandModule.name)) {
+                            updateEtherwarpConfig();
+                        } else if ("No Debuff".equals(selectedCommandModule.name)) {
+                            updateNoDebuffConfig();
+                        }
+                    }
                     return;
                 }
             }
@@ -769,237 +937,28 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private void handleDeleteKeyAction() {
-        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
-            for (FastRow row : fastRows) {
-                if (row.labelInput.isEditing) {
-                    row.labelInput.handleKeyTyped((char)0, Keyboard.KEY_BACK);
-                    return;
-                }
-                if (row.commandInput.isEditing) {
-                    row.commandInput.handleKeyTyped((char)0, Keyboard.KEY_BACK);
-                    return;
+    private void updateNoDebuffConfig() {
+        if (selectedCommandModule == null || !"No Debuff".equals(selectedCommandModule.name)) return;
+
+        for (ConfigStorage.NoDebuffConfig config : ConfigStorage.getNoDebuffConfigs()) {
+            for (CommandToggle toggle : commandToggles) {
+                if (toggle.name.equals(config.name)) {
+                    config.enabled = toggle.isEnabled();
+                    break;
                 }
             }
         }
-        for (CommandToggle toggle : commandToggles) {
-            if (toggle instanceof ColorInput && ((ColorInput)toggle).isEditing) {
-                ((ColorInput)toggle).handleKeyTyped((char)0, Keyboard.KEY_BACK);
-                break;
-            }
+        ConfigStorage.saveNoDebuffConfig();
+
+        boolean fire = false, blind = false, liquid = false;
+        for (ConfigStorage.NoDebuffConfig cfg : ConfigStorage.getNoDebuffConfigs()) {
+            if ("Remove Fire Overlay".equals(cfg.name)) fire = cfg.enabled;
+            else if ("Ignore Blindness".equals(cfg.name)) blind = cfg.enabled;
+            else if ("Clear Liquid Vision".equals(cfg.name)) liquid = cfg.enabled;
         }
-    }
-
-    private void handleDropdownInteraction(MethodDropdown dropdown, int mouseX, int mouseY, int contentY) {
-        if (dropdown.isOpen) {
-            for (int i = 0; i < dropdown.methods.length; i++) {
-                int optionY = contentY + dropdown.height + (i * dropdown.height);
-                if (mouseY >= optionY && mouseY <= optionY + dropdown.height) {
-                    dropdown.selectMethod(i);
-                    dropdown.isOpen = false;
-                    return;
-                }
-            }
-            dropdown.isOpen = false;
-        } else {
-            dropdown.isOpen = true;
-        }
-    }
-
-    private void handleColorInputClick(ColorInput colorInput, int mouseX) {
-        colorInput.isEditing = true;
-        colorInput.cursorBlinkTimer = 0;
-        colorInput.cursorVisible = true;
-
-        int textX = colorInput.x + 45;
-        String text = colorInput.currentValue;
-        int relativeX = mouseX - textX;
-        int pos = 0;
-        int textWidth = 0;
-
-        while (pos < text.length()) {
-            char c = text.charAt(pos);
-            int charWidth = fontRendererObj.getCharWidth(c);
-            if (relativeX < (textWidth + charWidth/2)) {
-                break;
-            }
-            textWidth += charWidth;
-            pos++;
-        }
-
-        colorInput.cursorPosition = pos;
-    }
-
-    // =============================================
-    // Fast Hotkey editor drawing and input
-    // =============================================
-    private void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
-        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(panelX * scale,
-                (height - (panelY + panelHeight)) * scale,
-                panelWidth * scale,
-                (panelHeight - 25) * scale);
-
-        int contentY = panelY + 25 - commandScroll.getOffset();
-        int x = panelX + 5;
-        int w = panelWidth - 10;
-
-        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
-
-        // Ensure rows match entries count
-        if (fastRows.size() != entries.size()) {
-            fastRows.clear();
-            for (ConfigStorage.FastHotKeyEntry e : entries) fastRows.add(new FastRow(e));
-        }
-
-        for (int i = 0; i < fastRows.size(); i++) {
-            FastRow row = fastRows.get(i);
-            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
-            if (rowTop + Dimensions.FH_ROW_HEIGHT < panelY + 25 || rowTop > panelY + panelHeight) continue;
-
-            // Background line separator
-            drawRect(x, rowTop - 2, x + w, rowTop - 1, 0x33000000);
-
-            // Titles and inputs (vertical layout)
-            String labelTitle = "Command " + (i + 1) + " Label:";
-            String cmdTitle = "Command " + (i + 1) + " Command:";
-            int title1Y = rowTop + 2;
-            int labelInputY = title1Y + 12;
-            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
-            int commandInputY = title2Y + 12;
-
-            fontRendererObj.drawStringWithShadow(labelTitle, x, title1Y, Colors.COMMAND_TEXT);
-            fontRendererObj.drawStringWithShadow(cmdTitle, x, title2Y, Colors.COMMAND_TEXT);
-
-            // Inputs full width
-            int inputX = x;
-            int inputW = Math.max(Dimensions.FH_INPUT_MIN_WIDTH, w);
-            row.labelInput.draw(inputX, labelInputY, inputW, Dimensions.FH_INPUT_HEIGHT, fontRendererObj);
-            row.commandInput.draw(inputX, commandInputY, inputW, Dimensions.FH_INPUT_HEIGHT, fontRendererObj);
-
-            // Remove button (below inputs, left-aligned)
-            int removeX = inputX;
-            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
-            boolean hoverRemove = mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT;
-            drawRect(removeX, removeY, removeX + Dimensions.FH_REMOVE_WIDTH, removeY + Dimensions.FH_REMOVE_HEIGHT,
-                    hoverRemove ? Colors.BUTTON_RED_HOVER : Colors.BUTTON_RED);
-            drawCenteredString(fontRendererObj, "Remove", removeX + Dimensions.FH_REMOVE_WIDTH / 2, removeY + 5, Colors.BUTTON_TEXT);
-        }
-
-        // Add button
-        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
-        int addX = x;
-        int addW = 60;
-        boolean canAdd = entries.size() < 12;
-        boolean hoverAdd = mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT;
-        drawRect(addX, addY, addX + addW, addY + Dimensions.FH_ADD_HEIGHT,
-                (hoverAdd && canAdd) ? Colors.BUTTON_GREEN_HOVER : Colors.BUTTON_GREEN);
-        int addTextColor = canAdd ? Colors.BUTTON_TEXT : 0xFFDDDDDD;
-        drawCenteredString(fontRendererObj, "Add", addX + addW / 2, addY + 6, addTextColor);
-
-        glDisable(GL_SCISSOR_TEST);
-
-        // Scrollbar
-        int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-        commandScroll.update(totalHeight, panelHeight - 25);
-        if (commandScroll.shouldRenderScrollbar()) {
-            commandScroll.updateScrollbarPosition(
-                    panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2,
-                    panelY + 25,
-                    panelHeight - 25
-            );
-            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
-        }
-    }
-
-    private void handleFastHotKeyClicks(int mouseX, int mouseY, int mouseButton) {
-        if (mouseButton != 0) return;
-        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
-
-        int x = panelX + 5;
-        int w = panelWidth - 10;
-        int contentY = panelY + 25 - commandScroll.getOffset();
-
-        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
-
-        // Add button
-        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
-        int addX = x;
-        int addW = 60;
-        if (entries.size() < 12 && mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT) {
-            ConfigStorage.FastHotKeyEntry e = new ConfigStorage.FastHotKeyEntry("", "");
-            entries.add(e);
-            fastRows.add(new FastRow(e));
-            ConfigStorage.saveFastHotKeyConfig();
-            int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-            commandScroll.update(totalHeight, panelHeight - 25);
-            return;
-        }
-
-        // Rows
-        for (int i = 0; i < fastRows.size(); i++) {
-            FastRow row = fastRows.get(i);
-            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
-
-            // Titles and inputs to compute remove button position
-            int title1Y = rowTop + 2;
-            int labelInputY = title1Y + 12;
-            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
-            int commandInputY = title2Y + 12;
-
-            // Remove button click (below inputs, left-aligned)
-            int removeX = x;
-            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
-            if (mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT) {
-                entries.remove(row.entry);
-                fastRows.remove(i);
-                ConfigStorage.saveFastHotKeyConfig();
-                int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-                commandScroll.update(totalHeight, panelHeight - 25);
-                return;
-            }
-
-            // Input clicks
-            int inputX = x;
-            int inputW = Math.max(Dimensions.FH_INPUT_MIN_WIDTH, w);
-            int labelY = labelInputY;
-            int commandY = commandInputY;
-
-            if (row.labelInput.isMouseOver(mouseX, mouseY, inputX, labelY, inputW, Dimensions.FH_INPUT_HEIGHT)) {
-                unfocusAllFastInputs();
-                row.labelInput.beginEditing(mouseX, inputX);
-                return;
-            }
-            if (row.commandInput.isMouseOver(mouseX, mouseY, inputX, commandY, inputW, Dimensions.FH_INPUT_HEIGHT)) {
-                unfocusAllFastInputs();
-                row.commandInput.beginEditing(mouseX, inputX);
-                return;
-            }
-        }
-    }
-
-    private void handleFastHotKeyTyping(char typedChar, int keyCode) {
-        for (FastRow row : fastRows) {
-            if (row.labelInput.isEditing) {
-                row.labelInput.handleKeyTyped(typedChar, keyCode);
-                return;
-            }
-            if (row.commandInput.isEditing) {
-                row.commandInput.handleKeyTyped(typedChar, keyCode);
-                return;
-            }
-        }
-    }
-
-    private void unfocusAllFastInputs() {
-        for (FastRow r : fastRows) {
-            r.labelInput.isEditing = false;
-            r.commandInput.isEditing = false;
-        }
+        NoDebuff.setNoFire(fire);
+        NoDebuff.setNoBlindness(blind);
+        NoDebuff.setClearLiquidVision(liquid);
     }
 
     private class CategoryButton extends GuiButton {
@@ -1185,11 +1144,15 @@ public class ModSettingsGui extends GuiScreen {
                     mouseY >= scrollBarY && mouseY <= scrollBarY + scrollBarHeight;
         }
 
+        void beginScroll() {
+            isScrolling = true;
+        }
+
         void handleDrag(int mouseX, int mouseY, Runnable callback) {
             if (isScrolling && maxOffset > 0) {
-                float scrollableArea = scrollBarY + scrollBarHeight - Dimensions.MIN_SCROLLBAR_HEIGHT;
-                float scrollPos = Math.min(Math.max(mouseY - scrollBarY - (scrollBarHeight / 2), 0), scrollableArea);
-                offset = (int)((scrollPos / scrollableArea) * maxOffset);
+                int handleTravel = Math.max(1, visibleHeight - scrollBarHeight);
+                int relY = Math.max(0, Math.min(mouseY - scrollBarY - (scrollBarHeight / 2), handleTravel));
+                offset = (int)((relY / (float)handleTravel) * maxOffset);
                 if (callback != null) callback.run();
             }
         }
@@ -1298,21 +1261,22 @@ public class ModSettingsGui extends GuiScreen {
 
     private class ColorInput extends CommandToggle {
         private Color color;
-        private String currentValue = "";
-        private boolean isEditing = false;
         private final String title;
-        private long lastKeyPressTime = 0;
-        private int cursorPosition = 0;
-        private long cursorBlinkTimer = 0;
-        private boolean cursorVisible = false;
+        private final TextInput textInput;
 
         ColorInput(String title, Color color, int x, int y, int width, int height) {
             super(title, "", false, x, y, width, height);
             this.color = color;
             this.title = title;
-            this.currentValue = color.getRed() + "," + color.getGreen() + "," + color.getBlue() + "," + color.getAlpha();
-            this.cursorPosition = this.currentValue.length();
+            String initial = color.getRed() + "," + color.getGreen() + "," + color.getBlue() + "," + color.getAlpha();
+            this.textInput = new TextInput(initial, true, (v) -> {
+                updateColor(v);
+            });
         }
+
+        boolean isEditing() { return textInput.isEditing; }
+        void unfocus() { textInput.isEditing = false; }
+        void beginEditing(int mouseX) { textInput.beginEditing(mouseX, x + 45); }
 
         @Override
         boolean isMouseOver(int mouseX, int mouseY, int yPos) {
@@ -1329,59 +1293,16 @@ public class ModSettingsGui extends GuiScreen {
 
             int inputY = yPos + height + 8;
             fontRenderer.drawStringWithShadow("RGBA:", x, inputY, Colors.TEXT);
-            drawRect(x + 40, inputY - 2, x + width, inputY + 15, 0xFF222222);
-
-            String displayedText = currentValue;
-            fontRenderer.drawStringWithShadow(displayedText, x + 45, inputY, isEditing ? Colors.TEXT : 0xFFAAAAAA);
-
-            if (isEditing) {
-                cursorBlinkTimer += 10;
-                if (cursorBlinkTimer >= 1000) {
-                    cursorBlinkTimer = 0;
-                    cursorVisible = !cursorVisible;
-                }
-
-                if (cursorVisible) {
-                    int cursorX = x + 45 + fontRenderer.getStringWidth(displayedText.substring(0, cursorPosition));
-                    drawRect(cursorX, inputY, cursorX + 1, inputY + 10, Colors.TEXT);
-                }
-            }
+            // Input field
+            textInput.draw(x + 40, inputY - 2, width - 40, 16, fontRenderer);
         }
 
         void handleKeyTyped(char typedChar, int keyCode) {
-            if (!isEditing) return;
-
-            long currentTime = System.currentTimeMillis();
-            boolean repeatedPress = (currentTime - lastKeyPressTime < 200);
-            lastKeyPressTime = currentTime;
-
-            if (keyCode == Keyboard.KEY_RETURN) {
-                isEditing = false;
-                updateColor();
-            } else if (keyCode == Keyboard.KEY_BACK) {
-                if (cursorPosition > 0) {
-                    currentValue = currentValue.substring(0, cursorPosition - 1) +
-                            currentValue.substring(cursorPosition);
-                    cursorPosition--;
-                    updateColor();
-                }
-            } else if (keyCode == Keyboard.KEY_LEFT) {
-                cursorPosition = Math.max(0, cursorPosition - 1);
-            } else if (keyCode == Keyboard.KEY_RIGHT) {
-                cursorPosition = Math.min(currentValue.length(), cursorPosition + 1);
-            } else if (Character.isDigit(typedChar) || typedChar == ',') {
-                currentValue = currentValue.substring(0, cursorPosition) + typedChar +
-                        currentValue.substring(cursorPosition);
-                cursorPosition++;
-                updateColor();
-            }
-
-            cursorBlinkTimer = 0;
-            cursorVisible = true;
+            textInput.handleKeyTyped(typedChar, keyCode);
         }
 
-        private void updateColor() {
-            String[] parts = currentValue.split(",");
+        private void updateColor(String value) {
+            String[] parts = value.split(",");
             if (parts.length == 4) {
                 try {
                     int r = Math.min(255, Math.max(0, Integer.parseInt(parts[0])));
@@ -1398,10 +1319,8 @@ public class ModSettingsGui extends GuiScreen {
                     }
 
                     ConfigStorage.saveEtherwarpConfig();
-                } catch (NumberFormatException e) {
-                    currentValue = color.getRed() + "," + color.getGreen() + "," +
-                            color.getBlue() + "," + color.getAlpha();
-                    cursorPosition = currentValue.length();
+                } catch (NumberFormatException ignored) {
+                    // ignore invalid until corrected by user
                 }
             }
         }
@@ -1512,5 +1431,38 @@ public class ModSettingsGui extends GuiScreen {
             });
         }
     }
-}
 
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        int dWheel = Mouse.getEventDWheel();
+        if (dWheel == 0) return;
+
+        // Translate raw mouse to scaled GUI coords
+        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+
+        // If hovering the command panel content area, scroll command panel
+        if (showCommandSettings && selectedCommandModule != null) {
+            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
+            int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; // content starts below title
+            int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
+            int panelHeight = (Dimensions.GUI_HEIGHT - 60) - 25;
+            if (mouseX >= panelX && mouseX <= panelX + panelWidth &&
+                    mouseY >= panelY && mouseY <= panelY + panelHeight) {
+                commandScroll.handleWheelScroll(dWheel);
+                return;
+            }
+        }
+
+        // Otherwise, if hovering the modules list area, scroll main list
+        int listX = guiLeft + 115;
+        int listY = guiTop + 25;
+        int listWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
+        int listHeight = Dimensions.GUI_HEIGHT - 50;
+        if (mouseX >= listX && mouseX <= listX + listWidth &&
+                mouseY >= listY && mouseY <= listY + listHeight) {
+            mainScroll.handleWheelScroll(dWheel, this::createModuleButtons);
+        }
+    }
+}

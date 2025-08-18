@@ -27,7 +27,7 @@ public class EtherwarpOverlay {
     public static boolean etherwarpOverlayOnlySneak = true;
     public static boolean etherwarpShowFailLocation = true;
     public static int etherwarpHighlightType = 0;
-    public static Color etherwarpOverlayColor = new Color(0, 255, 0, 150);
+    public static Color etherwarpOverlayColor = new Color(0, 255, 255, 150);
     public static Color etherwarpOverlayFailColor = new Color(255, 0, 0, 150);
 
     // Valid blocks for etherwarp feet (air by default)

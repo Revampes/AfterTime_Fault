@@ -39,7 +39,7 @@ public class SecretClicks {
 
     private final Map<String, HighlightedBlock> highlights = new HashMap<String, HighlightedBlock>();
     private boolean registered = false;
-    private Color highlightColor = new Color(0, 255, 255, 128); // Default cyan color with alpha
+    private Color highlightColor = new Color(0, 255, 0, 128); // Default green color with alpha
 
     private static class HighlightedBlock {
         final BlockPos blockPos;
@@ -203,47 +203,10 @@ public class SecretClicks {
     private void renderBlockHighlight(BlockPos pos, float r, float g, float b, float a) {
         if (pos == null) return;
 
-        // Save current GL state
-        boolean cullFace = GL11.glGetBoolean(GL11.GL_CULL_FACE);
-        boolean depthTest = GL11.glGetBoolean(GL11.GL_DEPTH_TEST);
-        boolean texture2D = GL11.glGetBoolean(GL11.GL_TEXTURE_2D);
-        boolean lighting = GL11.glGetBoolean(GL11.GL_LIGHTING);
-        boolean blend = GL11.glGetBoolean(GL11.GL_BLEND);
-
-        try {
-            // Setup our rendering state
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glDisable(GL11.GL_CULL_FACE); // Disable culling to render all faces
-            GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
-            GL11.glPolygonOffset(1.0f, -1.0f);
-
-            // Draw solid box first (with lower alpha)
-            RenderUtils.renderBlockHitbox(pos, r, g, b, a * 0.5f, true, 2f, true);
-
-            // Then draw outline
-            RenderUtils.renderBlockHitbox(pos, r, g, b, a, true, 2f, false);
-        } finally {
-            // Restore original GL state
-            if (cullFace) GL11.glEnable(GL11.GL_CULL_FACE);
-            else GL11.glDisable(GL11.GL_CULL_FACE);
-
-            if (depthTest) GL11.glEnable(GL11.GL_DEPTH_TEST);
-            else GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-            if (texture2D) GL11.glEnable(GL11.GL_TEXTURE_2D);
-            else GL11.glDisable(GL11.GL_TEXTURE_2D);
-
-            if (lighting) GL11.glEnable(GL11.GL_LIGHTING);
-            else GL11.glDisable(GL11.GL_LIGHTING);
-
-            if (blend) GL11.glEnable(GL11.GL_BLEND);
-            else GL11.glDisable(GL11.GL_BLEND);
-
-            GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
-        }
+        // Delegate all GL state management to RenderUtils to avoid breaking other renders.
+        // Draw solid box first (lower alpha), then outline.
+        RenderUtils.renderBlockHitbox(pos, r, g, b, a * 0.5f, true, 2f, true);
+        RenderUtils.renderBlockHitbox(pos, r, g, b, a, true, 2f, false);
     }
 
     private boolean isModuleEnabled() {

@@ -2,15 +2,10 @@ package com.aftertime.ratallofyou.modules.render;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Properties;
 
 public class NoDebuff {
     private static boolean enabled = false;
@@ -18,26 +13,34 @@ public class NoDebuff {
     private static boolean noFire = false;
     private static boolean clearLiquidVision = false;
 
-    // Setters that save config
+    // Event handler instance & registration state
+    private static NoDebuff handlerInstance;
+    private static boolean registered = false;
+
+    private static void ensureRegistered() {
+        if (!registered) {
+            if (handlerInstance == null) handlerInstance = new NoDebuff();
+            MinecraftForge.EVENT_BUS.register(handlerInstance);
+            registered = true;
+        }
+    }
+
+    private static void ensureUnregistered() {
+        if (registered && handlerInstance != null) {
+            MinecraftForge.EVENT_BUS.unregister(handlerInstance);
+            registered = false;
+        }
+    }
+
+    // Setters (no direct file I/O; persistence handled by ConfigStorage)
     public static void setEnabled(boolean state) {
         enabled = state;
-        saveConfig();
+        if (enabled) ensureRegistered(); else ensureUnregistered();
     }
 
-    public static void setNoBlindness(boolean state) {
-        noBlindness = state;
-        saveConfig();
-    }
-
-    public static void setNoFire(boolean state) {
-        noFire = state;
-        saveConfig();
-    }
-
-    public static void setClearLiquidVision(boolean state) {
-        clearLiquidVision = state;
-        saveConfig();
-    }
+    public static void setNoBlindness(boolean state) { noBlindness = state; }
+    public static void setNoFire(boolean state) { noFire = state; }
+    public static void setClearLiquidVision(boolean state) { clearLiquidVision = state; }
 
     // Getters
     public static boolean isEnabled() { return enabled; }
@@ -45,45 +48,6 @@ public class NoDebuff {
     public static boolean isNoFire() { return noFire; }
     public static boolean isClearLiquidVision() { return clearLiquidVision; }
 
-    public static void loadConfig() {
-        Properties props = new Properties();
-        File configFile = new File("config/ratallofyou_nodebuff.cfg");
-
-        try {
-            if (configFile.exists()) {
-                props.load(new FileInputStream(configFile));
-                enabled = Boolean.parseBoolean(props.getProperty("enabled", "false"));
-                noBlindness = Boolean.parseBoolean(props.getProperty("noBlindness", "false"));
-                noFire = Boolean.parseBoolean(props.getProperty("noFire", "false"));
-                clearLiquidVision = Boolean.parseBoolean(props.getProperty("clearLiquidVision", "false"));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void saveConfig() {
-        Properties props = new Properties();
-        File configFile = new File("config/ratallofyou_nodebuff.cfg");
-
-        try {
-            // Load existing properties if file exists
-            if (configFile.exists()) {
-                props.load(new FileInputStream(configFile));
-            }
-
-            // Set all properties
-            props.setProperty("enabled", String.valueOf(enabled));
-            props.setProperty("noBlindness", String.valueOf(noBlindness));
-            props.setProperty("noFire", String.valueOf(noFire));
-            props.setProperty("clearLiquidVision", String.valueOf(clearLiquidVision));
-
-            // Save to file
-            props.store(new FileOutputStream(configFile), "NoDebuff Settings");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     @SubscribeEvent
     public void onRenderFog(EntityViewRenderEvent.FogDensity event) {

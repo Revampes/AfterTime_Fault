@@ -11,10 +11,20 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 
 public class F7GhostBlocks {
     private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Dungeon Sweat Mode (Use at your own risk)");
 //    private static final String CONFIG_PATH = "src/main/java/com/aftertime/ratallofyou/Config/floorConfig.json";
+    private static final String CONFIG_RESOURCE = "/com/aftertime/ratallofyou/Config/floorConfig.json";
 
     // Block position maps
     private static final Map<Integer, BlockPos[]> airs = new HashMap<Integer, BlockPos[]>();
@@ -22,130 +32,8 @@ public class F7GhostBlocks {
     private static final Map<Integer, BlockPos[]> glass = new HashMap<Integer, BlockPos[]>();
 
     static {
-        // Initialize block positions
-        airs.put(1, new BlockPos[]{
-                new BlockPos(88, 220, 61),
-                new BlockPos(88, 219, 61),
-                new BlockPos(88, 218, 61),
-                new BlockPos(88, 217, 61),
-                new BlockPos(88, 216, 61),
-                new BlockPos(88, 215, 61),
-                new BlockPos(88, 214, 61),
-                new BlockPos(88, 213, 61),
-                new BlockPos(88, 212, 61),
-                new BlockPos(88, 211, 61),
-                new BlockPos(88, 210, 61),
-                new BlockPos(69, 220, 37),
-                new BlockPos(68, 220, 37)
-        });
-        airs.put(2, new BlockPos[]{
-        new BlockPos(88, 167, 41),
-                new BlockPos(89, 167, 41),
-                new BlockPos(91, 167, 41),
-                new BlockPos(92, 167, 41),
-                new BlockPos(93, 167, 41),
-                new BlockPos(94, 167, 41),
-                new BlockPos(95, 167, 41),
-                new BlockPos(88, 166, 41),
-                new BlockPos(89, 166, 41),
-                new BlockPos(90, 166, 41),
-                new BlockPos(91, 166, 41),
-                new BlockPos(92, 166, 41),
-                new BlockPos(93, 166, 41),
-                new BlockPos(94, 166, 41),
-                new BlockPos(95, 166, 41),
-                new BlockPos(88, 165, 41),
-                new BlockPos(89, 165, 41),
-                new BlockPos(90, 165, 41),
-                new BlockPos(91, 165, 41),
-                new BlockPos(92, 165, 41),
-                new BlockPos(93, 165, 41),
-                new BlockPos(94, 165, 41),
-                new BlockPos(95, 165, 41),
-                new BlockPos(88, 167, 40),
-                new BlockPos(89, 167, 40),
-                new BlockPos(90, 167, 40),
-                new BlockPos(91, 167, 40),
-                new BlockPos(92, 167, 40),
-                new BlockPos(93, 167, 40),
-                new BlockPos(94, 167, 40),
-                new BlockPos(95, 167, 40),
-                new BlockPos(88, 166, 40),
-                new BlockPos(89, 166, 40),
-                new BlockPos(90, 166, 40),
-                new BlockPos(91, 166, 40),
-                new BlockPos(92, 166, 40),
-                new BlockPos(93, 166, 40),
-                new BlockPos(94, 166, 40),
-                new BlockPos(95, 166, 40),
-                new BlockPos(88, 165, 40),
-                new BlockPos(89, 165, 40),
-                new BlockPos(90, 165, 40),
-                new BlockPos(91, 165, 40),
-                new BlockPos(92, 165, 40),
-                new BlockPos(93, 165, 40),
-                new BlockPos(94, 165, 40),
-                new BlockPos(95, 165, 40),
-                new BlockPos(101, 168, 47),
-                new BlockPos(101, 168, 46),
-                new BlockPos(101, 167, 47),
-                new BlockPos(101, 166, 47),
-                new BlockPos(101, 167, 46),
-                new BlockPos(101, 166, 46)
-        });
-        airs.put(3, new BlockPos[]{
-                new BlockPos(51, 114, 52),
-                new BlockPos(51, 114, 53),
-                new BlockPos(51, 114, 54),
-                new BlockPos(51, 114, 55),
-                new BlockPos(51, 114, 56),
-                new BlockPos(51, 114, 57),
-                new BlockPos(51, 114, 58),
-                new BlockPos(51, 115, 52),
-                new BlockPos(51, 115, 53),
-                new BlockPos(51, 115, 54),
-                new BlockPos(51, 115, 55),
-                new BlockPos(51, 115, 56),
-                new BlockPos(51, 115, 57),
-                new BlockPos(51, 115, 58),
-                new BlockPos(56, 113, 111),
-                new BlockPos(56, 112, 110),
-                new BlockPos(56, 112, 110),
-                new BlockPos(56, 111, 110)
-        });
-        airs.put(4, new BlockPos[]{
-                new BlockPos(54, 64, 72),
-                new BlockPos(54, 64, 73),
-                new BlockPos(54, 63, 73),
-                new BlockPos(54, 64, 74),
-                new BlockPos(54, 63, 74)
-        });
-
-        enderChests.put(1, new BlockPos[]{
-                new BlockPos(69, 221, 37),
-                new BlockPos(69, 221, 36)
-        });
-        enderChests.put(2, new BlockPos[]{
-                new BlockPos(101, 169, 46),
-                new BlockPos(100, 169, 46),
-                new BlockPos(99, 169, 46)
-        });
-        enderChests.put(3, new BlockPos[]{
-                new BlockPos(56, 114, 111)
-        });
-
-
-        glass.put(1, new BlockPos[]{
-                new BlockPos(68, 221, 38),
-                new BlockPos(69, 221, 38)
-        });
-        glass.put(2, new BlockPos[]{
-                new BlockPos(102, 169, 47)
-        });
-        glass.put(3, new BlockPos[]{
-                new BlockPos(55, 114, 110),
-                new BlockPos(55, 114, 111)
-        });
+        // Load positions from JSON resource on the classpath
+        loadConfigFromJson();
     }
 
     public static void init() {
@@ -174,11 +62,17 @@ public class F7GhostBlocks {
         }
 
         if (DungeonUtils.isInDungeon()) {
-            for (int phaseNum = 1; phaseNum <= 3; phaseNum++) {
+            // Process in ascending phase order, based on loaded config
+            Set<Integer> ecPhases = new TreeSet<Integer>(enderChests.keySet());
+            Set<Integer> glassPhases = new TreeSet<Integer>(glass.keySet());
+            for (Integer phaseNum : ecPhases) {
                 processEnderChests(phaseNum);
+            }
+            for (Integer phaseNum : glassPhases) {
                 processGlass(phaseNum);
             }
-            for (int phaseNum = 1; phaseNum <= 4; phaseNum++) {
+            Set<Integer> airPhases = new TreeSet<Integer>(airs.keySet());
+            for (Integer phaseNum : airPhases) {
                 processBlocks(phaseNum);
             }
         }
@@ -239,8 +133,15 @@ public class F7GhostBlocks {
                     Minecraft mc = Minecraft.getMinecraft();
                     if (mc.theWorld == null) return;
 
-                    for (int phaseNum = 1; phaseNum <= 3; phaseNum++) {
+                    // Restore original blocks for all air phases
+                    for (Integer phaseNum : new TreeSet<Integer>(airs.keySet())) {
                         restoreOriginalBlocks(phaseNum);
+                    }
+                    // Remove placed blocks for all phases present in either enderChests or glass
+                    TreeSet<Integer> placedPhases = new TreeSet<Integer>();
+                    placedPhases.addAll(enderChests.keySet());
+                    placedPhases.addAll(glass.keySet());
+                    for (Integer phaseNum : placedPhases) {
                         removePlacedBlocks(phaseNum);
                     }
                 } catch (Exception e) {
@@ -285,6 +186,52 @@ public class F7GhostBlocks {
                 }
             }
         } catch (Exception e) {
+            // Silent error handling
+        }
+    }
+
+    // --- JSON loading helpers ---
+    private static void loadConfigFromJson() {
+        try {
+            InputStream stream = F7GhostBlocks.class.getResourceAsStream(CONFIG_RESOURCE);
+            if (stream == null) {
+                return; // Resource not found, leave maps empty
+            }
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+            JsonObject root = new JsonParser().parse(reader).getAsJsonObject();
+            reader.close();
+
+            parseSection(root, "airs", airs);
+            parseSection(root, "enderChests", enderChests);
+            parseSection(root, "glass", glass);
+        } catch (Exception ignored) {
+            // Silent error handling
+        }
+    }
+
+    private static void parseSection(JsonObject root, String key, Map<Integer, BlockPos[]> target) {
+        try {
+            if (root == null || !root.has(key)) return;
+            JsonObject section = root.getAsJsonObject(key);
+            if (section == null) return;
+            for (Map.Entry<String, JsonElement> entry : section.entrySet()) {
+                try {
+                    int phase = Integer.parseInt(entry.getKey());
+                    JsonArray arr = entry.getValue().getAsJsonArray();
+                    BlockPos[] positions = new BlockPos[arr.size()];
+                    for (int i = 0; i < arr.size(); i++) {
+                        JsonObject obj = arr.get(i).getAsJsonObject();
+                        int x = obj.get("x").getAsInt();
+                        int y = obj.get("y").getAsInt();
+                        int z = obj.get("z").getAsInt();
+                        positions[i] = new BlockPos(x, y, z);
+                    }
+                    target.put(phase, positions);
+                } catch (Exception ignored) {
+                    // skip malformed entry
+                }
+            }
+        } catch (Exception ignored) {
             // Silent error handling
         }
     }

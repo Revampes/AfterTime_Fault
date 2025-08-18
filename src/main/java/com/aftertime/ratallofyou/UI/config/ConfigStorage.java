@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.config;
 
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.modules.render.EtherwarpOverlay;
+import com.aftertime.ratallofyou.modules.render.NoDebuff;
 
 import java.awt.*;
 import java.io.*;
@@ -196,6 +197,25 @@ public class ConfigStorage {
         loadNoDebuffConfig();
         // Load Fast Hotkey definitions
         loadFastHotKeyConfig();
+        // Load Etherwarp settings (toggles, colors, render method)
+        loadEtherwarpConfig();
+
+        // Apply NoDebuff settings to runtime on startup
+        for (ModuleInfo module : MODULES) {
+            if ("No Debuff".equals(module.name)) {
+                NoDebuff.setEnabled(module.enabled);
+                boolean fire = false, blind = false, liquid = false;
+                for (NoDebuffConfig cfg : NODEBUFF_CONFIGS) {
+                    if ("Remove Fire Overlay".equals(cfg.name)) fire = cfg.enabled;
+                    else if ("Ignore Blindness".equals(cfg.name)) blind = cfg.enabled;
+                    else if ("Clear Liquid Vision".equals(cfg.name)) liquid = cfg.enabled;
+                }
+                NoDebuff.setNoFire(fire);
+                NoDebuff.setNoBlindness(blind);
+                NoDebuff.setClearLiquidVision(liquid);
+                break;
+            }
+        }
     }
 
     public static void loadMainConfig() {
@@ -334,6 +354,25 @@ public class ConfigStorage {
                     Integer.parseInt(colorParts[3])
             );
         }
+
+        // Apply toggles to runtime booleans
+        if (!ETHERWARP_CONFIGS.isEmpty()) {
+            // Indexes: 0 Sync, 1 OnlySneak, 2 ShowFail, 3 Render Method (bool placeholder)
+            EtherwarpOverlay.etherwarpSyncWithServer = ETHERWARP_CONFIGS.get(0).enabled;
+            EtherwarpOverlay.etherwarpOverlayOnlySneak = ETHERWARP_CONFIGS.get(1).enabled;
+            EtherwarpOverlay.etherwarpShowFailLocation = ETHERWARP_CONFIGS.get(2).enabled;
+        }
+
+        // Load render method (0=Edges,1=Filled,2=Both) and map to highlightType (0,2,4)
+        int defaultMethod = Math.max(0, Math.min(2, EtherwarpOverlay.etherwarpHighlightType / 2));
+        int methodIdx;
+        try {
+            methodIdx = Integer.parseInt(props.getProperty("render_method", String.valueOf(defaultMethod)));
+        } catch (NumberFormatException e) {
+            methodIdx = defaultMethod;
+        }
+        methodIdx = Math.max(0, Math.min(2, methodIdx));
+        EtherwarpOverlay.etherwarpHighlightType = methodIdx * 2;
     }
 
     public static void saveEtherwarpConfig() {
@@ -355,6 +394,9 @@ public class ConfigStorage {
                         EtherwarpOverlay.etherwarpOverlayFailColor.getGreen() + "," +
                         EtherwarpOverlay.etherwarpOverlayFailColor.getBlue() + "," +
                         EtherwarpOverlay.etherwarpOverlayFailColor.getAlpha());
+
+        // Save render method index (not the GL type)
+        props.setProperty("render_method", String.valueOf(Math.max(0, Math.min(2, EtherwarpOverlay.etherwarpHighlightType / 2))));
 
         saveProperties(props, new File("config/ratallofyou_etherwarp.cfg"), "Etherwarp Overlay Configuration");
     }

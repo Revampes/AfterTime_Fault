@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class FastHotKeyGui extends GuiScreen {
-    private static final int CIRCLE_RADIUS = 120;
+    private static final int CIRCLE_RADIUS = 150;
     private int centerX;
     private int centerY;
     private int regionCount = 0;
