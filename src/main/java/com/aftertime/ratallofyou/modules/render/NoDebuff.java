@@ -48,7 +48,6 @@ public class NoDebuff {
     public static boolean isNoFire() { return noFire; }
     public static boolean isClearLiquidVision() { return clearLiquidVision; }
 
-
     @SubscribeEvent
     public void onRenderFog(EntityViewRenderEvent.FogDensity event) {
         if (!enabled) return;

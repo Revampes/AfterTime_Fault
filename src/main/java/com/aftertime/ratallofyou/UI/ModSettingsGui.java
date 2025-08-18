@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.UI;
 import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import com.aftertime.ratallofyou.modules.render.EtherwarpOverlay;
 import com.aftertime.ratallofyou.modules.render.NoDebuff;
+import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
@@ -146,6 +147,21 @@ public class ModSettingsGui extends GuiScreen {
         handleInputFieldEditingState();
         handleScrollbarClicks(mouseX, mouseY);
 
+        // Terminal panel input focus handling
+        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Dungeon Terminals")) {
+            int contentY = guiTop + Dimensions.COMMAND_PANEL_Y + 25 - commandScroll.getOffset();
+            for (CommandToggle toggle : commandToggles) {
+                if (toggle instanceof LabeledTextInput) {
+                    LabeledTextInput li = (LabeledTextInput) toggle;
+                    if (li.isMouseOver(mouseX, mouseY, contentY)) { li.beginEditing(mouseX); return; }
+                } else if (toggle instanceof TerminalColorInput) {
+                    TerminalColorInput tci = (TerminalColorInput) toggle;
+                    if (tci.isMouseOver(mouseX, mouseY, contentY)) { tci.textInput.beginEditing(mouseX, tci.x + 40); return; }
+                }
+                contentY += (toggle instanceof TerminalColorInput) ? 50 : 22;
+            }
+        }
+
         // If Fast Hotkey panel is open, only consume clicks inside its panel area
         if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Fast Hotkey")) {
             int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
@@ -185,14 +201,19 @@ public class ModSettingsGui extends GuiScreen {
             handleFastHotKeyTyping(typedChar, keyCode);
             return;
         }
-        // Remove global backspace handling; delegate to focused inputs only
         handleColorInputTyping(typedChar, keyCode);
-    }
-
-    @Override
-    public void updateScreen() {
-        super.updateScreen();
-        // Remove continuous global delete behavior that caused runaway deletions
+        // Terminal panel input typing
+        if (showCommandSettings && selectedCommandModule != null && selectedCommandModule.name.equals("Dungeon Terminals")) {
+            int contentY = guiTop + Dimensions.COMMAND_PANEL_Y + 25 - commandScroll.getOffset();
+            for (CommandToggle toggle : commandToggles) {
+                if (toggle instanceof LabeledTextInput) {
+                    ((LabeledTextInput) toggle).handleKeyTyped(typedChar, keyCode);
+                } else if (toggle instanceof TerminalColorInput) {
+                    ((TerminalColorInput) toggle).textInput.handleKeyTyped(typedChar, keyCode);
+                }
+                contentY += (toggle instanceof TerminalColorInput) ? 50 : 22;
+            }
+        }
     }
 
     // Remove unused global delete key helpers (kept for reference, no longer called)
@@ -498,831 +519,204 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
+    // Add missing handler for module button clicks: open settings or toggle module
+    private void handleModuleButtonClick(ModuleButton moduleBtn, int mouseX, int mouseY) {
+        ModuleInfo module = moduleBtn.getModule();
+        if (module.enabled && moduleBtn.isDropdownClicked(mouseX, mouseY)) {
+            selectedCommandModule = module;
+            showCommandSettings = true;
+            initializeCommandToggles();
+        } else {
+            handleModuleToggle(module);
+        }
+    }
+
     private void handleCommandToggleClicks(int mouseX, int mouseY) {
         if (!showCommandSettings) return;
 
         // Handle dropdown clicks
         if (handleDropdownClicks(mouseX, mouseY)) return;
 
-        // Handle color input clicks
+        // Handle color/text input clicks for Etherwarp and Terminals
         if (handleColorInputClicks(mouseX, mouseY)) return;
 
         // Handle regular toggle clicks
         handleRegularToggleClicks(mouseX, mouseY);
     }
 
-    private void handleScrollbarDrag(int mouseX, int mouseY) {
-        mainScroll.handleDrag(mouseX, mouseY, this::createModuleButtons);
-        commandScroll.handleDrag(mouseX, mouseY, null);
-    }
-
-    private void handleColorInputTyping(char typedChar, int keyCode) {
-        if (showCommandSettings && selectedCommandModule != null &&
-                selectedCommandModule.name.equals("Etherwarp Overlay")) {
-            for (CommandToggle toggle : commandToggles) {
-                if (toggle instanceof ColorInput && ((ColorInput)toggle).isEditing()) {
-                    ((ColorInput)toggle).handleKeyTyped(typedChar, keyCode);
-                    return;
-                }
-            }
-        }
-    }
-
-    // =============================================
-    // Module Management Methods
-    // =============================================
-    private void createCategoryButtons() {
-        int categoryY = guiTop + 30;
-        for (String category : getUniqueCategories()) {
-            CategoryButton btn = new CategoryButton(category, guiLeft + 10, categoryY);
-            categoryButtons.add(btn);
-            this.buttonList.add(btn);
-            categoryY += 25;
-        }
-    }
-
-    private List<String> getUniqueCategories() {
-        List<String> categories = new ArrayList<String>();
-        for (ModuleInfo module : ConfigStorage.MODULES) {
-            if (!categories.contains(module.category)) {
-                categories.add(module.category);
-            }
-        }
-        return categories;
-    }
-
-    private void createModuleButtons() {
-        moduleButtons.clear();
-        int moduleX = guiLeft + Dimensions.MODULE_LIST_X;
-        int moduleY = guiTop + 30;
-        int moduleWidth = Dimensions.MODULE_LIST_WIDTH;
-        int moduleHeight = 50;
-        int modulesAreaHeight = Dimensions.GUI_HEIGHT - 60;
-
-        List<ModuleInfo> filteredModules = getFilteredModules();
-        int totalModulesHeight = filteredModules.size() * (moduleHeight + 10);
-        mainScroll.update(totalModulesHeight, modulesAreaHeight);
-
-        int currentY = moduleY - mainScroll.getOffset();
-        for (ModuleInfo module : filteredModules) {
-            if (currentY + moduleHeight > guiTop + 30 && currentY < guiTop + Dimensions.GUI_HEIGHT - 30) {
-                moduleButtons.add(new ModuleButton(module, moduleX, currentY, moduleWidth, moduleHeight));
-            }
-            currentY += moduleHeight + 10;
-        }
-
-        mainScroll.updateScrollbarPosition(
-                guiLeft + Dimensions.MODULE_LIST_X + Dimensions.MODULE_LIST_WIDTH + 5,
-                guiTop + 30,
-                modulesAreaHeight
-        );
-    }
-
-    private List<ModuleInfo> getFilteredModules() {
-        List<ModuleInfo> filteredModules = new ArrayList<ModuleInfo>();
-        for (ModuleInfo module : ConfigStorage.MODULES) {
-            if (module.category.equals(selectedCategory)) {
-                filteredModules.add(module);
-                if (module.enabled && (module.name.equals("Party Commands") || module.name.equals("No Debuff") || module.name.equals("Etherwarp Overlay") || module.name.equals("Fast Hotkey"))) {
-                    selectedCommandModule = module;
-                }
-            }
-        }
-        return filteredModules;
-    }
-
-    private void handleModuleToggle(ModuleInfo module) {
-        module.enabled = !module.enabled;
-        ConfigStorage.saveMainConfig();
-
-        if (module.name.equals("No Debuff")) {
-            NoDebuff.setEnabled(module.enabled);
-            if (module.enabled) {
-                boolean fire = false, blind = false, liquid = false;
-                for (ConfigStorage.NoDebuffConfig cfg : ConfigStorage.getNoDebuffConfigs()) {
-                    if ("Remove Fire Overlay".equals(cfg.name)) fire = cfg.enabled;
-                    else if ("Ignore Blindness".equals(cfg.name)) blind = cfg.enabled;
-                    else if ("Clear Liquid Vision".equals(cfg.name)) liquid = cfg.enabled;
-                }
-                NoDebuff.setNoFire(fire);
-                NoDebuff.setNoBlindness(blind);
-                NoDebuff.setClearLiquidVision(liquid);
-            } else {
-                showCommandSettings = false;
-                selectedCommandModule = null;
-            }
-        } else if (module.name.equals("Party Commands")) {
-            if (!module.enabled) {
-                showCommandSettings = false;
-                selectedCommandModule = null;
-            }
-        } else {
-            showCommandSettings = false;
-        }
-
-        createModuleButtons();
-    }
-
-    private void handleModuleButtonClick(ModuleButton moduleBtn, int mouseX, int mouseY) {
-        if (moduleBtn.isMoveGuiButton()) {
-            UIHighlighter.enterMoveMode(this);
-        } else if (moduleBtn.isDropdownClicked(mouseX, mouseY)) {
-            handleDropdownClick(moduleBtn);
-        } else {
-            handleModuleToggle(moduleBtn.getModule());
-        }
-    }
-
-    private void handleDropdownClick(ModuleButton moduleBtn) {
-        if (selectedCommandModule == moduleBtn.getModule() && showCommandSettings) {
-            showCommandSettings = false;
-        } else {
-            selectedCommandModule = moduleBtn.getModule();
-            initializeCommandToggles();
-            showCommandSettings = true;
-        }
-    }
-
-    // =============================================
-    // Command Panel Methods
-    // =============================================
-    private void initializeCommandToggles() {
-        if (selectedCommandModule == null) {
-            showCommandSettings = false;
-            return;
-        }
-
-        commandToggles.clear();
-        fastRows.clear();
-
-        switch (selectedCommandModule.name) {
-            case "Party Commands":
-                initCommandToggles();
-                break;
-            case "No Debuff":
-                initNoDebuffToggles();
-                break;
-            case "Etherwarp Overlay":
-                initEtherwarpToggles();
-                break;
-            case "Fast Hotkey":
-                initFastHotkeyRows();
-                break;
-            default:
-                showCommandSettings = false;
-        }
-    }
-
-    private void initCommandToggles() {
-        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
-
-        int commandX = panelX + 5;
-        int commandY = panelY + 25;
-        int commandWidth = panelWidth - 10;
-
-        for (ConfigStorage.CommandConfig config : ConfigStorage.getCommandConfigs()) {
-            commandToggles.add(new CommandToggle(
-                    config.name,
-                    config.description,
-                    config.enabled,
-                    commandX,
-                    commandY,
-                    commandWidth,
-                    18
-            ));
-            commandY += 22;
-        }
-
-        int totalHeight = commandToggles.size() * 25;
-        commandScroll.update(totalHeight, panelHeight - 25);
-    }
-
-    private void initNoDebuffToggles() {
-        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
-
-        int commandX = panelX + 5;
-        int commandY = panelY + 25;
-        int commandWidth = panelWidth - 10;
-
-        for (ConfigStorage.NoDebuffConfig config : ConfigStorage.getNoDebuffConfigs()) {
-            commandToggles.add(new CommandToggle(
-                    config.name,
-                    config.description,
-                    config.enabled,
-                    commandX,
-                    commandY,
-                    commandWidth,
-                    18
-            ));
-            commandY += 22;
-        }
-
-        int totalHeight = commandToggles.size() * 25;
-        commandScroll.update(totalHeight, panelHeight - 25);
-    }
-
-    private void initEtherwarpToggles() {
-        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
-
-        int commandX = panelX + 5;
-        int commandY = panelY + 45;
-        int commandWidth = panelWidth - 10;
-
-        for (ConfigStorage.EtherwarpConfig config : ConfigStorage.getEtherwarpConfigs()) {
-            if (config.name.equals("Render Method")) {
-                commandToggles.add(new MethodDropdown(commandX, commandY, commandWidth, 18));
-            } else {
-                commandToggles.add(new CommandToggle(
-                        config.name,
-                        config.description,
-                        config.enabled,
-                        commandX,
-                        commandY,
-                        commandWidth,
-                        18
-                ));
-            }
-            commandY += 22;
-        }
-
-        commandY += 10;
-        commandToggles.add(new ColorInput(
-                "Overlay Color",
-                EtherwarpOverlay.etherwarpOverlayColor,
-                commandX,
-                commandY,
-                commandWidth,
-                18
-        ));
-        commandY += 50;
-
-        commandToggles.add(new ColorInput(
-                "Fail Color",
-                EtherwarpOverlay.etherwarpOverlayFailColor,
-                commandX,
-                commandY,
-                commandWidth,
-                18
-        ));
-
-        int totalHeight = commandToggles.size() * 25 + 60;
-        commandScroll.update(totalHeight, panelHeight - 25);
-    }
-
-    private void initFastHotkeyRows() {
-        // Build editor rows from stored entries
-        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
-        for (ConfigStorage.FastHotKeyEntry e : entries) {
-            fastRows.add(new FastRow(e));
-        }
-        // Update scroll metrics based on current rows
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
-        int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-        commandScroll.update(totalHeight, panelHeight - 25);
-    }
-
-    private void drawCommandPanelContent(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(panelX * new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(),
-                (height - (panelY + panelHeight)) * new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(),
-                panelWidth * new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(),
-                (panelHeight - 25) * new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor());
-
-        drawCommandToggles(mouseX, mouseY, panelY);
-        drawOpenDropdowns(mouseX, mouseY, panelY);
-
-        glDisable(GL_SCISSOR_TEST);
-
-        if (commandScroll.shouldRenderScrollbar()) {
-            commandScroll.updateScrollbarPosition(
-                    panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2,
-                    panelY + 25,
-                    panelHeight - 25
-            );
-            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
-        }
-    }
-
-    private String getCommandPanelTitle() {
-        if (selectedCommandModule.name.equals("Party Commands")) {
-            return "Command Settings";
-        } else if (selectedCommandModule.name.equals("No Debuff")) {
-            return "NoDebuff Settings";
-        } else if (selectedCommandModule.name.equals("Fast Hotkey")) {
-            return "Fast Hotkey Settings";
-        } else {
-            return "Etherwarp Settings";
-        }
-    }
-
+    // Handle clicks on dropdowns (currently Etherwarp render method)
     private boolean handleDropdownClicks(int mouseX, int mouseY) {
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int contentY = panelY + 25 - commandScroll.getOffset();
-
+        if (selectedCommandModule == null) return false;
+        if (!"Etherwarp Overlay".equals(selectedCommandModule.name)) return false;
+        int contentY = guiTop + Dimensions.COMMAND_PANEL_Y + 25 - commandScroll.getOffset();
         for (CommandToggle toggle : commandToggles) {
             if (toggle instanceof MethodDropdown) {
-                MethodDropdown dropdown = (MethodDropdown)toggle;
-                if (dropdown.isMouseOver(mouseX, mouseY, contentY)) {
-                    handleDropdownInteraction(dropdown, mouseX, mouseY, contentY);
+                MethodDropdown dd = (MethodDropdown) toggle;
+                // Base dropdown area
+                int yPos = contentY;
+                boolean inBase = mouseX >= dd.x + 100 && mouseX <= dd.x + dd.width && mouseY >= yPos && mouseY <= yPos + dd.height;
+                if (inBase) {
+                    dd.isOpen = !dd.isOpen;
                     return true;
                 }
-            }
-            contentY += toggle instanceof ColorInput ? 50 : 22;
-        }
-        return false;
-    }
-
-    private void handleDropdownInteraction(MethodDropdown dropdown, int mouseX, int mouseY, int yPos) {
-        if (dropdown.isOpen) {
-            for (int i = 0; i < dropdown.methods.length; i++) {
-                int optionY = yPos + dropdown.height + (i * dropdown.height);
-                if (mouseY >= optionY && mouseY <= optionY + dropdown.height) {
-                    dropdown.selectMethod(i);
-                    dropdown.isOpen = false;
-                    return;
-                }
-            }
-            // Click outside options closes the dropdown
-            dropdown.isOpen = false;
-        } else {
-            dropdown.isOpen = true;
-        }
-    }
-
-    private boolean handleColorInputClicks(int mouseX, int mouseY) {
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int contentY = panelY + 25 - commandScroll.getOffset();
-
-        for (CommandToggle toggle : commandToggles) {
-            if (toggle instanceof ColorInput) {
-                ColorInput colorInput = (ColorInput)toggle;
-                int inputY = contentY + toggle.height + 8;
-                if (mouseX >= colorInput.x + 40 && mouseX <= colorInput.x + colorInput.width &&
-                        mouseY >= inputY - 2 && mouseY <= inputY + 15) {
-                    colorInput.beginEditing(mouseX);
-                    return true;
-                }
-            }
-            contentY += toggle instanceof ColorInput ? 50 : 22;
-        }
-        return false;
-    }
-
-    private void handleRegularToggleClicks(int mouseX, int mouseY) {
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int contentY = panelY + 25 - commandScroll.getOffset();
-
-        for (CommandToggle toggle : commandToggles) {
-            if (!(toggle instanceof ColorInput) && !(toggle instanceof MethodDropdown)) {
-                if (toggle.isMouseOver(mouseX, mouseY, contentY)) {
-                    toggle.toggle();
-                    if (selectedCommandModule != null) {
-                        if ("Etherwarp Overlay".equals(selectedCommandModule.name)) {
-                            updateEtherwarpConfig();
-                        } else if ("No Debuff".equals(selectedCommandModule.name)) {
-                            updateNoDebuffConfig();
+                if (dd.isOpen) {
+                    for (int i = 0; i < dd.methods.length; i++) {
+                        int optionY = yPos + dd.height + (i * dd.height);
+                        if (mouseX >= dd.x + 100 && mouseX <= dd.x + dd.width && mouseY >= optionY && mouseY <= optionY + dd.height) {
+                            dd.selectMethod(i);
+                            dd.isOpen = false;
+                            return true;
                         }
                     }
-                    return;
                 }
             }
-            contentY += toggle instanceof ColorInput ? 50 : 22;
+            contentY += 22;
         }
+        return false;
     }
 
-    private void drawCommandToggles(int mouseX, int mouseY, int panelY) {
-        int contentY = panelY + 25 - commandScroll.getOffset();
+    // Focus color/text inputs when clicked inside their input boxes
+    private boolean handleColorInputClicks(int mouseX, int mouseY) {
+        if (selectedCommandModule == null) return false;
+        int contentY = guiTop + Dimensions.COMMAND_PANEL_Y + 25 - commandScroll.getOffset();
         for (CommandToggle toggle : commandToggles) {
-            if (!(toggle instanceof MethodDropdown && ((MethodDropdown)toggle).isOpen)) {
-                toggle.draw(mouseX, mouseY, contentY, fontRendererObj);
+            if (toggle instanceof ColorInput) {
+                ColorInput ci = (ColorInput) toggle;
+                int inputY = contentY + ci.height + 8;
+                boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15);
+                if (hover) { ci.beginEditing(mouseX); return true; }
+                contentY += 50; // ColorInput consumes extra vertical space
+                continue;
             }
-            contentY += toggle instanceof ColorInput ? 50 : 22;
+            if (toggle instanceof LabeledTextInput) {
+                LabeledTextInput li = (LabeledTextInput) toggle;
+                if (li.isMouseOver(mouseX, mouseY, contentY)) { li.beginEditing(mouseX); return true; }
+                contentY += 22;
+                continue;
+            }
+            if (toggle instanceof TerminalColorInput) {
+                TerminalColorInput tci = (TerminalColorInput) toggle;
+                if (tci.isMouseOver(mouseX, mouseY, contentY)) { tci.textInput.beginEditing(mouseX, tci.x + 40); return true; }
+                contentY += 50; // TerminalColorInput height
+                continue;
+            }
+            contentY += 22;
         }
+        return false;
     }
 
-    private void drawOpenDropdowns(int mouseX, int mouseY, int panelY) {
-        int contentY = panelY + 25 - commandScroll.getOffset();
+    // Toggle simple checkboxes and persist settings where applicable
+    private void handleRegularToggleClicks(int mouseX, int mouseY) {
+        if (selectedCommandModule == null) return;
+        int contentY = guiTop + Dimensions.COMMAND_PANEL_Y + 25 - commandScroll.getOffset();
         for (CommandToggle toggle : commandToggles) {
-            if (toggle instanceof MethodDropdown && ((MethodDropdown)toggle).isOpen) {
-                toggle.draw(mouseX, mouseY, contentY, fontRendererObj);
-            }
-            contentY += toggle instanceof ColorInput ? 50 : 22;
-        }
-    }
-
-    private void updateEtherwarpConfig() {
-        if (selectedCommandModule != null && selectedCommandModule.name.equals("Etherwarp Overlay")) {
-            for (ConfigStorage.EtherwarpConfig config : ConfigStorage.getEtherwarpConfigs()) {
-                for (CommandToggle toggle : commandToggles) {
-                    if (toggle.name.equals(config.name)) {
-                        config.enabled = toggle.isEnabled();
-                        break;
+            // Skip non-simple toggles
+            boolean isComplex = (toggle instanceof MethodDropdown) || (toggle instanceof ColorInput) || (toggle instanceof LabeledTextInput) || (toggle instanceof TerminalColorInput);
+            if (!isComplex && toggle.isMouseOver(mouseX, mouseY, contentY)) {
+                toggle.toggle();
+                // Persist per panel
+                if ("Dungeon Terminals".equals(selectedCommandModule.name)) {
+                    updateTerminalConfig();
+                } else if ("Etherwarp Overlay".equals(selectedCommandModule.name)) {
+                    // Etherwarp toggles mapped directly from config list; save config
+                    ConfigStorage.saveEtherwarpConfig();
+                } else if ("Party Commands".equals(selectedCommandModule.name)) {
+                    ConfigStorage.saveCommandsConfig();
+                } else if ("No Debuff".equals(selectedCommandModule.name)) {
+                    ConfigStorage.saveNoDebuffConfig();
+                    // Optionally apply to runtime
+                    boolean fire = false, blind = false, liquid = false;
+                    for (ConfigStorage.NoDebuffConfig cfg : ConfigStorage.getNoDebuffConfigs()) {
+                        if ("Remove Fire Overlay".equals(cfg.name)) fire = cfg.enabled;
+                        else if ("Ignore Blindness".equals(cfg.name)) blind = cfg.enabled;
+                        else if ("Clear Liquid Vision".equals(cfg.name)) liquid = cfg.enabled;
                     }
+                    NoDebuff.setNoFire(fire);
+                    NoDebuff.setNoBlindness(blind);
+                    NoDebuff.setClearLiquidVision(liquid);
                 }
+                return;
             }
-            ConfigStorage.saveEtherwarpConfig();
-
-            EtherwarpOverlay.etherwarpSyncWithServer = ConfigStorage.getEtherwarpConfigs().get(0).enabled;
-            EtherwarpOverlay.etherwarpOverlayOnlySneak = ConfigStorage.getEtherwarpConfigs().get(1).enabled;
-            EtherwarpOverlay.etherwarpShowFailLocation = ConfigStorage.getEtherwarpConfigs().get(2).enabled;
+            // Advance Y per control type
+            if (toggle instanceof ColorInput || toggle instanceof TerminalColorInput) contentY += 50; else contentY += 22;
         }
     }
 
-    private void updateNoDebuffConfig() {
-        if (selectedCommandModule == null || !"No Debuff".equals(selectedCommandModule.name)) return;
-
-        for (ConfigStorage.NoDebuffConfig config : ConfigStorage.getNoDebuffConfigs()) {
-            for (CommandToggle toggle : commandToggles) {
-                if (toggle.name.equals(config.name)) {
-                    config.enabled = toggle.isEnabled();
-                    break;
-                }
-            }
+    // =============================
+    // Terminal settings inputs
+    // =============================
+    private class LabeledTextInput extends CommandToggle {
+        private final TextInput textInput;
+        private final ValueChange onCommit;
+        LabeledTextInput(String label, String initial, int x, int y, int width, int height, ValueChange onCommit) {
+            super(label, "", false, x, y, width, height);
+            this.onCommit = onCommit;
+            this.textInput = new TextInput(initial, true, (v) -> {});
         }
-        ConfigStorage.saveNoDebuffConfig();
-
-        boolean fire = false, blind = false, liquid = false;
-        for (ConfigStorage.NoDebuffConfig cfg : ConfigStorage.getNoDebuffConfigs()) {
-            if ("Remove Fire Overlay".equals(cfg.name)) fire = cfg.enabled;
-            else if ("Ignore Blindness".equals(cfg.name)) blind = cfg.enabled;
-            else if ("Clear Liquid Vision".equals(cfg.name)) liquid = cfg.enabled;
-        }
-        NoDebuff.setNoFire(fire);
-        NoDebuff.setNoBlindness(blind);
-        NoDebuff.setClearLiquidVision(liquid);
-    }
-
-    private class CategoryButton extends GuiButton {
-        CategoryButton(String category, int x, int y) {
-            super(-1, x, y, 100, 20, category);
-        }
-
-        @Override
-        public void drawButton(Minecraft mc, int mouseX, int mouseY) {
-            if (this.visible) {
-                int bgColor = selectedCategory.equals(displayString) ? Colors.SELECTED_CATEGORY : Colors.CATEGORY_BUTTON;
-                drawRect(xPosition, yPosition, xPosition + width, yPosition + height, bgColor);
-                int textColor = selectedCategory.equals(displayString) ? 0xFFFFFFFF : 0xCCCCCC;
-                this.drawCenteredString(mc.fontRendererObj, displayString, xPosition + width / 2, yPosition + (height - 8) / 2, textColor);
-            }
-        }
-    }
-
-    private class ModuleButton {
-        private final ModuleInfo module;
-        private final int x, y, width, height;
-        private boolean showDropdown = false;
-        private final int dropdownSize = 10;
-
-        ModuleButton(ModuleInfo module, int x, int y, int width, int height) {
-            this.module = module;
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-        }
-
-        void draw(int mouseX, int mouseY, FontRenderer fontRenderer) {
-            int bgColor = isMoveGuiButton() ? Colors.MOVE_GUI :
-                    (module.enabled ? Colors.MODULE_ACTIVE : Colors.MODULE_INACTIVE);
-
-            drawRect(x, y, x + width, y + height, bgColor);
-            fontRenderer.drawStringWithShadow(module.name, x + Dimensions.TEXT_PADDING, y + Dimensions.TEXT_PADDING, Colors.TEXT);
-
-            List<String> descLines = fontRenderer.listFormattedStringToWidth(module.description, width - Dimensions.TEXT_PADDING * 2);
-            for (int i = 0; i < descLines.size(); i++) {
-                fontRenderer.drawString(
-                        descLines.get(i),
-                        x + Dimensions.TEXT_PADDING,
-                        y + Dimensions.TEXT_PADDING + 12 + (i * Dimensions.LINE_HEIGHT),
-                        0xAAAAAA
-                );
-            }
-
-            if (module.enabled && (module.name.equals("Party Commands") ||
-                    module.name.equals("No Debuff") ||
-                    module.name.equals("Etherwarp Overlay") ||
-                    module.name.equals("Fast Hotkey"))) {
-                String settingsText = "Settings";
-                int textWidth = fontRenderer.getStringWidth(settingsText);
-                int textX = x + width - textWidth - Dimensions.TEXT_PADDING;
-                int textY = y + Dimensions.TEXT_PADDING;
-
-                drawRect(textX - 2, textY - 2,
-                        textX + textWidth + 2, textY + 10,
-                        0x80000000);
-
-                fontRenderer.drawStringWithShadow(settingsText, textX, textY, 0xFFFFFF);
-            }
-
-            if (isMouseOver(mouseX, mouseY)) {
-                drawRect(x, y, x + width, y + height, 0x40FFFFFF);
-            }
-        }
-
-        boolean isDropdownClicked(int mouseX, int mouseY) {
-            if (!module.enabled || !(module.name.equals("Party Commands") ||
-                    module.name.equals("No Debuff") ||
-                    module.name.equals("Etherwarp Overlay") ||
-                    module.name.equals("Fast Hotkey"))) {
-                return false;
-            }
-            String settingsText = "Settings";
-            int textWidth = fontRendererObj.getStringWidth(settingsText);
-            int textX = x + width - textWidth - Dimensions.TEXT_PADDING;
-            int textY = y + Dimensions.TEXT_PADDING;
-            return mouseX >= textX - 2 && mouseX <= textX + textWidth + 2 &&
-                    mouseY >= textY - 2 && mouseY <= textY + 10;
-        }
-
-        boolean isMouseOver(int mouseX, int mouseY) {
-            return mouseX >= x && mouseX <= x + width &&
-                    mouseY >= y && mouseY <= y + height;
-        }
-
-        boolean isMoveGuiButton() {
-            return module.name.equals("Move GUI Position");
-        }
-
-        ModuleInfo getModule() {
-            return module;
-        }
-    }
-
-    private class CommandToggle {
-        protected final String name;
-        protected final String description;
-        protected boolean enabled;
-        protected final int x, y, width, height;
-
-        CommandToggle(String name, String description, boolean enabled, int x, int y, int width, int height) {
-            this.name = name;
-            this.description = description;
-            this.enabled = enabled;
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-        }
-
-        void toggle() {
-            enabled = !enabled;
-        }
-
-        boolean isEnabled() {
-            return enabled;
-        }
-
-        String getConfigKey() {
-            return name.toLowerCase().replace(" ", "");
-        }
-
-        void draw(int mouseX, int mouseY, int yPos, FontRenderer fontRenderer) {
-            if (yPos + height > guiTop + 30 && yPos < guiTop + Dimensions.GUI_HEIGHT - 30) {
-                drawRect(x, yPos, x + width, yPos + height,
-                        enabled ? Colors.COMMAND_CHECKBOX_SELECTED : Colors.COMMAND_CHECKBOX);
-
-                drawRect(x + 3, yPos + 4, x + 13, yPos + 14, 0xFF000000);
-                if (enabled) {
-                    drawRect(x + 5, yPos + 6, x + 11, yPos + 12, 0xFFFFFFFF);
-                }
-
-                fontRenderer.drawStringWithShadow(name, x + 18, yPos + 5, Colors.TEXT);
-
-                if (isMouseOver(mouseX, mouseY, yPos)) {
-                    drawRect(x, yPos, x + width, yPos + 18, 0x40FFFFFF);
-                }
-            }
-        }
-
         boolean isMouseOver(int mouseX, int mouseY, int yPos) {
-            return mouseX >= x && mouseX <= x + width &&
-                    mouseY >= yPos && mouseY <= yPos + height;
+            int inputY = yPos; // we place input on same line for simplicity
+            return mouseX >= x && mouseX <= x + width && mouseY >= inputY && mouseY <= inputY + height;
         }
-    }
-
-    private class ScrollManager {
-        private int offset = 0;
-        private int maxOffset = 0;
-        private boolean isScrolling = false;
-        private int scrollBarX, scrollBarY;
-        private int scrollBarHeight = Dimensions.MIN_SCROLLBAR_HEIGHT;
-        private int visibleHeight;
-
-        void reset() {
-            offset = 0;
-            maxOffset = 0;
-            isScrolling = false;
-        }
-
-        void update(int totalHeight, int visibleHeight) {
-            this.visibleHeight = visibleHeight;
-            maxOffset = Math.max(0, totalHeight - visibleHeight);
-            offset = Math.min(offset, maxOffset);
-            offset = Math.max(0, offset);
-        }
-
-        void updateScrollbarPosition(int x, int y, int visibleHeight) {
-            scrollBarX = x;
-            scrollBarY = y;
-            scrollBarHeight = (int)((visibleHeight / (float)Math.max(maxOffset + visibleHeight, visibleHeight)) * visibleHeight);
-            scrollBarHeight = Math.max(Dimensions.MIN_SCROLLBAR_HEIGHT, Math.min(scrollBarHeight, visibleHeight));
-        }
-
-        boolean checkScrollbarClick(int mouseX, int mouseY) {
-            if (maxOffset <= 0) return false;
-            return mouseX >= scrollBarX && mouseX <= scrollBarX + Dimensions.SCROLLBAR_WIDTH &&
-                    mouseY >= scrollBarY && mouseY <= scrollBarY + scrollBarHeight;
-        }
-
-        void beginScroll() {
-            isScrolling = true;
-        }
-
-        void handleDrag(int mouseX, int mouseY, Runnable callback) {
-            if (isScrolling && maxOffset > 0) {
-                int handleTravel = Math.max(1, visibleHeight - scrollBarHeight);
-                int relY = Math.max(0, Math.min(mouseY - scrollBarY - (scrollBarHeight / 2), handleTravel));
-                offset = (int)((relY / (float)handleTravel) * maxOffset);
-                if (callback != null) callback.run();
+        void beginEditing(int mouseX) { textInput.beginEditing(mouseX, x + 45); }
+        void handleKeyTyped(char typedChar, int keyCode) {
+            int beforeLen = textInput.value.length();
+            textInput.handleKeyTyped(typedChar, keyCode);
+            // On enter commit
+            if (!textInput.isEditing || (keyCode == Keyboard.KEY_RETURN)) {
+                if (onCommit != null) onCommit.onChange(textInput.value);
+            } else if (textInput.value.length() != beforeLen) {
+                // Also commit live on change for immediate preview
+                if (onCommit != null) onCommit.onChange(textInput.value);
             }
         }
-
-        void handleWheelScroll(int scroll, Runnable callback) {
-            if (scroll != 0) {
-                offset += scroll > 0 ? -20 : 20;
-                offset = Math.max(0, Math.min(offset, maxOffset));
-                if (callback != null) callback.run();
-            }
-        }
-
-        void handleWheelScroll(int scroll) {
-            handleWheelScroll(scroll, null);
-        }
-
-        void endScroll() {
-            isScrolling = false;
-        }
-
-        boolean shouldRenderScrollbar() {
-            return maxOffset > 0;
-        }
-
-        void drawScrollbar(int trackColor, int handleColor) {
-            if (!shouldRenderScrollbar()) return;
-
-            drawRect(scrollBarX, scrollBarY,
-                    scrollBarX + Dimensions.SCROLLBAR_WIDTH,
-                    scrollBarY + visibleHeight,
-                    trackColor);
-
-            float contentRatio = visibleHeight / (float)(maxOffset + visibleHeight);
-            int handleHeight = Math.max(Dimensions.MIN_SCROLLBAR_HEIGHT,
-                    (int)(visibleHeight * contentRatio));
-
-            int handleY = scrollBarY + (int)(((float)offset / maxOffset) * (visibleHeight - handleHeight));
-            drawRect(scrollBarX, handleY,
-                    scrollBarX + Dimensions.SCROLLBAR_WIDTH,
-                    handleY + handleHeight,
-                    handleColor);
-        }
-
-        int getOffset() {
-            return offset;
-        }
-    }
-
-    private class MethodDropdown extends CommandToggle {
-        private final String[] methods = {"Edges", "Filled", "Both"};
-        private int selectedMethod;
-        private boolean isOpen = false;
-
-        MethodDropdown(int x, int y, int width, int height) {
-            super("Render Method", "", true, x, y, width, height);
-            this.selectedMethod = EtherwarpOverlay.etherwarpHighlightType / 2;
-        }
-
         @Override
-        void draw(int mouseX, int mouseY, int yPos, FontRenderer fontRenderer) {
-            fontRenderer.drawStringWithShadow(name, x, yPos + 5, Colors.TEXT);
-
-            int dropdownWidth = width - 100;
-            drawRect(x + 100, yPos, x + 100 + dropdownWidth, yPos + height, 0xFF333333);
-            fontRenderer.drawStringWithShadow(methods[selectedMethod],
-                    x + 105, yPos + 5, Colors.TEXT);
-
-            if (isOpen) {
-                GlStateManager.pushMatrix();
-                GlStateManager.translate(0, 0, 300);
-                for (int i = 0; i < methods.length; i++) {
-                    int optionY = yPos + height + (i * height);
-                    drawRect(x + 100, optionY, x + 100 + dropdownWidth, optionY + height, 0xFF444444);
-                    fontRenderer.drawStringWithShadow(methods[i],
-                            x + 105, optionY + 5, Colors.TEXT);
-                }
-                GlStateManager.popMatrix();
-            }
-        }
-
-        @Override
-        boolean isMouseOver(int mouseX, int mouseY, int yPos) {
-            if (mouseX >= x + 100 && mouseX <= x + width &&
-                    mouseY >= yPos && mouseY <= yPos + height) {
-                return true;
-            }
-
-            if (isOpen) {
-                for (int i = 0; i < methods.length; i++) {
-                    int optionY = yPos + height + (i * height);
-                    if (mouseX >= x + 100 && mouseX <= x + width &&
-                            mouseY >= optionY && mouseY <= optionY + height) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        void selectMethod(int methodIndex) {
-            selectedMethod = methodIndex;
-            EtherwarpOverlay.etherwarpHighlightType = methodIndex * 2;
-            ConfigStorage.saveEtherwarpConfig();
+        void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+            fr.drawStringWithShadow(name, x, yPos + 5, Colors.COMMAND_TEXT);
+            textInput.draw(x + 45, yPos + 2, width - 50, 16, fr);
         }
     }
 
-    private class ColorInput extends CommandToggle {
+    private class TerminalColorInput extends CommandToggle {
         private Color color;
         private final String title;
+        private final boolean isOverlay;
         private final TextInput textInput;
-
-        ColorInput(String title, Color color, int x, int y, int width, int height) {
+        TerminalColorInput(String title, Color color, int x, int y, int width, int height, boolean isOverlay) {
             super(title, "", false, x, y, width, height);
             this.color = color;
             this.title = title;
+            this.isOverlay = isOverlay;
             String initial = color.getRed() + "," + color.getGreen() + "," + color.getBlue() + "," + color.getAlpha();
-            this.textInput = new TextInput(initial, true, (v) -> {
-                updateColor(v);
-            });
+            this.textInput = new TextInput(initial, true, (v) -> updateColor(v));
         }
-
-        boolean isEditing() { return textInput.isEditing; }
-        void unfocus() { textInput.isEditing = false; }
-        void beginEditing(int mouseX) { textInput.beginEditing(mouseX, x + 45); }
-
-        @Override
         boolean isMouseOver(int mouseX, int mouseY, int yPos) {
             int inputY = yPos + height + 8;
-            return (mouseX >= x + 40 && mouseX <= x + width &&
-                    mouseY >= inputY - 2 && mouseY <= inputY + 15);
+            return (mouseX >= x + 40 && mouseX <= x + width && mouseY >= inputY - 2 && mouseY <= inputY + 15);
         }
-
         @Override
-        void draw(int mouseX, int mouseY, int yPos, FontRenderer fontRenderer) {
-            fontRenderer.drawStringWithShadow(title, x, yPos + 5, Colors.TEXT);
-            drawRect(x + fontRenderer.getStringWidth(title) + 10, yPos + 3,
-                    x + fontRenderer.getStringWidth(title) + 30, yPos + height - 3, color.getRGB());
-
+        void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+            fr.drawStringWithShadow(title, x, yPos + 5, Colors.COMMAND_TEXT);
+            drawRect(x + fr.getStringWidth(title) + 10, yPos + 3, x + fr.getStringWidth(title) + 30, yPos + height - 3, color.getRGB());
             int inputY = yPos + height + 8;
-            fontRenderer.drawStringWithShadow("RGBA:", x, inputY, Colors.TEXT);
-            // Input field
-            textInput.draw(x + 40, inputY - 2, width - 40, 16, fontRenderer);
+            fr.drawStringWithShadow("RGBA:", x, inputY, Colors.COMMAND_TEXT);
+            textInput.draw(x + 40, inputY - 2, width - 40, 16, fr);
         }
-
-        void handleKeyTyped(char typedChar, int keyCode) {
-            textInput.handleKeyTyped(typedChar, keyCode);
-        }
-
+        void handleKeyTyped(char typedChar, int keyCode) { textInput.handleKeyTyped(typedChar, keyCode); }
         private void updateColor(String value) {
             String[] parts = value.split(",");
-            if (parts.length == 4) {
-                try {
-                    int r = Math.min(255, Math.max(0, Integer.parseInt(parts[0])));
-                    int g = Math.min(255, Math.max(0, Integer.parseInt(parts[1])));
-                    int b = Math.min(255, Math.max(0, Integer.parseInt(parts[2])));
-                    int a = Math.min(255, Math.max(0, Integer.parseInt(parts[3])));
-
-                    this.color = new Color(r, g, b, a);
-
-                    if (title.equals("Overlay Color")) {
-                        EtherwarpOverlay.etherwarpOverlayColor = this.color;
-                    } else {
-                        EtherwarpOverlay.etherwarpOverlayFailColor = this.color;
-                    }
-
-                    ConfigStorage.saveEtherwarpConfig();
-                } catch (NumberFormatException ignored) {
-                    // ignore invalid until corrected by user
-                }
-            }
+            if (parts.length != 4) return;
+            try {
+                int r = Math.min(255, Math.max(0, Integer.parseInt(parts[0])));
+                int g = Math.min(255, Math.max(0, Integer.parseInt(parts[1])));
+                int b = Math.min(255, Math.max(0, Integer.parseInt(parts[2])));
+                int a = Math.min(255, Math.max(0, Integer.parseInt(parts[3])));
+                this.color = new Color(r, g, b, a);
+                // Persist to config and apply
+                ConfigStorage.TerminalSettings ts = ConfigStorage.getTerminalSettings();
+                if (isOverlay) ts.overlayColor = this.color; else ts.backgroundColor = this.color;
+                ConfigStorage.saveTerminalConfig();
+                ConfigStorage.applyTerminalSettingsToRuntime();
+            } catch (Exception ignored) {}
         }
     }
 
@@ -1463,6 +857,346 @@ public class ModSettingsGui extends GuiScreen {
         if (mouseX >= listX && mouseX <= listX + listWidth &&
                 mouseY >= listY && mouseY <= listY + listHeight) {
             mainScroll.handleWheelScroll(dWheel, this::createModuleButtons);
+        }
+    }
+
+    // =============================================
+    // Builders and helpers we were missing
+    // =============================================
+    private void createCategoryButtons() {
+        categoryButtons.clear();
+        buttonList.clear();
+        List<String> cats = ConfigStorage.getUniqueCategories();
+        int y = guiTop + 30;
+        int x = guiLeft + 10;
+        for (int i = 0; i < cats.size(); i++) {
+            String c = cats.get(i);
+            GuiButton b = new GuiButton(1000 + i, x, y, 95, 18, c);
+            categoryButtons.add(b);
+            buttonList.add(b);
+            y += 20;
+        }
+        if (!cats.contains(selectedCategory) && !cats.isEmpty()) selectedCategory = cats.get(0);
+    }
+
+    private void createModuleButtons() {
+        moduleButtons.clear();
+        List<ConfigStorage.ModuleInfo> mods = ConfigStorage.getModulesByCategory(selectedCategory);
+        int listX = guiLeft + 120;
+        int listY = guiTop + 28;
+        int listW = Dimensions.GUI_WIDTH - 120 - 10 - Dimensions.SCROLLBAR_WIDTH;
+        int y = listY - mainScroll.getOffset();
+        int rowH = 22;
+        for (ConfigStorage.ModuleInfo mi : mods) {
+            moduleButtons.add(new ModuleButton(listX + 4, y, listW - 8, rowH - 2, mi));
+            y += rowH;
+        }
+        int totalHeight = mods.size() * rowH;
+        int viewH = Dimensions.GUI_HEIGHT - 50;
+        mainScroll.update(totalHeight, viewH);
+        mainScroll.updateScrollbarPosition(listX + listW - 2, listY, viewH);
+    }
+
+    private void initializeCommandToggles() {
+        commandToggles.clear();
+        if (selectedCommandModule == null) return;
+        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X + 5;
+        int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30; // content start (without scroll)
+        int w = Dimensions.COMMAND_PANEL_WIDTH - 10;
+
+        String name = selectedCommandModule.name;
+        if ("Dungeon Terminals".equals(name)) {
+            ConfigStorage.TerminalSettings ts = ConfigStorage.getTerminalSettings();
+            commandToggles.add(new CommandToggle("High Ping Mode", "Queues clicks for high latency", ts.highPingMode, panelX, y, w, 16)); y += 22;
+            commandToggles.add(new CommandToggle("Phoenix Client Compat", "Alternative click timing", ts.phoenixClientCompat, panelX, y, w, 16)); y += 22;
+            commandToggles.add(new CommandToggle("Enable Starts With GUI", "Use custom GUI for Starts With", ts.enableStartsWith, panelX, y, w, 16)); y += 22;
+            commandToggles.add(new CommandToggle("Enable Colors GUI", "Use custom GUI for Colors", ts.enableColors, panelX, y, w, 16)); y += 22;
+
+            // Scale and timings / offsets
+            commandToggles.add(new LabeledTextInput("Scale", String.valueOf(ts.scale), panelX, y, w, 16, (v) -> {
+                try { ts.scale = Math.max(0.25f, Math.min(4f, Float.parseFloat(v))); } catch (Exception ignored) {}
+                ConfigStorage.saveTerminalConfig();
+                ConfigStorage.applyTerminalSettingsToRuntime();
+            })); y += 22;
+            commandToggles.add(new LabeledTextInput("Timeout", String.valueOf(ts.timeoutMs), panelX, y, w, 16, (v) -> {
+                try { ts.timeoutMs = Math.max(0, Integer.parseInt(v)); } catch (Exception ignored) {}
+                ConfigStorage.saveTerminalConfig();
+                ConfigStorage.applyTerminalSettingsToRuntime();
+            })); y += 22;
+            commandToggles.add(new LabeledTextInput("FirstClick", String.valueOf(ts.firstClickMs), panelX, y, w, 16, (v) -> {
+                try { ts.firstClickMs = Math.max(0, Integer.parseInt(v)); } catch (Exception ignored) {}
+                ConfigStorage.saveTerminalConfig();
+                ConfigStorage.applyTerminalSettingsToRuntime();
+            })); y += 22;
+            commandToggles.add(new LabeledTextInput("OffsetX", String.valueOf(ts.offsetX), panelX, y, w, 16, (v) -> {
+                try { ts.offsetX = Integer.parseInt(v); } catch (Exception ignored) {}
+                ConfigStorage.saveTerminalConfig();
+                ConfigStorage.applyTerminalSettingsToRuntime();
+            })); y += 22;
+            commandToggles.add(new LabeledTextInput("OffsetY", String.valueOf(ts.offsetY), panelX, y, w, 16, (v) -> {
+                try { ts.offsetY = Integer.parseInt(v); } catch (Exception ignored) {}
+                ConfigStorage.saveTerminalConfig();
+                ConfigStorage.applyTerminalSettingsToRuntime();
+            })); y += 22;
+
+            // Colors
+            commandToggles.add(new TerminalColorInput("Overlay", ts.overlayColor, panelX, y, w, 18, true)); y += 50;
+            commandToggles.add(new TerminalColorInput("Background", ts.backgroundColor, panelX, y, w, 18, false)); y += 50;
+        } else if ("Party Commands".equals(name)) {
+            for (ConfigStorage.CommandConfig cc : ConfigStorage.getCommandConfigs()) {
+                commandToggles.add(new CommandToggle(cc.name, cc.description, cc.enabled, panelX, y, w, 16)); y += 22;
+            }
+        } else if ("No Debuff".equals(name)) {
+            for (ConfigStorage.NoDebuffConfig nc : ConfigStorage.getNoDebuffConfigs()) {
+                commandToggles.add(new CommandToggle(nc.name, nc.description, nc.enabled, panelX, y, w, 16)); y += 22;
+            }
+        } else if ("Etherwarp Overlay".equals(name)) {
+            for (ConfigStorage.EtherwarpConfig ec : ConfigStorage.getEtherwarpConfigs()) {
+                if ("Render Method".equals(ec.name)) {
+                    commandToggles.add(new MethodDropdown("Render Method", panelX, y, w, 16)); y += 22;
+                } else {
+                    commandToggles.add(new CommandToggle(ec.name, ec.description, ec.enabled, panelX, y, w, 16)); y += 22;
+                }
+            }
+            // Color editors for Etherwarp
+            commandToggles.add(new ColorInput("Overlay RGBA", EtherwarpOverlay.etherwarpOverlayColor, panelX, y, w, 18, (c) -> {
+                EtherwarpOverlay.etherwarpOverlayColor = c; ConfigStorage.saveEtherwarpConfig();
+            })); y += 50;
+            commandToggles.add(new ColorInput("Fail RGBA", EtherwarpOverlay.etherwarpOverlayFailColor, panelX, y, w, 18, (c) -> {
+                EtherwarpOverlay.etherwarpOverlayFailColor = c; ConfigStorage.saveEtherwarpConfig();
+            })); y += 50;
+        }
+        int panelHeight = Dimensions.GUI_HEIGHT - 60 - 25; // view height
+        int totalHeight = (y - (guiTop + Dimensions.COMMAND_PANEL_Y + 30));
+        commandScroll.update(totalHeight, panelHeight);
+        commandScroll.updateScrollbarPosition(guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH - Dimensions.SCROLLBAR_WIDTH - 2,
+                guiTop + Dimensions.COMMAND_PANEL_Y + 25,
+                panelHeight);
+    }
+
+    private String getCommandPanelTitle() {
+        return selectedCommandModule == null ? "" : ("Settings - " + selectedCommandModule.name);
+    }
+
+    private void drawCommandPanelContent(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
+        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(panelX * scale, (height - (panelY + panelHeight)) * scale, panelWidth * scale, (panelHeight - 25) * scale);
+
+        int y = panelY + 30 - commandScroll.getOffset();
+        for (CommandToggle t : commandToggles) {
+            t.draw(mouseX, mouseY, y, fontRendererObj);
+            y += (t instanceof ColorInput || t instanceof TerminalColorInput) ? 50 : 22;
+        }
+        glDisable(GL_SCISSOR_TEST);
+
+        int totalHeight = 0;
+        for (CommandToggle t : commandToggles) totalHeight += (t instanceof ColorInput || t instanceof TerminalColorInput) ? 50 : 22;
+        commandScroll.update(totalHeight, panelHeight - 25);
+        commandScroll.updateScrollbarPosition(panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, panelHeight - 25);
+    }
+
+    private void handleScrollbarDrag(int mouseX, int mouseY) {
+        if (mainScroll.isDragging) mainScroll.handleDrag(mouseX, mouseY, this::createModuleButtons);
+        if (commandScroll.isDragging) commandScroll.handleDrag(mouseX, mouseY, null);
+    }
+
+    private void handleColorInputTyping(char typedChar, int keyCode) {
+        if (!showCommandSettings) return;
+        for (CommandToggle t : commandToggles) {
+            if (t instanceof ColorInput) ((ColorInput) t).handleKeyTyped(typedChar, keyCode);
+            if (t instanceof TerminalColorInput) ((TerminalColorInput) t).handleKeyTyped(typedChar, keyCode);
+        }
+    }
+
+    private void updateTerminalConfig() {
+        if (selectedCommandModule == null || !"Dungeon Terminals".equals(selectedCommandModule.name)) return;
+        ConfigStorage.TerminalSettings ts = ConfigStorage.getTerminalSettings();
+        for (CommandToggle t : commandToggles) {
+            if ("High Ping Mode".equals(t.name)) ts.highPingMode = t.enabled;
+            else if ("Phoenix Client Compat".equals(t.name)) ts.phoenixClientCompat = t.enabled;
+            else if ("Enable Starts With GUI".equals(t.name)) ts.enableStartsWith = t.enabled;
+            else if ("Enable Colors GUI".equals(t.name)) ts.enableColors = t.enabled;
+        }
+        ConfigStorage.saveTerminalConfig();
+        // Apply runtime + enable/disable modules
+        ConfigStorage.applyTerminalSettingsToRuntime();
+        com.aftertime.ratallofyou.modules.dungeon.terminals.startswith.setEnabled(ts.enableStartsWith);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setEnabled(ts.enableColors);
+    }
+
+    private void handleModuleToggle(ConfigStorage.ModuleInfo module) {
+        module.enabled = !module.enabled;
+        ConfigStorage.saveMainConfig();
+        if ("No Debuff".equals(module.name)) {
+            NoDebuff.setEnabled(module.enabled);
+        } else if ("Dungeon Terminals".equals(module.name)) {
+            // When module toggled, enable/disable both helpers according to per-terminal toggles
+            ConfigStorage.TerminalSettings ts = ConfigStorage.getTerminalSettings();
+            com.aftertime.ratallofyou.modules.dungeon.terminals.startswith.setEnabled(module.enabled && ts.enableStartsWith);
+            com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setEnabled(module.enabled && ts.enableColors);
+        }
+        createModuleButtons();
+    }
+
+    // =============================================
+    // Inner UI model classes
+    // =============================================
+    private class CommandToggle {
+        final String name;
+        final String description;
+        boolean enabled;
+        final int x, y, width, height;
+        CommandToggle(String name, String description, boolean enabled, int x, int y, int width, int height) {
+            this.name = name; this.description = description; this.enabled = enabled;
+            this.x = x; this.y = y; this.width = width; this.height = height;
+        }
+        void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+            int box = 10;
+            int cx = x; int cy = yPos + 3;
+            drawRect(cx, cy, cx + box, cy + box, enabled ? Colors.BUTTON_GREEN : Colors.CATEGORY_BUTTON);
+            fr.drawStringWithShadow(name, x + 14, yPos + 3, Colors.COMMAND_TEXT);
+        }
+        boolean isMouseOver(int mouseX, int mouseY, int yPos) {
+            return mouseX >= x && mouseX <= x + width && mouseY >= yPos && mouseY <= yPos + height;
+        }
+        void toggle() { enabled = !enabled; }
+    }
+
+    private class ColorInput extends CommandToggle {
+        private Color color;
+        private final TextInput textInput;
+        private final java.util.function.Consumer<Color> onCommit;
+        ColorInput(String title, Color initial, int x, int y, int width, int height, java.util.function.Consumer<Color> onCommit) {
+            super(title, "", false, x, y, width, height);
+            this.color = initial;
+            this.onCommit = onCommit;
+            String s = color.getRed()+","+color.getGreen()+","+color.getBlue()+","+color.getAlpha();
+            this.textInput = new TextInput(s, true, (v) -> updateColor(v));
+        }
+        void beginEditing(int mouseX) { textInput.beginEditing(mouseX, x + 40); }
+        void unfocus() { textInput.isEditing = false; }
+        @Override
+        void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+            fr.drawStringWithShadow(name, x, yPos + 5, Colors.COMMAND_TEXT);
+            drawRect(x + fr.getStringWidth(name) + 10, yPos + 3, x + fr.getStringWidth(name) + 30, yPos + height - 3, color.getRGB());
+            int inputY = yPos + height + 8;
+            fr.drawStringWithShadow("RGBA:", x, inputY, Colors.COMMAND_TEXT);
+            textInput.draw(x + 40, inputY - 2, width - 40, 16, fr);
+        }
+        void handleKeyTyped(char typedChar, int keyCode) { textInput.handleKeyTyped(typedChar, keyCode); }
+        private void updateColor(String value) {
+            String[] parts = value.split(",");
+            if (parts.length != 4) return;
+            try {
+                int r = Math.min(255, Math.max(0, Integer.parseInt(parts[0])));
+                int g = Math.min(255, Math.max(0, Integer.parseInt(parts[1])));
+                int b = Math.min(255, Math.max(0, Integer.parseInt(parts[2])));
+                int a = Math.min(255, Math.max(0, Integer.parseInt(parts[3])));
+                this.color = new Color(r,g,b,a);
+                if (onCommit != null) onCommit.accept(this.color);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private class MethodDropdown extends CommandToggle {
+        final String[] methods = new String[]{"Edges", "Filled", "Both"};
+        int selected = Math.max(0, Math.min(2, EtherwarpOverlay.etherwarpHighlightType / 2));
+        boolean isOpen = false;
+        MethodDropdown(String title, int x, int y, int width, int height) { super(title, "", false, x, y, width, height); }
+        void selectMethod(int idx) {
+            selected = Math.max(0, Math.min(2, idx));
+            EtherwarpOverlay.etherwarpHighlightType = selected * 2;
+            ConfigStorage.saveEtherwarpConfig();
+        }
+        @Override
+        void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+            fr.drawStringWithShadow(name + ":", x, yPos + 4, Colors.COMMAND_TEXT);
+            int bx = x + 100; int by = yPos; int bw = width - 100; int bh = height;
+            drawRect(bx, by, bx + bw, by + bh, Colors.CATEGORY_BUTTON);
+            String label = methods[selected];
+            fr.drawStringWithShadow(label, bx + 4, by + 4, Colors.COMMAND_TEXT);
+            if (isOpen) {
+                for (int i = 0; i < methods.length; i++) {
+                    int oy = by + bh + i * bh;
+                    drawRect(bx, oy, bx + bw, oy + bh, 0xFF1E1E1E);
+                    fr.drawStringWithShadow(methods[i], bx + 4, oy + 4, Colors.COMMAND_TEXT);
+                }
+            }
+        }
+    }
+
+    private class ModuleButton {
+        final int x, y, width, height;
+        final ConfigStorage.ModuleInfo module;
+        ModuleButton(int x, int y, int width, int height, ConfigStorage.ModuleInfo module) { this.x=x; this.y=y; this.width=width; this.height=height; this.module=module; }
+        void draw(int mouseX, int mouseY, FontRenderer fr) {
+            int bg = module.enabled ? 0xFF2E7D32 : 0xFF333333;
+            drawRect(x, y, x + width, y + height, bg);
+            fr.drawStringWithShadow(module.name, x + 6, y + 7, Colors.TEXT);
+            // settings dropdown area (right side ellipsis)
+            fr.drawStringWithShadow("...", x + width - 12, y + 7, Colors.TEXT);
+        }
+        boolean isMouseOver(int mx, int my) { return mx >= x && mx <= x + width && my >= y && my <= y + height; }
+        boolean isDropdownClicked(int mx, int my) { return isMouseOver(mx, my) && mx >= x + width - 18; }
+        ConfigStorage.ModuleInfo getModule() { return module; }
+    }
+
+    private class ScrollManager {
+        private int contentHeight;
+        private int viewHeight;
+        private int offset;
+        private int barX, barY, barH;
+        private int handleY, handleH;
+        private int dragStartY, dragStartOffset;
+        boolean isDragging = false;
+
+        void reset() { contentHeight = 0; viewHeight = 0; offset = 0; isDragging = false; }
+        int getOffset() { return Math.max(0, Math.min(offset, Math.max(0, contentHeight - viewHeight))); }
+        void update(int total, int view) {
+            contentHeight = Math.max(0, total);
+            viewHeight = Math.max(0, view);
+            int maxOffset = Math.max(0, contentHeight - viewHeight);
+            if (offset > maxOffset) offset = maxOffset;
+            recalcHandle();
+        }
+        void updateScrollbarPosition(int x, int y, int h) { barX = x; barY = y; barH = h; recalcHandle(); }
+        boolean shouldRenderScrollbar() { return contentHeight > viewHeight && viewHeight > 0; }
+        void drawScrollbar(int trackColor, int handleColor) {
+            if (!shouldRenderScrollbar()) return;
+            drawRect(barX, barY, barX + Dimensions.SCROLLBAR_WIDTH, barY + barH, trackColor);
+            drawRect(barX, handleY, barX + Dimensions.SCROLLBAR_WIDTH, handleY + handleH, handleColor);
+        }
+        boolean checkScrollbarClick(int mx, int my) {
+            if (!shouldRenderScrollbar()) return false;
+            boolean inside = mx >= barX && mx <= barX + Dimensions.SCROLLBAR_WIDTH && my >= barY && my <= barY + barH;
+            if (inside) { isDragging = true; dragStartY = my; dragStartOffset = offset; }
+            return inside;
+        }
+        void beginScroll() { isDragging = true; dragStartY = -1; dragStartOffset = offset; }
+        void endScroll() { isDragging = false; }
+        void handleDrag(int mx, int my, Runnable onChange) {
+            if (!isDragging || !shouldRenderScrollbar()) return;
+            if (handleH >= barH) { offset = 0; if (onChange!=null) onChange.run(); return; }
+            float ratio = (float)(contentHeight - viewHeight) / (float)(barH - handleH);
+            int dy = my - (dragStartY == -1 ? my : dragStartY);
+            offset = Math.max(0, Math.min(contentHeight - viewHeight, dragStartOffset + Math.round(dy * ratio)));
+            recalcHandle();
+            if (onChange != null) onChange.run();
+        }
+        void handleWheelScroll(int dWheel) { handleWheelScroll(dWheel, null); }
+        void handleWheelScroll(int dWheel, Runnable onChange) {
+            int step = 20 * (dWheel < 0 ? 1 : -1);
+            offset = Math.max(0, Math.min(contentHeight - viewHeight, offset + step));
+            recalcHandle();
+            if (onChange != null) onChange.run();
+        }
+        private void recalcHandle() {
+            if (!shouldRenderScrollbar()) { handleY = barY; handleH = barH; return; }
+            int minH = Math.max(Dimensions.MIN_SCROLLBAR_HEIGHT, barH * Math.max(1, viewHeight) / Math.max(1, contentHeight));
+            handleH = Math.max(Dimensions.MIN_SCROLLBAR_HEIGHT, minH);
+            float t = (contentHeight - viewHeight) == 0 ? 0f : (float) offset / (float) (contentHeight - viewHeight);
+            handleY = barY + Math.round((barH - handleH) * t);
         }
     }
 }

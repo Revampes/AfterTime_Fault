@@ -120,7 +120,8 @@ public class Utils {
                     "minecraft:chest",
                     "minecraft:lever",
                     "minecraft:skull",
-                    "minecraft:trapped_chest"
+                    "minecraft:trapped_chest",
+                    "minecraft:stone_button"
             };
 
             return Arrays.asList(validBlocks).contains(blockName);

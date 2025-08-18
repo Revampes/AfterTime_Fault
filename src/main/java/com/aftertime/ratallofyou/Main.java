@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
+import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.render.*;
 import com.aftertime.ratallofyou.modules.SkyBlock.AutoSprint;
@@ -60,6 +61,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new ArmorHide());
         MinecraftForge.EVENT_BUS.register(new FastHotKey());
         MinecraftForge.EVENT_BUS.register(new FastHotKeyGui());
+        MinecraftForge.EVENT_BUS.register(new startswith());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

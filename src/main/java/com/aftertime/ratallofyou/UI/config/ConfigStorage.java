@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.UI.config;
 
 import com.aftertime.ratallofyou.UI.UIDragger;
+import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import com.aftertime.ratallofyou.modules.render.EtherwarpOverlay;
 import com.aftertime.ratallofyou.modules.render.NoDebuff;
 
@@ -16,6 +17,8 @@ public class ConfigStorage {
     private static final File NODEBUFF_CONFIG_FILE = new File("config/ratallofyou_nodebuff.cfg");
     // Added dedicated Fast Hotkey storage file
     private static final File FASTHOTKEY_CONFIG_FILE = new File("config/ratallofyou_fast_hotkey.cfg");
+    // New: Terminals settings file
+    private static final File TERMINALS_CONFIG_FILE = new File("config/ratallofyou_terminals.cfg");
 
     // Module metadata storage
     public static class ModuleInfo {
@@ -49,6 +52,8 @@ public class ConfigStorage {
             new ModuleInfo("Key Highlighter", "Box Key (through wall!)", "Dungeons", false),
             new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins (through wall!)", "Dungeons", false),
             new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false),
+            // New: Dungeon Terminals helper (custom GUI)
+            new ModuleInfo("Dungeon Terminals", "Custom GUI and helpers for SkyBlock dungeon terminals", "Dungeons", false),
 
             // SkyBlock
             new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false),
@@ -101,6 +106,22 @@ public class ConfigStorage {
         }
     }
 
+    // New: Terminal settings container
+    public static class TerminalSettings {
+        public boolean highPingMode = false;
+        public boolean phoenixClientCompat = false;
+        public float scale = 1.0f;
+        public int timeoutMs = 500;
+        public int firstClickMs = 0;
+        public int offsetX = 0;
+        public int offsetY = 0;
+        public Color overlayColor = new Color(0, 255, 0, 255);
+        public Color backgroundColor = new Color(0, 0, 0, 127);
+        // Per-terminal enable toggles
+        public boolean enableStartsWith = true;
+        public boolean enableColors = true;
+    }
+
     // New Fast Hotkey entry model
     public static class FastHotKeyEntry {
         public String label;
@@ -147,6 +168,9 @@ public class ConfigStorage {
 
     // Fast Hotkey entries (max 12)
     private static final List<FastHotKeyEntry> FAST_HOTKEY_ENTRIES = new ArrayList<FastHotKeyEntry>();
+
+    // Terminals settings singleton
+    private static final TerminalSettings TERMINAL_SETTINGS = new TerminalSettings();
 
     public static Properties loadProperties(File file) {
         Properties props = new Properties();
@@ -199,6 +223,8 @@ public class ConfigStorage {
         loadFastHotKeyConfig();
         // Load Etherwarp settings (toggles, colors, render method)
         loadEtherwarpConfig();
+        // Load Terminal helper settings
+        loadTerminalConfig();
 
         // Apply NoDebuff settings to runtime on startup
         for (ModuleInfo module : MODULES) {
@@ -216,6 +242,9 @@ public class ConfigStorage {
                 break;
             }
         }
+
+        // Apply Terminal settings to runtime (module enable handled elsewhere)
+        applyTerminalSettingsToRuntime();
     }
 
     public static void loadMainConfig() {
@@ -433,5 +462,100 @@ public class ConfigStorage {
             props.setProperty("command_" + i, e.command == null ? "" : e.command);
         }
         saveProperties(props, FASTHOTKEY_CONFIG_FILE, "Fast Hotkey Entries");
+    }
+
+    // ============================
+    // Terminals config
+    // ============================
+    public static TerminalSettings getTerminalSettings() { return TERMINAL_SETTINGS; }
+
+    public static void loadTerminalConfig() {
+        Properties props = loadProperties(TERMINALS_CONFIG_FILE);
+        TERMINAL_SETTINGS.highPingMode = Boolean.parseBoolean(props.getProperty("high_ping_mode", String.valueOf(TERMINAL_SETTINGS.highPingMode)));
+        TERMINAL_SETTINGS.phoenixClientCompat = Boolean.parseBoolean(props.getProperty("phoenix_client", String.valueOf(TERMINAL_SETTINGS.phoenixClientCompat)));
+        try { TERMINAL_SETTINGS.scale = Float.parseFloat(props.getProperty("scale", String.valueOf(TERMINAL_SETTINGS.scale))); } catch (Exception ignored) {}
+        try { TERMINAL_SETTINGS.timeoutMs = Integer.parseInt(props.getProperty("timeout_ms", String.valueOf(TERMINAL_SETTINGS.timeoutMs))); } catch (Exception ignored) {}
+        try { TERMINAL_SETTINGS.firstClickMs = Integer.parseInt(props.getProperty("first_click_ms", String.valueOf(TERMINAL_SETTINGS.firstClickMs))); } catch (Exception ignored) {}
+        try { TERMINAL_SETTINGS.offsetX = Integer.parseInt(props.getProperty("offset_x", String.valueOf(TERMINAL_SETTINGS.offsetX))); } catch (Exception ignored) {}
+        try { TERMINAL_SETTINGS.offsetY = Integer.parseInt(props.getProperty("offset_y", String.valueOf(TERMINAL_SETTINGS.offsetY))); } catch (Exception ignored) {}
+        // Per-terminal toggles
+        TERMINAL_SETTINGS.enableStartsWith = Boolean.parseBoolean(props.getProperty("enable_startswith", String.valueOf(TERMINAL_SETTINGS.enableStartsWith)));
+        TERMINAL_SETTINGS.enableColors = Boolean.parseBoolean(props.getProperty("enable_colors", String.valueOf(TERMINAL_SETTINGS.enableColors)));
+
+        String oc = props.getProperty("overlay_color", "0,255,0,255");
+        String[] p = oc.split(",");
+        if (p.length == 4) {
+            try {
+                TERMINAL_SETTINGS.overlayColor = new Color(Integer.parseInt(p[0]), Integer.parseInt(p[1]), Integer.parseInt(p[2]), Integer.parseInt(p[3]));
+            } catch (Exception ignored) {}
+        }
+        String bc = props.getProperty("background_color", "0,0,0,127");
+        p = bc.split(",");
+        if (p.length == 4) {
+            try {
+                TERMINAL_SETTINGS.backgroundColor = new Color(Integer.parseInt(p[0]), Integer.parseInt(p[1]), Integer.parseInt(p[2]), Integer.parseInt(p[3]));
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public static void saveTerminalConfig() {
+        Properties props = new Properties();
+        props.setProperty("high_ping_mode", String.valueOf(TERMINAL_SETTINGS.highPingMode));
+        props.setProperty("phoenix_client", String.valueOf(TERMINAL_SETTINGS.phoenixClientCompat));
+        props.setProperty("scale", String.valueOf(TERMINAL_SETTINGS.scale));
+        props.setProperty("timeout_ms", String.valueOf(TERMINAL_SETTINGS.timeoutMs));
+        props.setProperty("first_click_ms", String.valueOf(TERMINAL_SETTINGS.firstClickMs));
+        props.setProperty("offset_x", String.valueOf(TERMINAL_SETTINGS.offsetX));
+        props.setProperty("offset_y", String.valueOf(TERMINAL_SETTINGS.offsetY));
+        // Per-terminal toggles
+        props.setProperty("enable_startswith", String.valueOf(TERMINAL_SETTINGS.enableStartsWith));
+        props.setProperty("enable_colors", String.valueOf(TERMINAL_SETTINGS.enableColors));
+        props.setProperty("overlay_color",
+                TERMINAL_SETTINGS.overlayColor.getRed() + "," + TERMINAL_SETTINGS.overlayColor.getGreen() + "," + TERMINAL_SETTINGS.overlayColor.getBlue() + "," + TERMINAL_SETTINGS.overlayColor.getAlpha());
+        props.setProperty("background_color",
+                TERMINAL_SETTINGS.backgroundColor.getRed() + "," + TERMINAL_SETTINGS.backgroundColor.getGreen() + "," + TERMINAL_SETTINGS.backgroundColor.getBlue() + "," + TERMINAL_SETTINGS.backgroundColor.getAlpha());
+        saveProperties(props, TERMINALS_CONFIG_FILE, "Dungeon Terminals Settings");
+    }
+
+    public static void applyTerminalSettingsToRuntime() {
+        startswith.setHighPingMode(TERMINAL_SETTINGS.highPingMode);
+        startswith.setPhoenixClientCompat(TERMINAL_SETTINGS.phoenixClientCompat);
+        startswith.setScale(TERMINAL_SETTINGS.scale);
+        startswith.setTimeoutMs(TERMINAL_SETTINGS.timeoutMs);
+        startswith.setFirstClickBlockMs(TERMINAL_SETTINGS.firstClickMs);
+        startswith.setOffsetX(TERMINAL_SETTINGS.offsetX);
+        startswith.setOffsetY(TERMINAL_SETTINGS.offsetY);
+        startswith.setOverlayColor(new java.awt.Color(
+                TERMINAL_SETTINGS.overlayColor.getRed(),
+                TERMINAL_SETTINGS.overlayColor.getGreen(),
+                TERMINAL_SETTINGS.overlayColor.getBlue(),
+                TERMINAL_SETTINGS.overlayColor.getAlpha()
+        ).getRGB());
+        startswith.setBackgroundColor(new java.awt.Color(
+                TERMINAL_SETTINGS.backgroundColor.getRed(),
+                TERMINAL_SETTINGS.backgroundColor.getGreen(),
+                TERMINAL_SETTINGS.backgroundColor.getBlue(),
+                TERMINAL_SETTINGS.backgroundColor.getAlpha()
+        ).getRGB());
+        // Also apply to Colors terminal helper
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setHighPingMode(TERMINAL_SETTINGS.highPingMode);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setPhoenixClientCompat(TERMINAL_SETTINGS.phoenixClientCompat);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setScale(TERMINAL_SETTINGS.scale);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setTimeoutMs(TERMINAL_SETTINGS.timeoutMs);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setFirstClickBlockMs(TERMINAL_SETTINGS.firstClickMs);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOffsetX(TERMINAL_SETTINGS.offsetX);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOffsetY(TERMINAL_SETTINGS.offsetY);
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOverlayColor(new java.awt.Color(
+                TERMINAL_SETTINGS.overlayColor.getRed(),
+                TERMINAL_SETTINGS.overlayColor.getGreen(),
+                TERMINAL_SETTINGS.overlayColor.getBlue(),
+                TERMINAL_SETTINGS.overlayColor.getAlpha()
+        ).getRGB());
+        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setBackgroundColor(new java.awt.Color(
+                TERMINAL_SETTINGS.backgroundColor.getRed(),
+                TERMINAL_SETTINGS.backgroundColor.getGreen(),
+                TERMINAL_SETTINGS.backgroundColor.getBlue(),
+                TERMINAL_SETTINGS.backgroundColor.getAlpha()
+        ).getRGB());
     }
 }
