@@ -715,7 +715,7 @@ public class ModSettingsGui extends GuiScreen {
                 ConfigStorage.TerminalSettings ts = ConfigStorage.getTerminalSettings();
                 if (isOverlay) ts.overlayColor = this.color; else ts.backgroundColor = this.color;
                 ConfigStorage.saveTerminalConfig();
-                ConfigStorage.applyTerminalSettingsToRuntime();
+//                ConfigStorage.applyTerminalSettingsToRuntime();
             } catch (Exception ignored) {}
         }
     }
@@ -913,31 +913,31 @@ public class ModSettingsGui extends GuiScreen {
             commandToggles.add(new CommandToggle("Enable Colors GUI", "Use custom GUI for Colors", ts.enableColors, panelX, y, w, 16)); y += 22;
 
             // Scale and timings / offsets
-            commandToggles.add(new LabeledTextInput("Scale", String.valueOf(ts.scale), panelX, y, w, 16, (v) -> {
-                try { ts.scale = Math.max(0.25f, Math.min(4f, Float.parseFloat(v))); } catch (Exception ignored) {}
-                ConfigStorage.saveTerminalConfig();
-                ConfigStorage.applyTerminalSettingsToRuntime();
-            })); y += 22;
-            commandToggles.add(new LabeledTextInput("Timeout", String.valueOf(ts.timeoutMs), panelX, y, w, 16, (v) -> {
-                try { ts.timeoutMs = Math.max(0, Integer.parseInt(v)); } catch (Exception ignored) {}
-                ConfigStorage.saveTerminalConfig();
-                ConfigStorage.applyTerminalSettingsToRuntime();
-            })); y += 22;
-            commandToggles.add(new LabeledTextInput("FirstClick", String.valueOf(ts.firstClickMs), panelX, y, w, 16, (v) -> {
-                try { ts.firstClickMs = Math.max(0, Integer.parseInt(v)); } catch (Exception ignored) {}
-                ConfigStorage.saveTerminalConfig();
-                ConfigStorage.applyTerminalSettingsToRuntime();
-            })); y += 22;
-            commandToggles.add(new LabeledTextInput("OffsetX", String.valueOf(ts.offsetX), panelX, y, w, 16, (v) -> {
-                try { ts.offsetX = Integer.parseInt(v); } catch (Exception ignored) {}
-                ConfigStorage.saveTerminalConfig();
-                ConfigStorage.applyTerminalSettingsToRuntime();
-            })); y += 22;
-            commandToggles.add(new LabeledTextInput("OffsetY", String.valueOf(ts.offsetY), panelX, y, w, 16, (v) -> {
-                try { ts.offsetY = Integer.parseInt(v); } catch (Exception ignored) {}
-                ConfigStorage.saveTerminalConfig();
-                ConfigStorage.applyTerminalSettingsToRuntime();
-            })); y += 22;
+//            commandToggles.add(new LabeledTextInput("Scale", String.valueOf(ts.scale), panelX, y, w, 16, (v) -> {
+//                try { ts.scale = Math.max(0.25f, Math.min(4f, Float.parseFloat(v))); } catch (Exception ignored) {}
+//                ConfigStorage.saveTerminalConfig();
+//                ConfigStorage.applyTerminalSettingsToRuntime();
+//            })); y += 22;
+//            commandToggles.add(new LabeledTextInput("Timeout", String.valueOf(ts.timeoutMs), panelX, y, w, 16, (v) -> {
+//                try { ts.timeoutMs = Math.max(0, Integer.parseInt(v)); } catch (Exception ignored) {}
+//                ConfigStorage.saveTerminalConfig();
+//                ConfigStorage.applyTerminalSettingsToRuntime();
+//            })); y += 22;
+//            commandToggles.add(new LabeledTextInput("FirstClick", String.valueOf(ts.firstClickMs), panelX, y, w, 16, (v) -> {
+//                try { ts.firstClickMs = Math.max(0, Integer.parseInt(v)); } catch (Exception ignored) {}
+//                ConfigStorage.saveTerminalConfig();
+//                ConfigStorage.applyTerminalSettingsToRuntime();
+//            })); y += 22;
+//            commandToggles.add(new LabeledTextInput("OffsetX", String.valueOf(ts.offsetX), panelX, y, w, 16, (v) -> {
+//                try { ts.offsetX = Integer.parseInt(v); } catch (Exception ignored) {}
+//                ConfigStorage.saveTerminalConfig();
+//                ConfigStorage.applyTerminalSettingsToRuntime();
+//            })); y += 22;
+//            commandToggles.add(new LabeledTextInput("OffsetY", String.valueOf(ts.offsetY), panelX, y, w, 16, (v) -> {
+//                try { ts.offsetY = Integer.parseInt(v); } catch (Exception ignored) {}
+//                ConfigStorage.saveTerminalConfig();
+//                ConfigStorage.applyTerminalSettingsToRuntime();
+//            })); y += 22;
 
             // Colors
             commandToggles.add(new TerminalColorInput("Overlay", ts.overlayColor, panelX, y, w, 18, true)); y += 50;
@@ -1020,7 +1020,7 @@ public class ModSettingsGui extends GuiScreen {
         }
         ConfigStorage.saveTerminalConfig();
         // Apply runtime + enable/disable modules
-        ConfigStorage.applyTerminalSettingsToRuntime();
+//        ConfigStorage.applyTerminalSettingsToRuntime();
         com.aftertime.ratallofyou.modules.dungeon.terminals.startswith.setEnabled(ts.enableStartsWith);
         com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setEnabled(ts.enableColors);
     }

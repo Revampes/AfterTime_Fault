@@ -244,7 +244,7 @@ public class ConfigStorage {
         }
 
         // Apply Terminal settings to runtime (module enable handled elsewhere)
-        applyTerminalSettingsToRuntime();
+//        applyTerminalSettingsToRuntime();
     }
 
     public static void loadMainConfig() {
@@ -517,45 +517,45 @@ public class ConfigStorage {
         saveProperties(props, TERMINALS_CONFIG_FILE, "Dungeon Terminals Settings");
     }
 
-    public static void applyTerminalSettingsToRuntime() {
-        startswith.setHighPingMode(TERMINAL_SETTINGS.highPingMode);
-        startswith.setPhoenixClientCompat(TERMINAL_SETTINGS.phoenixClientCompat);
-        startswith.setScale(TERMINAL_SETTINGS.scale);
-        startswith.setTimeoutMs(TERMINAL_SETTINGS.timeoutMs);
-        startswith.setFirstClickBlockMs(TERMINAL_SETTINGS.firstClickMs);
-        startswith.setOffsetX(TERMINAL_SETTINGS.offsetX);
-        startswith.setOffsetY(TERMINAL_SETTINGS.offsetY);
-        startswith.setOverlayColor(new java.awt.Color(
-                TERMINAL_SETTINGS.overlayColor.getRed(),
-                TERMINAL_SETTINGS.overlayColor.getGreen(),
-                TERMINAL_SETTINGS.overlayColor.getBlue(),
-                TERMINAL_SETTINGS.overlayColor.getAlpha()
-        ).getRGB());
-        startswith.setBackgroundColor(new java.awt.Color(
-                TERMINAL_SETTINGS.backgroundColor.getRed(),
-                TERMINAL_SETTINGS.backgroundColor.getGreen(),
-                TERMINAL_SETTINGS.backgroundColor.getBlue(),
-                TERMINAL_SETTINGS.backgroundColor.getAlpha()
-        ).getRGB());
-        // Also apply to Colors terminal helper
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setHighPingMode(TERMINAL_SETTINGS.highPingMode);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setPhoenixClientCompat(TERMINAL_SETTINGS.phoenixClientCompat);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setScale(TERMINAL_SETTINGS.scale);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setTimeoutMs(TERMINAL_SETTINGS.timeoutMs);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setFirstClickBlockMs(TERMINAL_SETTINGS.firstClickMs);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOffsetX(TERMINAL_SETTINGS.offsetX);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOffsetY(TERMINAL_SETTINGS.offsetY);
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOverlayColor(new java.awt.Color(
-                TERMINAL_SETTINGS.overlayColor.getRed(),
-                TERMINAL_SETTINGS.overlayColor.getGreen(),
-                TERMINAL_SETTINGS.overlayColor.getBlue(),
-                TERMINAL_SETTINGS.overlayColor.getAlpha()
-        ).getRGB());
-        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setBackgroundColor(new java.awt.Color(
-                TERMINAL_SETTINGS.backgroundColor.getRed(),
-                TERMINAL_SETTINGS.backgroundColor.getGreen(),
-                TERMINAL_SETTINGS.backgroundColor.getBlue(),
-                TERMINAL_SETTINGS.backgroundColor.getAlpha()
-        ).getRGB());
-    }
+//    public static void applyTerminalSettingsToRuntime() {
+//        startswith.setHighPingMode(TERMINAL_SETTINGS.highPingMode);
+//        startswith.setPhoenixClientCompat(TERMINAL_SETTINGS.phoenixClientCompat);
+//        startswith.setScale(TERMINAL_SETTINGS.scale);
+//        startswith.setTimeoutMs(TERMINAL_SETTINGS.timeoutMs);
+//        startswith.setFirstClickBlockMs(TERMINAL_SETTINGS.firstClickMs);
+//        startswith.setOffsetX(TERMINAL_SETTINGS.offsetX);
+//        startswith.setOffsetY(TERMINAL_SETTINGS.offsetY);
+//        startswith.setOverlayColor(new java.awt.Color(
+//                TERMINAL_SETTINGS.overlayColor.getRed(),
+//                TERMINAL_SETTINGS.overlayColor.getGreen(),
+//                TERMINAL_SETTINGS.overlayColor.getBlue(),
+//                TERMINAL_SETTINGS.overlayColor.getAlpha()
+//        ).getRGB());
+//        startswith.setBackgroundColor(new java.awt.Color(
+//                TERMINAL_SETTINGS.backgroundColor.getRed(),
+//                TERMINAL_SETTINGS.backgroundColor.getGreen(),
+//                TERMINAL_SETTINGS.backgroundColor.getBlue(),
+//                TERMINAL_SETTINGS.backgroundColor.getAlpha()
+//        ).getRGB());
+//        // Also apply to Colors terminal helper
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setHighPingMode(TERMINAL_SETTINGS.highPingMode);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setPhoenixClientCompat(TERMINAL_SETTINGS.phoenixClientCompat);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setScale(TERMINAL_SETTINGS.scale);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setTimeoutMs(TERMINAL_SETTINGS.timeoutMs);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setFirstClickBlockMs(TERMINAL_SETTINGS.firstClickMs);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOffsetX(TERMINAL_SETTINGS.offsetX);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOffsetY(TERMINAL_SETTINGS.offsetY);
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setOverlayColor(new java.awt.Color(
+//                TERMINAL_SETTINGS.overlayColor.getRed(),
+//                TERMINAL_SETTINGS.overlayColor.getGreen(),
+//                TERMINAL_SETTINGS.overlayColor.getBlue(),
+//                TERMINAL_SETTINGS.overlayColor.getAlpha()
+//        ).getRGB());
+//        com.aftertime.ratallofyou.modules.dungeon.terminals.Colors.setBackgroundColor(new java.awt.Color(
+//                TERMINAL_SETTINGS.backgroundColor.getRed(),
+//                TERMINAL_SETTINGS.backgroundColor.getGreen(),
+//                TERMINAL_SETTINGS.backgroundColor.getBlue(),
+//                TERMINAL_SETTINGS.backgroundColor.getAlpha()
+//        ).getRGB());
+//    }
 }
