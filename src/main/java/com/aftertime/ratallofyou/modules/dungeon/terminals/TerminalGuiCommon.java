@@ -26,11 +26,8 @@ public final class TerminalGuiCommon {
         try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.numbers"); } catch (Throwable ignored) {}
         try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.startswith"); } catch (Throwable ignored) {}
         try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.Colors"); } catch (Throwable ignored) {}
-        // Added redgreen to ensure it auto-registers at startup as well
         try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.redgreen"); } catch (Throwable ignored) {}
-        // Ensure Rubix solver auto-registers
         try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.rubix"); } catch (Throwable ignored) {}
-        // Ensure Melody terminal auto-registers
         try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.melody"); } catch (Throwable ignored) {}
     }
 

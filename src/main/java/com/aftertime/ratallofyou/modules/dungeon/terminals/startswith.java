@@ -25,10 +25,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Custom GUI and click helper for the "Starts With" terminal in SkyBlock dungeons.
- * Ported from the provided ChatTriggers JS logic into a Forge 1.8.9 Java module.
- */
 public class startswith {
     // Runtime enable toggle
     private static boolean enabled = true;
