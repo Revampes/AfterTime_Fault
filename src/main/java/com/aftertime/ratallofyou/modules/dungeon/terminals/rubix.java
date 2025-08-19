@@ -213,7 +213,9 @@ public class rubix {
         GlStateManager.scale(TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.scale, 1f);
         TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
-        for (int i = 0; i < windowSize; ++i) {
+        // Draw overlays only for allowed 3x3 slots
+        for (int i : ALLOWED_SLOTS) {
+            if (i >= windowSize) continue;
             int need = getSolution(i);
             if (need == 0) continue;
             int curX = (i % 9) * 18 + offX;

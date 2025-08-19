@@ -174,23 +174,21 @@ public class numbers {
         TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
 
-        // Highlight next 3 steps only
-        // Top-3 highlight colors for next clicks (1st, 2nd, 3rd)
+        // Highlight next up to 3 steps directly
         int[] stepColors = new int[]{ 0xFF00FF00, 0xFFFFFF00, 0xFFFF0000 };
-        for (int i = 0; i < windowSize; ++i) {
-            int idx = solution.indexOf(i);
-            if (idx == -1 || idx >= stepColors.length) continue;
-            int curX = (i % 9) * 18 + offX;
-            int curY = (i / 9) * 18 + offY;
-            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, stepColors[idx]);
+        int max = Math.min(3, solution.size());
+        for (int i = 0; i < max; i++) {
+            int slot = solution.get(i);
+            int curX = (slot % 9) * 18 + offX;
+            int curY = (slot / 9) * 18 + offY;
+            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, stepColors[i]);
         }
 
         // Draw numeric labels for all panes according to fullSolution order
-        for (int i = 0; i < windowSize; ++i) {
-            int idx = fullSolution.indexOf(i);
-            if (idx == -1) continue;
-            int curX = (i % 9) * 18 + offX;
-            int curY = (i / 9) * 18 + offY;
+        for (int idx = 0; idx < fullSolution.size(); idx++) {
+            int slot = fullSolution.get(idx);
+            int curX = (slot % 9) * 18 + offX;
+            int curY = (slot / 9) * 18 + offY;
             String text = String.valueOf(idx + 1);
             fr.drawStringWithShadow(text, curX + (int) ((16 - fr.getStringWidth(text)) / 2f), curY + 4, 0xFFFFFFFF);
         }

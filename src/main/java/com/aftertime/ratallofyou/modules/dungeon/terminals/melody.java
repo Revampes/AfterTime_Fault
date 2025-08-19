@@ -196,19 +196,25 @@ public class melody {
             TerminalGuiCommon.drawRect(colX, offY + 18, colX + 16, offY + 18 + 70, COLOR_COLUMN);
         }
 
-        // Per-slot overlays: button state and current moving note
+        // Draw only the relevant slots without scanning the whole grid
         int buttonSlot = (button >= 0) ? (button * 9 + 16) : -1;
         int currentSlot = (button >= 0 && current >= 0) ? (button * 9 + 10 + current) : -1;
-        for (int i = 0; i < windowSize; ++i) {
-            int curX = (i % 9) * 18 + offX;
-            int curY = (i / 9) * 18 + offY;
-            if (i == buttonSlot) {
-                TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_BUTTON_CORRECT);
-            } else if (Arrays.binarySearch(BUTTON_SLOTS, i) >= 0) {
-                TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_BUTTON_INCORRECT);
-            } else if (i == currentSlot) {
-                TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_SLOT);
-            }
+
+        if (buttonSlot >= 0 && buttonSlot < windowSize) {
+            int curX = (buttonSlot % 9) * 18 + offX;
+            int curY = (buttonSlot / 9) * 18 + offY;
+            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_BUTTON_CORRECT);
+        }
+        for (int s : BUTTON_SLOTS) {
+            if (s == buttonSlot || s >= windowSize) continue;
+            int curX = (s % 9) * 18 + offX;
+            int curY = (s / 9) * 18 + offY;
+            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_BUTTON_INCORRECT);
+        }
+        if (currentSlot >= 0 && currentSlot < windowSize) {
+            int curX = (currentSlot % 9) * 18 + offX;
+            int curY = (currentSlot / 9) * 18 + offY;
+            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_SLOT);
         }
         GlStateManager.popMatrix();
     }
@@ -218,20 +224,20 @@ public class melody {
         Container container = Minecraft.getMinecraft().thePlayer != null ? Minecraft.getMinecraft().thePlayer.openContainer : null;
         if (!(container instanceof ContainerChest)) return;
 
-        // Find the active lime pane (meta 5) which encodes row and current column
+        // Find the active lime pane (meta 5) and the correct column marker (meta 2). Break early when both found.
         int activeSlot = -1;
         int correctSlot = -1;
         int size = Math.max(0, windowSize);
         for (int i = 0; i < size; i++) {
             Slot s = container.getSlot(i);
             ItemStack stack = s == null ? null : s.getStack();
-            if (stack == null) continue;
-            if (stack.hasEffect()) continue;
+            if (stack == null || stack.hasEffect()) continue;
             int id = Item.getIdFromItem(stack.getItem());
             if (id != 160) continue; // stained glass pane only
             int meta = stack.getItemDamage();
             if (meta == 5) activeSlot = i;      // lime pane indicates moving note
             else if (meta == 2) correctSlot = i; // green pane indicates correct column marker (top row)
+            if (activeSlot != -1 && correctSlot != -1) break; // early exit
         }
         if (activeSlot != -1) {
             int row = activeSlot / 9;

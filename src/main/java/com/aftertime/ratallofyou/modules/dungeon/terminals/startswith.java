@@ -197,11 +197,10 @@ public class startswith {
         // title
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
 
-        // draw solution highlights
-        for (int i = 0; i < windowSize; i++) {
-            if (!solution.contains(i)) continue;
-            int curX = (i % 9) * 18 + offX;
-            int curY = (i / 9) * 18 + offY;
+        // draw solution highlights directly from solution list
+        for (int slot : solution) {
+            int curX = (slot % 9) * 18 + offX;
+            int curY = (slot / 9) * 18 + offY;
             TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.overlayColor);
         }
         GlStateManager.popMatrix();

@@ -201,10 +201,10 @@ public class redgreen {
         TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
 
-        for (int i = 0; i < windowSize; ++i) {
-            if (!solution.contains(i)) continue;
-            int curX = (i % 9) * 18 + offX;
-            int curY = (i / 9) * 18 + offY;
+        // Iterate over solution slots directly
+        for (int slot : solution) {
+            int curX = (slot % 9) * 18 + offX;
+            int curY = (slot / 9) * 18 + offY;
             TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.overlayColor);
         }
 
