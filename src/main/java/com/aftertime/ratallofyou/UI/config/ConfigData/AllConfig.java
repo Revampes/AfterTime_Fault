@@ -117,6 +117,19 @@ public class AllConfig {
             put("gui_moveguiposition",new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false));
     }};
 
+    // New: Fast Hotkey appearance/config options
+    public final HashMap<String, BaseConfig<?>> FASTHOTKEY_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("fhk_inner_radius", new BaseConfig<>("Inner Radius", "Inner cancel circle radius (px)", 40));
+        put("fhk_outer_radius", new BaseConfig<>("Outer Radius", "Outer ring radius (px)", 150));
+        // Animation colors and proximity
+        put("fhk_inner_near_color", new BaseConfig<>("Inner Near Color", "Color nearest to cursor on inner ring (RGBA)", new Color(255, 255, 255, 255)));
+        put("fhk_inner_far_color", new BaseConfig<>("Inner Far Color", "Color farthest from cursor on inner ring (RGBA)", new Color(0, 0, 0, 255)));
+        put("fhk_outer_near_color", new BaseConfig<>("Outer Near Color", "Color nearest to cursor on outer ring (RGBA)", new Color(255, 255, 255, 255)));
+        put("fhk_outer_far_color", new BaseConfig<>("Outer Far Color", "Color farthest from cursor on outer ring (RGBA)", new Color(0, 0, 0, 255)));
+        put("fhk_outline_prox_range", new BaseConfig<>("Outline Proximity Range", "How far from ring counts as close (px)", 120));
+    }};
+
     // After individual maps are ready, build the index map
     public final HashMap<Integer,HashMap<String,BaseConfig<?>>> ALLCONFIGS = new HashMap<Integer,HashMap<String,BaseConfig<?>>>()
     {{
@@ -126,6 +139,8 @@ public class AllConfig {
         put(3, ETHERWARP_CONFIGS);
         put(4, TERMINAL_CONFIGS);
         put(5, Pos_CONFIGS);
+        // Index 6 reserved for Fast Hotkey appearance
+        put(6, FASTHOTKEY_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

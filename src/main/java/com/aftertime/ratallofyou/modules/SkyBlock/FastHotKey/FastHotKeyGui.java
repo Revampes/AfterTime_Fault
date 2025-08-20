@@ -9,12 +9,14 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import java.io.IOException;
 import java.util.List;
+import java.awt.Color;
 
 public class FastHotKeyGui extends GuiScreen {
-    private static final int CIRCLE_RADIUS = 150;
+    // Default radii (will be overridden by config each frame)
+    private static final int DEFAULT_OUTER_RADIUS = 150;
+    private static final int DEFAULT_INNER_RADIUS = 40;
     // New UI constants
-    private static final int INNER_CANCEL_RADIUS = 40;
-    private static final float GAP_PIXELS = 8f;
+    private static final float GAP_PIXELS = 5f;
     private static final float ARROW_BASE_HALFWIDTH = 10f;
     private static final float ARROW_LENGTH = 20f;
     private static final float ARROW_MARGIN = 3f;
@@ -23,11 +25,16 @@ public class FastHotKeyGui extends GuiScreen {
     private static final float LABEL_SIDE_MARGIN_PX = 4f;      // Keep a small angular margin
     private static final float LABEL_VERTICAL_MARGIN_PX = 3f;  // Keep a small radial margin
     private static final float LABEL_MAX_SCALE = 3.5f;         // Avoid absurdly large text
-    private static final float LABEL_MIN_SCALE = 0.5f;         // Still readable when narrow
+
+    // Outline
+    private static final float OUTLINE_THICKNESS = 8f;         // Outline stroke thickness
 
     private int centerX;
     private int centerY;
     private int regionCount = 0;
+    // Track last mouse position while the GUI is open
+    private int lastMouseX = 0;
+    private int lastMouseY = 0;
 
     @Override
     public void initGui() {
@@ -40,9 +47,22 @@ public class FastHotKeyGui extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        // Update last known mouse position
+        this.lastMouseX = mouseX;
+        this.lastMouseY = mouseY;
+
         // Center
         centerX = width / 2;
         centerY = height / 2;
+
+        // Load configurable radii and colors
+        int innerRadius = getSafeInnerRadius();
+        int outerRadius = getSafeOuterRadius(innerRadius);
+        int proxRange = getOutlineProxRange();
+        Color innerNear = getColorOrDefault("fhk_inner_near_color", new Color(255,255,255,255));
+        Color innerFar  = getColorOrDefault("fhk_inner_far_color",  new Color(0,0,0,255));
+        Color outerNear = getColorOrDefault("fhk_outer_near_color", new Color(255,255,255,255));
+        Color outerFar  = getColorOrDefault("fhk_outer_far_color",  new Color(0,0,0,255));
 
         // No commands configured
         if (regionCount == 0) {
@@ -59,49 +79,57 @@ public class FastHotKeyGui extends GuiScreen {
         for (int i = 0; i < regionCount; i++) {
             double baseStart = i * sectorSize;
             double baseEnd = (i + 1) * sectorSize;
-            drawRingSectorWithPixelGap(centerX, centerY, INNER_CANCEL_RADIUS, CIRCLE_RADIUS, baseStart, baseEnd, GAP_PIXELS, 0x80000000);
+            drawRingSectorWithPixelGap(centerX, centerY, innerRadius, outerRadius, baseStart, baseEnd, GAP_PIXELS, 0x80000000);
         }
 
-        // Hover highlight (inner and outer arcs with constant pixel gap)
-        int hoveredRegion = getHoveredRegion(mouseX, mouseY);
-        if (hoveredRegion != -1) {
-            double baseStart = hoveredRegion * sectorSize;
-            double baseEnd = (hoveredRegion + 1) * sectorSize;
-            double innerTrim = GAP_PIXELS / (2.0 * Math.max(1.0, INNER_CANCEL_RADIUS));
-            double outerTrim = GAP_PIXELS / (2.0 * Math.max(1.0, CIRCLE_RADIUS));
-            double innerStart = baseStart + innerTrim;
-            double innerEnd = baseEnd - innerTrim;
-            double outerStart = baseStart + outerTrim;
-            double outerEnd = baseEnd - outerTrim;
-            int white = 0xFFFFFFFF;
-            drawCircleArcAngles(centerX, centerY, CIRCLE_RADIUS, outerStart, outerEnd, white, 8.0f);
-            drawCircleArcAngles(centerX, centerY, INNER_CANCEL_RADIUS, innerStart, innerEnd, white, 8.0f);
-        }
+        // New: Angular gradient outlines (near->far colors), with gaps preserved per sector
+        drawAngularGradientRingOutlineWithGaps(centerX, centerY, innerRadius, regionCount, GAP_PIXELS, mouseX, mouseY, proxRange, innerNear, innerFar);
+        drawAngularGradientRingOutlineWithGaps(centerX, centerY, outerRadius, regionCount, GAP_PIXELS, mouseX, mouseY, proxRange, outerNear, outerFar);
+
+        // Temporarily disabled old hover effect (white arcs on hovered region)
+        // ...existing code for old hover arcs removed...
 
         // Labels (scaled to fit their wedge)
         List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
         for (int i = 0; i < regionCount; i++) {
             double midAngle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
-            double rLabel = CIRCLE_RADIUS * LABEL_RADIUS_FACTOR;
+            double rLabel = (innerRadius + (outerRadius - innerRadius) * LABEL_RADIUS_FACTOR);
             int x = (int)(centerX + Math.cos(midAngle) * rLabel);
             int y = (int)(centerY + Math.sin(midAngle) * rLabel);
             String label = entries.get(i).label;
             if (label == null || label.trim().isEmpty()) label = "Command " + (i + 1);
-            drawScaledCenteredLabel(label, x, y, rLabel, sectorSize, 0xFFFFFF);
+            drawScaledCenteredLabel(label, x, y, rLabel, sectorSize, 0xFFFFFF, innerRadius, outerRadius);
         }
 
         // Direction arrow following mouse, positioned near inner radius
         double dx = mouseX - centerX;
         double dy = mouseY - centerY;
         double mouseAngle = Math.atan2(dy, dx);
-        double arrowRadius = INNER_CANCEL_RADIUS + (ARROW_LENGTH * 0.5f) + ARROW_MARGIN;
+        double arrowRadius = innerRadius + (ARROW_LENGTH * 0.5f) + ARROW_MARGIN;
         drawArrowAtAngle(centerX, centerY, mouseAngle, arrowRadius, ARROW_BASE_HALFWIDTH, ARROW_LENGTH, 0xFFFFFFFF);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
+    // Public API for confirming selection when hotkey is released
+    public void onHotkeyReleased() {
+        int innerRadius = getSafeInnerRadius();
+        int outerRadius = getSafeOuterRadius(innerRadius);
+        int region = getHoveredRegion(this.lastMouseX, this.lastMouseY, innerRadius, outerRadius);
+        if (region != -1) {
+            List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+            if (region < entries.size()) {
+                String cmd = entries.get(region).command;
+                if (cmd != null && !cmd.trim().isEmpty()) {
+                    Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                }
+            }
+        }
+        mc.displayGuiScreen(null);
+    }
+
     // Compute and draw the label at the largest scale that fits its wedge and ring thickness
-    private void drawScaledCenteredLabel(String text, int x, int y, double rLabel, double sectorSize, int color) {
+    private void drawScaledCenteredLabel(String text, int x, int y, double rLabel, double sectorSize, int color, int innerRadius, int outerRadius) {
         if (text == null || text.isEmpty()) return;
 
         int baseWidth = fontRendererObj.getStringWidth(text);
@@ -116,12 +144,12 @@ public class FastHotKeyGui extends GuiScreen {
 
         // Width-constrained scale (keep a tiny safety margin)
         double allowedWidth = Math.max(0.0, chordWidth - 2.0);
-        float widthScale = (float) ((baseWidth > 0) ? (allowedWidth / baseWidth) : 1.0);
+        float widthScale = (float) (allowedWidth / baseWidth);
 
         // Height-constrained scale based on ring thickness around rLabel
-        double radialMax = Math.min(rLabel - INNER_CANCEL_RADIUS, CIRCLE_RADIUS - rLabel) - LABEL_VERTICAL_MARGIN_PX;
+        double radialMax = Math.min(rLabel - innerRadius, outerRadius - rLabel) - LABEL_VERTICAL_MARGIN_PX;
         radialMax = Math.max(0.0, radialMax);
-        float heightScale = (float) ((baseHeight > 0) ? ((2.0 * radialMax) / baseHeight) : 1.0);
+        float heightScale = (float) ((2.0 * radialMax) / baseHeight);
 
         float scale = Math.min(widthScale, heightScale);
         scale = Math.min(scale, LABEL_MAX_SCALE);
@@ -149,7 +177,7 @@ public class FastHotKeyGui extends GuiScreen {
         GL11.glColor4f(r, g, b, a);
         GL11.glLineWidth(thickness);
 
-        int steps = 24;
+        int steps = 64;
         double step = Math.max((endAngle - startAngle) / steps, 1e-4);
         GL11.glBegin(GL11.GL_LINE_STRIP);
         for (double angle = startAngle; angle <= endAngle + 1e-6; angle += step) {
@@ -265,12 +293,12 @@ public class FastHotKeyGui extends GuiScreen {
         GlStateManager.disableBlend();
     }
 
-    private int getHoveredRegion(int mouseX, int mouseY) {
+    private int getHoveredRegion(int mouseX, int mouseY, int innerRadius, int outerRadius) {
         double dx = mouseX - centerX;
         double dy = mouseY - centerY;
         double distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > CIRCLE_RADIUS || distance < INNER_CANCEL_RADIUS || regionCount == 0) return -1;
+        if (distance > outerRadius || distance < innerRadius || regionCount == 0) return -1;
 
         double angle = Math.atan2(dy, dx);
         if (angle < 0) angle += 2 * Math.PI;
@@ -287,8 +315,8 @@ public class FastHotKeyGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        // Close on Escape or the current Fast Hotkey binding
-        if (keyCode == Keyboard.KEY_ESCAPE || keyCode == FastHotKey.HOTKEY.getKeyCode()) {
+        // Close only on Escape; hotkey release is handled externally
+        if (keyCode == Keyboard.KEY_ESCAPE) {
             mc.displayGuiScreen(null);
             return;
         }
@@ -298,7 +326,9 @@ public class FastHotKeyGui extends GuiScreen {
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         if (mouseButton == 0) {
-            int region = getHoveredRegion(mouseX, mouseY);
+            int innerRadius = getSafeInnerRadius();
+            int outerRadius = getSafeOuterRadius(innerRadius);
+            int region = getHoveredRegion(mouseX, mouseY, innerRadius, outerRadius);
             if (region != -1) {
                 List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
                 if (region < entries.size()) {
@@ -318,5 +348,93 @@ public class FastHotKeyGui extends GuiScreen {
     public boolean doesGuiPauseGame() {
         return false;
     }
-}
 
+    // =============================
+    // Helpers for config + outlines
+    // =============================
+    private int getSafeInnerRadius() {
+        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get("fhk_inner_radius").Data;
+        int r = (v instanceof Integer) ? (Integer) v : DEFAULT_INNER_RADIUS;
+        return Math.max(10, Math.min(400, r));
+    }
+    private int getSafeOuterRadius(int innerRadius) {
+        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get("fhk_outer_radius").Data;
+        int r = (v instanceof Integer) ? (Integer) v : DEFAULT_OUTER_RADIUS;
+        return Math.max(innerRadius + 10, Math.min(600, r));
+    }
+    private int getOutlineProxRange() {
+        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get("fhk_outline_prox_range").Data;
+        int r = (v instanceof Integer) ? (Integer) v : 120;
+        return Math.max(10, Math.min(2000, r));
+    }
+    private Color getColorOrDefault(String key, Color def) {
+        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key).Data;
+        return (v instanceof Color) ? (Color) v : def;
+    }
+
+    // New: Angular gradient outline with gaps preserved
+    private void drawAngularGradientRingOutlineWithGaps(int cx, int cy, int radius, int regionCount, float gapPx, int mouseX, int mouseY, int proxRange, Color near, Color far) {
+        if (regionCount <= 0 || radius <= 0) return;
+        double mouseAngle = Math.atan2(mouseY - cy, mouseX - cx);
+        double dist = Math.hypot(mouseX - cx, mouseY - cy);
+        float fRad = clamp01(1.0f - (float)(Math.abs(dist - radius) / Math.max(1, proxRange)));
+        double sectorSize = (Math.PI * 2.0) / regionCount;
+
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+        GlStateManager.disableTexture2D();
+        GlStateManager.disableDepth();
+        GlStateManager.depthMask(false);
+        GL11.glLineWidth(OUTLINE_THICKNESS);
+
+        // Precompute color channels
+        float nr = near.getRed() / 255f, ng = near.getGreen() / 255f, nb = near.getBlue() / 255f, na = near.getAlpha() / 255f;
+        float fr = far.getRed() / 255f,  fg = far.getGreen() / 255f,  fb = far.getBlue() / 255f,  fa = far.getAlpha() / 255f;
+
+        // Per-sector draw with gap trimming at this radius
+        double gapAngle = (gapPx / Math.max(1.0, radius));
+        int stepsPerFull = 192; // smoothness
+        int stepsPerSector = Math.max(8, stepsPerFull / Math.max(1, regionCount));
+
+        for (int i = 0; i < regionCount; i++) {
+            double baseStart = i * sectorSize;
+            double baseEnd = (i + 1) * sectorSize;
+            double start = baseStart + gapAngle * 0.5;
+            double end = baseEnd - gapAngle * 0.5;
+            if (end <= start) continue;
+
+            GL11.glBegin(GL11.GL_LINE_STRIP);
+            for (int s = 0; s <= stepsPerSector; s++) {
+                double t = (double)s / (double)stepsPerSector;
+                double a = start + t * (end - start);
+                // Angular factor: 1 at same angle as mouse, 0 at opposite side
+                double dAng = angularDistance(a, mouseAngle);
+                float fAng = (float)(1.0 - (dAng / Math.PI));
+                fAng = clamp01(fAng);
+                // Combine radial and angular closeness for mixing
+                float mix = clamp01(fAng * fRad);
+                // Lerp colors: far -> near
+                float cr = fr + (nr - fr) * mix;
+                float cg = fg + (ng - fg) * mix;
+                float cb = fb + (nb - fb) * mix;
+                float ca = fa + (na - fa) * mix;
+                GL11.glColor4f(cr, cg, cb, ca);
+                GL11.glVertex2f((float)(cx + Math.cos(a) * radius), (float)(cy + Math.sin(a) * radius));
+            }
+            GL11.glEnd();
+        }
+
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepth();
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+    }
+
+    private static double angularDistance(double a, double b) {
+        double d = Math.abs(a - b) % (Math.PI * 2.0);
+        return d > Math.PI ? (2.0 * Math.PI - d) : d;
+    }
+    private static float clamp01(float v) {
+        return v < 0f ? 0f : (v > 1f ? 1f : v);
+    }
+}

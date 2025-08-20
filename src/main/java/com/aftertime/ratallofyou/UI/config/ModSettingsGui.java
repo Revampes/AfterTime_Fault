@@ -239,9 +239,25 @@ public class ModSettingsGui extends GuiScreen {
             for (FastHotkeyEntry e : entries) fastRows.add(new FastRow(guiLeft, e));
         }
 
+        // 1) Draw Fast Hotkey appearance options (labelled + color inputs)
+        int yCursor = contentY;
+        for (LabelledInput t : labelledInputs) {
+            t.draw(mouseX, mouseY, yCursor, fontRendererObj);
+            yCursor += t.getVerticalSpace();
+        }
+        for (ColorInput t : ColorInputs) {
+            t.draw(mouseX, mouseY, yCursor, fontRendererObj);
+            yCursor += 50;
+        }
+
+        // Separator line
+        drawRect(x, yCursor, x + w, yCursor + 1, 0x33000000);
+        yCursor += 6;
+
+        // 2) Draw Fast Hotkey command rows
         for (int i = 0; i < fastRows.size(); i++) {
             FastRow row = fastRows.get(i);
-            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
+            int rowTop = yCursor + i * Dimensions.FH_ROW_HEIGHT;
             if (rowTop + Dimensions.FH_ROW_HEIGHT < panelY + 25 || rowTop > panelY + panelHeight) continue;
 
             // Background line separator
@@ -269,7 +285,7 @@ public class ModSettingsGui extends GuiScreen {
         }
 
         // Add button
-        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int addY = yCursor + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
         int addW = 60;
         boolean canAdd = entries.size() < 12;
         boolean hoverAdd = mouseX >= x && mouseX <= x + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT;
@@ -280,7 +296,10 @@ public class ModSettingsGui extends GuiScreen {
         glDisable(GL_SCISSOR_TEST);
 
         // Scrollbar
-        int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+        int optionsHeight = 0;
+        for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
+        optionsHeight += ColorInputs.size() * 50;
+        int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
         commandScroll.update(totalHeight, panelHeight - 25);
         if (commandScroll.shouldRenderScrollbar()) {
             commandScroll.updateScrollbarPosition(panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, panelHeight - 25);
@@ -298,17 +317,24 @@ public class ModSettingsGui extends GuiScreen {
         int x = panelX + 5;
         int contentY = panelY + 25 - commandScroll.getOffset();
 
+        // First, delegate clicks to Fast Hotkey appearance options
+        if (handleLabelledInputClicks(mouseX, mouseY)) return;
+        if (handleColorInputClicks(mouseX, mouseY)) return;
+
         List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
 
         // Add button
-        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int optionsHeight = 0;
+        for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
+        optionsHeight += ColorInputs.size() * 50;
+        int addY = contentY + optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
         int addW = 60;
         if (entries.size() < 12 && mouseX >= x && mouseX <= x + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT) {
             FastHotkeyEntry e = new FastHotkeyEntry("", "", entries.size());
             entries.add(e);
             fastRows.add(new FastRow(guiLeft, e));
             e.SetProperty();
-            int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+            int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
             commandScroll.update(totalHeight, panelHeight - 25);
             return;
         }
@@ -316,7 +342,7 @@ public class ModSettingsGui extends GuiScreen {
         // Rows
         for (int i = 0; i < fastRows.size(); i++) {
             FastRow row = fastRows.get(i);
-            int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
+            int rowTop = contentY + optionsHeight + i * Dimensions.FH_ROW_HEIGHT;
 
             // Titles and inputs to compute remove button position
             int title1Y = rowTop + 2;
@@ -332,7 +358,7 @@ public class ModSettingsGui extends GuiScreen {
                 entries.remove(row.entry);
                 fastRows.remove(i);
 
-                int totalHeight = fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
+                int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
                 commandScroll.update(totalHeight, panelHeight - 25);
                 return;
             }
@@ -352,6 +378,9 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private void handleFastHotKeyTyping(char typedChar, int keyCode) {
+        // First handle general option inputs on the Fast Hotkey panel
+        handleAllInputTyping(typedChar, keyCode);
+        // Then handle per-row inputs
         for (FastRow row : fastRows) {
             if (row.labelInput.isEditing) {
                 row.labelInput.handleKeyTyped(typedChar, keyCode);
@@ -549,15 +578,16 @@ public class ModSettingsGui extends GuiScreen {
         Object data = entry.getValue().Data;
         int xPos = guiLeft + Dimensions.COMMAND_PANEL_X + 5;
         int width = Dimensions.COMMAND_PANEL_WIDTH - 10;
-        boolean isTerminal = (ConfigType == 4);
+        // Use vertical-above labels for Terminal and Fast Hotkey settings
+        boolean isVerticalAbove = (ConfigType == 4 || ConfigType == 6);
         if (type.equals(String.class)) {
-            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isTerminal));
+            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
         } else if (type.equals(Boolean.class)) {
             Toggles.add(new Toggle(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16));
         } else if (type.equals(Integer.class)) {
-            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isTerminal));
+            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
         } else if (type.equals(Float.class)) {
-            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isTerminal));
+            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
         } else if (type.equals(DataType_DropDown.class)) {
             DataType_DropDown dropdownData = (DataType_DropDown) data;
             methodDropdowns.add(new MethodDropdown(ref, entry.getValue().name, dropdownData.selectedIndex, xPos, y, width, 16, dropdownData.options));
@@ -597,6 +627,26 @@ public class ModSettingsGui extends GuiScreen {
                 new java.util.AbstractMap.SimpleEntry<>(key, cfg);
         AddEntryAsOption(entry, y, 4);
     }
+
+    // New: Fast Hotkey appearance options
+    private void Add_SubSetting_FastHotkey(Integer y) {
+        addFhkEntry("fhk_inner_radius", y);
+        addFhkEntry("fhk_outer_radius", y);
+        addFhkEntry("fhk_outline_prox_range", y);
+        addFhkEntry("fhk_inner_near_color", y);
+        addFhkEntry("fhk_inner_far_color", y);
+        addFhkEntry("fhk_outer_near_color", y);
+        addFhkEntry("fhk_outer_far_color", y);
+    }
+
+    private void addFhkEntry(String key, Integer y) {
+        com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key);
+        if (cfg == null) return;
+        java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> entry =
+                new java.util.AbstractMap.SimpleEntry<>(key, cfg);
+        AddEntryAsOption(entry, y, 6);
+    }
+
     private void Add_SubSetting_Command(Integer y)
     {
         for (Map.Entry<String, BaseConfig<?>> entry : AllConfig.INSTANCE.COMMAND_CONFIGS.entrySet()) {
@@ -638,7 +688,8 @@ public class ModSettingsGui extends GuiScreen {
                 Add_SubSetting_Etherwarp(y);
                 break;
             case "Fast Hotkey":
-                // Fast Hotkey uses a dedicated renderer; no generic options here
+                // Add appearance options for Fast Hotkey panel
+                Add_SubSetting_FastHotkey(y);
                 break;
         }
 
