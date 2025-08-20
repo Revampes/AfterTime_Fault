@@ -13,7 +13,7 @@ import java.util.List;
 public class FastHotKeyGui extends GuiScreen {
     private static final int CIRCLE_RADIUS = 150;
     // New UI constants
-    private static final int INNER_CANCEL_RADIUS = 60;
+    private static final int INNER_CANCEL_RADIUS = 40;
     private static final float GAP_PIXELS = 8f;
     private static final float ARROW_BASE_HALFWIDTH = 10f;
     private static final float ARROW_LENGTH = 20f;
