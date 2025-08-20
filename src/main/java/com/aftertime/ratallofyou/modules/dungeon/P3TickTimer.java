@@ -41,7 +41,7 @@ public class P3TickTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!isModuleEnabled() || !isTimerActive || event.phase != TickEvent.Phase.START) return;
+        if (!isModuleEnabled() || !isTimerActive || event.phase != TickEvent.Phase.START || DungeonUtils.isInDungeon()) return;
 
         barrierTicks--;
         if (barrierTicks <= 0) {

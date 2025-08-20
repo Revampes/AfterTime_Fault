@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.utils;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -49,7 +50,7 @@ public class RenderUtils {
             worldRenderer.pos(maxX, minY, maxZ).color(red, green, blue, alpha).endVertex();
             worldRenderer.pos(minX, minY, maxZ).color(red, green, blue, alpha).endVertex();
             worldRenderer.pos(minX, minY, minZ).color(red, green, blue, alpha).endVertex();
-            tessellator.draw();
+            Tessellator.getInstance().draw();
 
             // Vertical lines
             worldRenderer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
@@ -64,7 +65,7 @@ public class RenderUtils {
 
             worldRenderer.pos(maxX, minY, maxZ).color(red, green, blue, alpha).endVertex();
             worldRenderer.pos(maxX, maxY, maxZ).color(red, green, blue, alpha).endVertex();
-            tessellator.draw();
+            Tessellator.getInstance().draw();
 
             // Top square
             worldRenderer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
@@ -73,7 +74,7 @@ public class RenderUtils {
             worldRenderer.pos(maxX, maxY, maxZ).color(red, green, blue, alpha).endVertex();
             worldRenderer.pos(minX, maxY, maxZ).color(red, green, blue, alpha).endVertex();
             worldRenderer.pos(minX, maxY, minZ).color(red, green, blue, alpha).endVertex();
-            tessellator.draw();
+            Tessellator.getInstance().draw();
         } finally {
             GlStateManager.enableDepth();
             GlStateManager.enableTexture2D();
@@ -451,5 +452,42 @@ public class RenderUtils {
 
         tessellator.draw();
     }
-}
 
+    // New: floating text at world position, camera-facing
+    public static void renderFloatingText(String text, double x, double y, double z, float scale, int color, boolean depthTest) {
+        if (text == null || text.isEmpty()) return;
+        RenderManager rm = mc.getRenderManager();
+        FontRenderer fr = mc.fontRendererObj;
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x - rm.viewerPosX, y - rm.viewerPosY, z - rm.viewerPosZ);
+        GlStateManager.rotate(-rm.playerViewY, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(rm.playerViewX, 1.0F, 0.0F, 0.0F);
+        GlStateManager.scale(-0.025F * scale, -0.025F * scale, 0.025F * scale);
+
+        GlStateManager.disableLighting();
+        if (!depthTest) GlStateManager.disableDepth();
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+
+        int width = fr.getStringWidth(text) / 2;
+        GlStateManager.disableTexture2D();
+        Tessellator tess = Tessellator.getInstance();
+        WorldRenderer wr = tess.getWorldRenderer();
+        wr.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        // background rectangle (semi-transparent black)
+        wr.pos(-width - 2, -2, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        wr.pos(-width - 2, 9, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        wr.pos(width + 2, 9, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        wr.pos(width + 2, -2, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        tess.draw();
+        GlStateManager.enableTexture2D();
+
+        fr.drawString(text, -width, 0, color, true);
+
+        GlStateManager.enableDepth();
+        GlStateManager.disableBlend();
+        GlStateManager.enableLighting();
+        GlStateManager.popMatrix();
+    }
+}

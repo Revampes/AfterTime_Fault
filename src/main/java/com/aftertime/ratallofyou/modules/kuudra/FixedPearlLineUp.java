@@ -8,7 +8,7 @@ import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-public class PearlLineups {
+public class FixedPearlLineUp {
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
         // Check both module enabled and phase 1
@@ -62,7 +62,7 @@ public class PearlLineups {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_pearllineups");
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_fixedpearllineups");
         return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

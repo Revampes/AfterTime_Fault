@@ -18,6 +18,12 @@ public class FastHotKeyGui extends GuiScreen {
     private static final float ARROW_BASE_HALFWIDTH = 10f;
     private static final float ARROW_LENGTH = 20f;
     private static final float ARROW_MARGIN = 3f;
+    // Label layout constants
+    private static final float LABEL_RADIUS_FACTOR = 0.7f;     // Where labels sit between inner/outer
+    private static final float LABEL_SIDE_MARGIN_PX = 4f;      // Keep a small angular margin
+    private static final float LABEL_VERTICAL_MARGIN_PX = 3f;  // Keep a small radial margin
+    private static final float LABEL_MAX_SCALE = 3.5f;         // Avoid absurdly large text
+    private static final float LABEL_MIN_SCALE = 0.5f;         // Still readable when narrow
 
     private int centerX;
     private int centerY;
@@ -72,15 +78,16 @@ public class FastHotKeyGui extends GuiScreen {
             drawCircleArcAngles(centerX, centerY, INNER_CANCEL_RADIUS, innerStart, innerEnd, white, 8.0f);
         }
 
-        // Labels
+        // Labels (scaled to fit their wedge)
         List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
         for (int i = 0; i < regionCount; i++) {
-            double angle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
-            int x = (int)(centerX + Math.cos(angle) * CIRCLE_RADIUS * 0.7);
-            int y = (int)(centerY + Math.sin(angle) * CIRCLE_RADIUS * 0.7);
+            double midAngle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
+            double rLabel = CIRCLE_RADIUS * LABEL_RADIUS_FACTOR;
+            int x = (int)(centerX + Math.cos(midAngle) * rLabel);
+            int y = (int)(centerY + Math.sin(midAngle) * rLabel);
             String label = entries.get(i).label;
             if (label == null || label.trim().isEmpty()) label = "Command " + (i + 1);
-            drawCenteredString(fontRendererObj, label, x, y, 0xFFFFFF);
+            drawScaledCenteredLabel(label, x, y, rLabel, sectorSize, 0xFFFFFF);
         }
 
         // Direction arrow following mouse, positioned near inner radius
@@ -91,6 +98,40 @@ public class FastHotKeyGui extends GuiScreen {
         drawArrowAtAngle(centerX, centerY, mouseAngle, arrowRadius, ARROW_BASE_HALFWIDTH, ARROW_LENGTH, 0xFFFFFFFF);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
+    // Compute and draw the label at the largest scale that fits its wedge and ring thickness
+    private void drawScaledCenteredLabel(String text, int x, int y, double rLabel, double sectorSize, int color) {
+        if (text == null || text.isEmpty()) return;
+
+        int baseWidth = fontRendererObj.getStringWidth(text);
+        int baseHeight = fontRendererObj.FONT_HEIGHT;
+        if (baseWidth <= 0 || baseHeight <= 0) return;
+
+        // Available angular width at label radius (account for an approximate gap and side margins)
+        double gapAngleAtR = GAP_PIXELS / Math.max(1.0, rLabel);
+        double sideMarginAngle = LABEL_SIDE_MARGIN_PX / Math.max(1.0, rLabel);
+        double usableAngle = Math.max(0.0, sectorSize - gapAngleAtR - 2.0 * sideMarginAngle);
+        double chordWidth = 2.0 * rLabel * Math.sin(Math.max(0.0, usableAngle / 2.0));
+
+        // Width-constrained scale (keep a tiny safety margin)
+        double allowedWidth = Math.max(0.0, chordWidth - 2.0);
+        float widthScale = (float) ((baseWidth > 0) ? (allowedWidth / baseWidth) : 1.0);
+
+        // Height-constrained scale based on ring thickness around rLabel
+        double radialMax = Math.min(rLabel - INNER_CANCEL_RADIUS, CIRCLE_RADIUS - rLabel) - LABEL_VERTICAL_MARGIN_PX;
+        radialMax = Math.max(0.0, radialMax);
+        float heightScale = (float) ((baseHeight > 0) ? ((2.0 * radialMax) / baseHeight) : 1.0);
+
+        float scale = Math.min(widthScale, heightScale);
+        scale = Math.min(scale, LABEL_MAX_SCALE);
+        if (!(scale > 0f)) return; // nothing fits
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x, y, 0);
+        GlStateManager.scale(scale, scale, 1.0f);
+        drawCenteredString(fontRendererObj, text, 0, -(fontRendererObj.FONT_HEIGHT / 2), color);
+        GlStateManager.popMatrix();
     }
 
     // Draw arc between explicit angles

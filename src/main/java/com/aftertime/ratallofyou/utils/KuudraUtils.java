@@ -62,14 +62,17 @@ public class KuudraUtils {
         if (!(entity instanceof EntityArmorStand)) return false;
 
         EntityArmorStand stand = (EntityArmorStand) entity;
-        String name = stand.getDisplayName().getUnformattedText();
+        String name = stand.getDisplayName() != null ? stand.getDisplayName().getUnformattedText() : null;
+        if (name == null || name.isEmpty()) return false;
 
-        if (name.contains("RECEIVED")) return false;
+        String upper = name.toUpperCase();
+        if (upper.contains("RECEIVED")) return false;
 
-        return name != null &&
-                (name.contains("CLICK TO PICK UP") ||
-                        name.contains("SUPPLIES") ||
-                        name.contains("KUUDRA CRATE"));
+        return upper.contains("CLICK TO PICK UP") ||
+               upper.contains("SUPPLIES") ||
+               upper.contains("KUUDRA CRATE") ||
+               // Fallback: match any crate label, in case formatting/locale changes
+               (upper.contains("CRATE") && upper.contains("KUUDRA"));
     }
 
     public static boolean isInteractable(Entity entity) {
