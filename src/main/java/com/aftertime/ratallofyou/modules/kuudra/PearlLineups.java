@@ -1,13 +1,14 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class PearlLineups {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Pearl Lineups");
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
         // Check both module enabled and phase 1
@@ -61,6 +62,7 @@ public class PearlLineups {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_pearllineups");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

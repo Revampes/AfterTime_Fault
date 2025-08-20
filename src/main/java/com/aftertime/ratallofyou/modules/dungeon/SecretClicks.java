@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.Utils;
@@ -24,7 +26,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class SecretClicks {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Show Secret Clicks");
     private static final String[] VALID_BLOCKS = {
             "minecraft:chest",
             "minecraft:lever",
@@ -210,6 +211,7 @@ public class SecretClicks {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_secretclicks");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

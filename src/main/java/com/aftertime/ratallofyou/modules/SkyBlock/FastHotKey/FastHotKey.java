@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -9,7 +11,6 @@ import net.minecraftforge.fml.common.gameevent.InputEvent;
 import org.lwjgl.input.Keyboard;
 
 public class FastHotKey {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Fast Hotkey");
     // Expose a static keybinding so it can be remapped in Controls and referenced elsewhere
     public static final KeyBinding HOTKEY = new KeyBinding("Open Fast Hotkey", Keyboard.KEY_G, "Rat All Of You");
 
@@ -32,6 +33,7 @@ public class FastHotKey {
     }
 
     private static boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_fasthotkey");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

@@ -1,7 +1,10 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.UIDragger;
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -14,16 +17,9 @@ public class InvincibleTimer {
     private int phoenixTime = 0;
     private String procText = " ";
     private long procTextEndTime = 0;
-    private static final String MODULE_NAME = "Invincible Timer";
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Invincible Timer");
 
     // Initialize positions
     public InvincibleTimer() {
-        // Register with default positions (200,200 for first line, others spaced vertically)
-        UIDragger.getInstance().registerElement(MODULE_NAME + " Bonzo", 200, 200);
-        UIDragger.getInstance().registerElement(MODULE_NAME + " Spirit", 200, 218);
-        UIDragger.getInstance().registerElement(MODULE_NAME + " Phoenix", 200, 236);
-        UIDragger.getInstance().registerElement(MODULE_NAME + " ProcText", 400, 300);
     }
 
     @SubscribeEvent
@@ -61,16 +57,16 @@ public class InvincibleTimer {
             procTextEndTime = System.currentTimeMillis() + 1500;
         }
     }
-
+    UIPosition bonzoPos = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("bonzo_pos").Data;
+    UIPosition spiritPos = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("spirit_pos").Data;
+    UIPosition phoenixPos = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("phoenix_pos").Data;
+    UIPosition procPos = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("proc_pos").Data;
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled()) return;
 
-        // Get positions from UIDragger
-        UIDragger.UIPosition bonzoPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Bonzo");
-        UIDragger.UIPosition spiritPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Spirit");
-        UIDragger.UIPosition phoenixPos = UIDragger.getInstance().getPosition(MODULE_NAME + " Phoenix");
-        UIDragger.UIPosition procPos = UIDragger.getInstance().getPosition(MODULE_NAME + " ProcText");
+        // Get positions from UIDraggers
+
 
         // Draw using draggable positions
         drawText("§9Bonzo: " + getStatusText(bonzoTime), bonzoPos.x, bonzoPos.y, 2);
@@ -97,6 +93,7 @@ public class InvincibleTimer {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_invincibletimer");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

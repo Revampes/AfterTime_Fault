@@ -2,7 +2,6 @@ package com.aftertime.ratallofyou;
 
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
-import com.aftertime.ratallofyou.UI.config.ConfigStorage;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import com.aftertime.ratallofyou.modules.kuudra.*;
@@ -11,7 +10,6 @@ import com.aftertime.ratallofyou.modules.SkyBlock.AutoSprint;
 import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
 import com.aftertime.ratallofyou.modules.dungeon.*;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
-import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.modules.dungeon.StarMobHighlighter;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
@@ -21,6 +19,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import com.aftertime.ratallofyou.UI.config.ConfigIO;
+import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -30,7 +30,10 @@ public class Main {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        ConfigStorage.loadAllConfigs();
+        // Initialize and load all configs using the new config system
+        ConfigIO.INSTANCE.InitializeConfigs();
+        // Apply terminal settings (defaults + per-terminal toggles)
+        TerminalSettingsApplier.applyFromAllConfig();
     }
 
     @Mod.EventHandler
@@ -58,7 +61,6 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new PearlLineups());
         MinecraftForge.EVENT_BUS.register(new KuudraUtils());
         MinecraftForge.EVENT_BUS.register(new EtherwarpOverlay());
-        MinecraftForge.EVENT_BUS.register(new ArmorHide());
         MinecraftForge.EVENT_BUS.register(new FastHotKey());
         MinecraftForge.EVENT_BUS.register(new FastHotKeyGui());
         MinecraftForge.EVENT_BUS.register(new startswith());
@@ -66,7 +68,6 @@ public class Main {
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());
         KeybindHandler.registerKeybinds();
-        // Load UI positions
-        UIDragger.getInstance().loadPositions();
+        // UI positions are now part of the config (UIPosition entries) and load with InitializeConfigs()
     }
 }

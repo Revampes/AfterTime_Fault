@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -8,7 +10,6 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class PearlCancel {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Pearl Cancel (Use at your own risk!)");
     private static final Minecraft mc = Minecraft.getMinecraft();
 
     @SubscribeEvent
@@ -26,6 +27,7 @@ public class PearlCancel {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_pearlcancel");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

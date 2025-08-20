@@ -2,7 +2,11 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.UI.config.PropertyRef;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -18,7 +22,6 @@ public class P3TickTimer {
     private boolean isTimerActive = false;
     private final Minecraft mc = Minecraft.getMinecraft();
     private boolean isMouseOver = false;
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Phase 3 Tick Timer");
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
@@ -45,7 +48,7 @@ public class P3TickTimer {
             barrierTicks = 60; // Reset to 3 seconds (60 ticks)
         }
     }
-
+    UIPosition pos = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("p3ticktimer_pos").Data;
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
         if (!isModuleEnabled() || !isTimerActive ||
@@ -54,11 +57,10 @@ public class P3TickTimer {
         String time = String.format("%.2f", barrierTicks / 20.0f);
         String formattedTime = getFormattedTime(time);
 
-        UIDragger.UIPosition pos = UIDragger.getInstance().getPosition("Phase 3 Tick Timer");
+
         if (pos == null) {
             ScaledResolution res = new ScaledResolution(mc);
-            pos = new UIDragger.UIPosition(res.getScaledWidth() / 2, res.getScaledHeight() / 2);
-            UIDragger.getInstance().registerElement("Phase 3 Tick Timer", pos.x, pos.y);
+            pos = new UIPosition(res.getScaledWidth() / 2, res.getScaledHeight() / 2);
         }
 
         int textWidth = mc.fontRendererObj.getStringWidth(formattedTime);
@@ -105,13 +107,13 @@ public class P3TickTimer {
         int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
         int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
 
-        UIDragger.UIPosition pos = UIDragger.getInstance().getPosition("Phase 3 Tick Timer");
+        UIPosition pos = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("p3ticktimer_pos").Data;
         if (pos == null) return;
 
         if (Mouse.getEventButton() == 0) { // Left mouse button
             if (Mouse.getEventButtonState()) { // Mouse pressed
                 if (isMouseOver(pos.x, pos.y, getElementWidth(), getElementHeight())) {
-                    UIDragger.getInstance().tryStartDrag("Phase 3 Tick Timer", mouseX, mouseY);
+                    UIDragger.getInstance().tryStartDrag(pos, mouseX, mouseY);
                 }
             } else { // Mouse released
                 UIDragger.getInstance().updatePositions();
@@ -151,6 +153,7 @@ public class P3TickTimer {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_phase3ticktimer");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

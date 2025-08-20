@@ -1,7 +1,9 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.UI.config.ConfigStorage;
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -16,30 +18,12 @@ import org.lwjgl.opengl.GL11;
 import java.awt.*;
 
 public class EtherwarpOverlay {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Etherwarp Overlay");
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final float SNEAK_EYE_HEIGHT = 1.54f;
     private static final float PADDING = 0.005f;
 
-    // Configuration options
-//    public static boolean enabled = true;
-    public static boolean etherwarpSyncWithServer = false;
-    public static boolean etherwarpOverlayOnlySneak = true;
-    public static boolean etherwarpShowFailLocation = true;
-    public static int etherwarpHighlightType = 0;
-    public static Color etherwarpOverlayColor = new Color(0, 255, 255, 150);
-    public static Color etherwarpOverlayFailColor = new Color(255, 0, 0, 150);
-
     // Valid blocks for etherwarp feet (air by default)
     private static final int[] VALID_ETHERWARP_BLOCKS = {0}; // Air
-
-    static {
-        loadConfig();
-    }
-
-    public static void loadConfig() {
-        ConfigStorage.loadEtherwarpConfig();
-    }
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
@@ -48,11 +32,10 @@ public class EtherwarpOverlay {
 
     public static void onRenderWorld() {
         if (!isModuleEnabled() || mc.thePlayer == null || mc.theWorld == null) return;
-        if (etherwarpOverlayOnlySneak && !mc.thePlayer.isSneaking()) return;
+        if (etherwarpOverlayOnlySneak() && !mc.thePlayer.isSneaking()) return;
         if (!isHoldingAOTV()) return;
 
-        // Delegate to the specific renderer which manages GL state internally.
-        if (etherwarpSyncWithServer) {
+        if (etherwarpSyncWithServer()) {
             doSyncedEther();
         } else {
             doSmoothEther();
@@ -232,24 +215,26 @@ public class EtherwarpOverlay {
         if (result == null) return;
 
         if (!result.success) {
-            if (!etherwarpShowFailLocation) return;
+            if (!etherwarpShowFailLocation()) return;
 
+            Color fail = etherwarpOverlayFailColor();
             renderEtherBlock(
                     result.x, result.y, result.z,
-                    etherwarpOverlayFailColor.getRed() / 255f,
-                    etherwarpOverlayFailColor.getGreen() / 255f,
-                    etherwarpOverlayFailColor.getBlue() / 255f,
-                    etherwarpOverlayFailColor.getAlpha() / 255f
+                    fail.getRed() / 255f,
+                    fail.getGreen() / 255f,
+                    fail.getBlue() / 255f,
+                    fail.getAlpha() / 255f
             );
             return;
         }
 
+        Color ok = etherwarpOverlayColor();
         renderEtherBlock(
                 result.x, result.y, result.z,
-                etherwarpOverlayColor.getRed() / 255f,
-                etherwarpOverlayColor.getGreen() / 255f,
-                etherwarpOverlayColor.getBlue() / 255f,
-                etherwarpOverlayColor.getAlpha() / 255f
+                ok.getRed() / 255f,
+                ok.getGreen() / 255f,
+                ok.getBlue() / 255f,
+                ok.getAlpha() / 255f
         );
     }
 
@@ -275,7 +260,8 @@ public class EtherwarpOverlay {
             // Enable depth testing but disable depth writes for filled rendering
             GlStateManager.enableDepth();
 
-            switch (etherwarpHighlightType) {
+            int mode = etherwarpHighlightType();
+            switch (mode) {
                 case 0: // Edges Only
                     GlStateManager.depthMask(true);
                     RenderUtils.renderBoxFromCorners(
@@ -284,7 +270,7 @@ public class EtherwarpOverlay {
                     );
                     break;
 
-                case 2: // Filled Only
+                case 1: // Filled Only
                     GlStateManager.depthMask(false); // Disable depth writes for filled
                     RenderUtils.renderBoxFromCorners(
                             minX, minY, minZ, maxX, maxY, maxZ,
@@ -292,7 +278,7 @@ public class EtherwarpOverlay {
                     );
                     break;
 
-                case 4: // Both
+                case 2: // Both
                     // First render filled (with depth writes disabled)
                     GlStateManager.depthMask(false);
                     RenderUtils.renderBoxFromCorners(
@@ -309,20 +295,59 @@ public class EtherwarpOverlay {
                     break;
             }
         } finally {
-            // Ensure depth writes and texture are restored for the rest of the frame
+            // Restore GL state even if rendering fails
             GlStateManager.depthMask(true);
             GlStateManager.enableTexture2D();
-
-            // Restore state
+            GlStateManager.disableBlend();
             GlStateManager.popAttrib();
             GlStateManager.popMatrix();
         }
     }
 
+    // Config helpers
+    private static boolean isModuleEnabled() {
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("render_etherwarpoverlay");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+    }
+
+    private static boolean etherwarpOverlayOnlySneak() {
+        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_only_show_when_sneak").Data;
+        return v instanceof Boolean ? (Boolean) v : true; // default true per AllConfig
+    }
+
+    private static boolean etherwarpSyncWithServer() {
+        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_sync_with_server").Data;
+        return v instanceof Boolean ? (Boolean) v : false;
+    }
+
+    private static boolean etherwarpShowFailLocation() {
+        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_show_fail_location").Data;
+        return v instanceof Boolean ? (Boolean) v : true; // default true per AllConfig
+    }
+
+    private static int etherwarpHighlightType() {
+        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_render_method").Data;
+        if (v instanceof DataType_DropDown) {
+            DataType_DropDown dd = (DataType_DropDown) v;
+            return Math.max(0, Math.min(2, dd.selectedIndex));
+        }
+        return 0; // Edges by default
+    }
+
+    private static Color etherwarpOverlayColor() {
+        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_OverlayColor").Data;
+        return v instanceof Color ? (Color) v : new Color(0, 255, 0, 200);
+    }
+
+    private static Color etherwarpOverlayFailColor() {
+        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_OverlayFailColor").Data;
+        return v instanceof Color ? (Color) v : new Color(180, 0, 0, 200);
+    }
+
+    // Result container
     private static class EtherwarpResult {
         final boolean success;
         final int x, y, z;
-
         EtherwarpResult(boolean success, int x, int y, int z) {
             this.success = success;
             this.x = x;
@@ -330,9 +355,4 @@ public class EtherwarpOverlay {
             this.z = z;
         }
     }
-
-    private static boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
-    }
 }
-

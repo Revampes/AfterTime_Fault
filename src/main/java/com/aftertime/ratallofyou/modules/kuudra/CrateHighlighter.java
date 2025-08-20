@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
@@ -12,7 +14,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class CrateHighlighter {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final String MODULE_NAME = "Crate Highlighter";
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Crate Highlighter");
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
@@ -45,6 +46,7 @@ public class CrateHighlighter {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_cratehighlighter");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

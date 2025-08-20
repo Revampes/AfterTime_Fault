@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey;
 
-import com.aftertime.ratallofyou.UI.config.ConfigStorage;
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -11,11 +12,12 @@ import java.util.List;
 
 public class FastHotKeyGui extends GuiScreen {
     private static final int CIRCLE_RADIUS = 150;
+    // New UI constants
     private static final int INNER_CANCEL_RADIUS = 60;
     private static final float GAP_PIXELS = 8f;
     private static final float ARROW_BASE_HALFWIDTH = 10f;
     private static final float ARROW_LENGTH = 20f;
-    private static final float ARROW_MARGIN = 3f; // distance from inner ring to arrow base
+    private static final float ARROW_MARGIN = 3f;
 
     private int centerX;
     private int centerY;
@@ -26,16 +28,17 @@ public class FastHotKeyGui extends GuiScreen {
         super.initGui();
         this.centerX = width / 2;
         this.centerY = height / 2;
-        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
         this.regionCount = Math.min(12, entries.size());
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-
+        // Center
         centerX = width / 2;
         centerY = height / 2;
 
+        // No commands configured
         if (regionCount == 0) {
             String msg = "No Fast Hotkey commands configured";
             String hint = "Open Mod Settings > Fast Hotkey > Settings to add up to maximum 12 commands";
@@ -45,6 +48,7 @@ public class FastHotKeyGui extends GuiScreen {
             return;
         }
 
+        // Draw ring sectors with constant pixel gaps
         double sectorSize = 2 * Math.PI / regionCount;
         for (int i = 0; i < regionCount; i++) {
             double baseStart = i * sectorSize;
@@ -52,24 +56,24 @@ public class FastHotKeyGui extends GuiScreen {
             drawRingSectorWithPixelGap(centerX, centerY, INNER_CANCEL_RADIUS, CIRCLE_RADIUS, baseStart, baseEnd, GAP_PIXELS, 0x80000000);
         }
 
+        // Hover highlight (inner and outer arcs with constant pixel gap)
         int hoveredRegion = getHoveredRegion(mouseX, mouseY);
         if (hoveredRegion != -1) {
             double baseStart = hoveredRegion * sectorSize;
             double baseEnd = (hoveredRegion + 1) * sectorSize;
-            // Angle trims to maintain constant pixel gap on both edges
             double innerTrim = GAP_PIXELS / (2.0 * Math.max(1.0, INNER_CANCEL_RADIUS));
             double outerTrim = GAP_PIXELS / (2.0 * Math.max(1.0, CIRCLE_RADIUS));
             double innerStart = baseStart + innerTrim;
             double innerEnd = baseEnd - innerTrim;
             double outerStart = baseStart + outerTrim;
             double outerEnd = baseEnd - outerTrim;
-            int white = 0xFFFFFFFF; // white
+            int white = 0xFFFFFFFF;
             drawCircleArcAngles(centerX, centerY, CIRCLE_RADIUS, outerStart, outerEnd, white, 8.0f);
             drawCircleArcAngles(centerX, centerY, INNER_CANCEL_RADIUS, innerStart, innerEnd, white, 8.0f);
         }
 
         // Labels
-        List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
         for (int i = 0; i < regionCount; i++) {
             double angle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
             int x = (int)(centerX + Math.cos(angle) * CIRCLE_RADIUS * 0.7);
@@ -79,7 +83,7 @@ public class FastHotKeyGui extends GuiScreen {
             drawCenteredString(fontRendererObj, label, x, y, 0xFFFFFF);
         }
 
-        // Arrow that follows mouse angle, positioned just outside inner hole inside the ring
+        // Direction arrow following mouse, positioned near inner radius
         double dx = mouseX - centerX;
         double dy = mouseY - centerY;
         double mouseAngle = Math.atan2(dy, dx);
@@ -89,7 +93,7 @@ public class FastHotKeyGui extends GuiScreen {
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
-    // Draw an arc segment between explicit angles
+    // Draw arc between explicit angles
     private void drawCircleArcAngles(int x, int y, int radius, double startAngle, double endAngle, int color, float thickness) {
         float a = (float)(color >> 24 & 255) / 255.0F;
         float r = (float)(color >> 16 & 255) / 255.0F;
@@ -107,7 +111,7 @@ public class FastHotKeyGui extends GuiScreen {
         int steps = 24;
         double step = Math.max((endAngle - startAngle) / steps, 1e-4);
         GL11.glBegin(GL11.GL_LINE_STRIP);
-        for (double angle = startAngle; angle <= endAngle + 1e-6; angle += step) { // ? dk if correct, but it works
+        for (double angle = startAngle; angle <= endAngle + 1e-6; angle += step) {
             GL11.glVertex2f((float)(x + Math.cos(angle) * radius), (float)(y + Math.sin(angle) * radius));
         }
         GL11.glEnd();
@@ -242,6 +246,7 @@ public class FastHotKeyGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        // Close on Escape or the current Fast Hotkey binding
         if (keyCode == Keyboard.KEY_ESCAPE || keyCode == FastHotKey.HOTKEY.getKeyCode()) {
             mc.displayGuiScreen(null);
             return;
@@ -254,7 +259,7 @@ public class FastHotKeyGui extends GuiScreen {
         if (mouseButton == 0) {
             int region = getHoveredRegion(mouseX, mouseY);
             if (region != -1) {
-                List<ConfigStorage.FastHotKeyEntry> entries = ConfigStorage.getFastHotKeyEntries();
+                List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
                 if (region < entries.size()) {
                     String cmd = entries.get(region).command;
                     if (cmd != null && !cmd.trim().isEmpty()) {
@@ -273,3 +278,4 @@ public class FastHotKeyGui extends GuiScreen {
         return false;
     }
 }
+

@@ -1,13 +1,14 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class Fullbright {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Fullbright");
     private static float originalGamma;
     private boolean wasEnabled = false;
 
@@ -35,6 +36,7 @@ public class Fullbright {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("render_fullbright");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

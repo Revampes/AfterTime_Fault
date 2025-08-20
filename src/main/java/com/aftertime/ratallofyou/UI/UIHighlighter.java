@@ -1,5 +1,9 @@
 package com.aftertime.ratallofyou.UI;
 
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.UI.config.ConfigIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
@@ -11,10 +15,9 @@ import org.lwjgl.input.Mouse;
 import java.util.Map;
 
 public class UIHighlighter {
-    private static boolean isInMoveMode = false;
+    private static Boolean isInMoveMode = false;
     private static GuiScreen previousScreen = null;
     private final UIDragger uiDragger = UIDragger.getInstance();
-    private boolean[] wasKeyPressed = new boolean[6]; // Store previous key states
 
     public static boolean isInMoveMode() {
         return isInMoveMode;
@@ -44,6 +47,9 @@ public class UIHighlighter {
         mc.inGameHasFocus = true;
         Mouse.setGrabbed(true);
 
+        // Persist updated UI positions
+        ConfigIO.INSTANCE.SaveProperties();
+
         // Restore previous screen if exists
         if (previousScreen != null) {
             mc.displayGuiScreen(previousScreen);
@@ -64,44 +70,38 @@ public class UIHighlighter {
         // Handle dragging
         int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
         int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
+        for (Map.Entry<String, BaseConfig<?>> entry : AllConfig.INSTANCE.Pos_CONFIGS.entrySet()) {
 
-        if (Mouse.isButtonDown(0)) {
-            for (Map.Entry<String, UIDragger.UIPosition> entry : uiDragger.getAllElements().entrySet()) {
-                String moduleName = entry.getKey();
-                UIDragger.UIPosition pos = entry.getValue();
-                int width = uiDragger.getElementWidth(moduleName);
-                int height = uiDragger.getElementHeight(moduleName);
+            int width = 40;
+            int height = 50;
+            UIPosition pos = (UIPosition) entry.getValue().Data;
+            drawRect(
+                    pos.x - 2, pos.y - 2,
+                    pos.x + width + 2, pos.y + height + 2,
+                    uiDragger.isDragging() && uiDragger.getDraggedElement() == pos ?
+                            0x80FF0000 : 0x80FFFF00
+            );
+            if (Mouse.isButtonDown(0)) {
+
 
                 if (mouseX >= pos.x && mouseX <= pos.x + width &&
                         mouseY >= pos.y && mouseY <= pos.y + height) {
 
                     if (!uiDragger.isDragging()) {
-                        uiDragger.tryStartDrag(moduleName, mouseX, mouseY);
+                        uiDragger.tryStartDrag((UIPosition) entry.getValue().Data, mouseX, mouseY);
                     }
                 }
-            }
 
-            if (uiDragger.isDragging()) {
-                uiDragger.updateDragPosition(mouseX, mouseY);
+
+                if (uiDragger.isDragging()) {
+                    uiDragger.updateDragPosition(mouseX, mouseY);
+                }
+            } else if (uiDragger.isDragging()) {
+                uiDragger.updatePositions();
             }
-        } else if (uiDragger.isDragging()) {
-            uiDragger.updatePositions();
         }
 
-        // Highlight elements
-        for (Map.Entry<String, UIDragger.UIPosition> entry : uiDragger.getAllElements().entrySet()) {
-            String moduleName = entry.getKey();
-            UIDragger.UIPosition pos = entry.getValue();
-            int width = uiDragger.getElementWidth(moduleName);
-            int height = uiDragger.getElementHeight(moduleName);
 
-            drawRect(
-                    pos.x - 2, pos.y - 2,
-                    pos.x + width + 2, pos.y + height + 2,
-                    uiDragger.isDragging() && uiDragger.getDraggedElement().equals(moduleName) ?
-                            0x80FF0000 : 0x80FFFF00
-            );
-        }
     }
 
     @SubscribeEvent

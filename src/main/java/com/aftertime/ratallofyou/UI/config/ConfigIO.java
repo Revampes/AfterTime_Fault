@@ -1,0 +1,230 @@
+package com.aftertime.ratallofyou.UI.config;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
+import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry;
+import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+
+import java.awt.*;
+import java.io.File;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+public class ConfigIO {
+
+    public boolean AutoSave = false;
+    public static ConfigIO INSTANCE = new ConfigIO();
+    public final File CONFIG_FILE = new File("config/ratallofyou/Config.cfg");
+    public final File FastHotKey_FILE = new File("config/ratallofyou/FHK.cfg");
+
+
+    public Properties properties;
+    public Properties FastHotKeyProperties;
+    public void InitializeConfigs() {
+        Properties prop = LoadProperties(CONFIG_FILE);
+        Properties fastHotKeyProp = LoadProperties(FastHotKey_FILE);
+        // Set fields before delegating so GetConfig() has non-null properties
+        properties = prop;
+        FastHotKeyProperties = fastHotKeyProp;
+        AllConfig.INSTANCE.LoadFromProperty(prop, fastHotKeyProp);
+
+
+    }
+
+    public void SetConfig(String Key, Object value) {
+        if (value instanceof Boolean) {
+            SetBool(Key, (Boolean) value);
+        } else if (value instanceof String) {
+            SetString(Key, (String) value);
+        } else if (value instanceof Float) {
+            SetFloat(Key, (Float) value);
+        } else if (value instanceof Integer) {
+            SetInt(Key, (Integer) value);
+        } else if (value instanceof Color) {
+            SetColor(Key, (Color) value);
+        } else if (value instanceof DataType_DropDown) {
+            SetDropDown(Key, (DataType_DropDown) value);
+        } else if (value instanceof int[]) {
+            int[] pos = (int[]) value;
+            SetUIPosition(Key, pos[0], pos[1]);
+        } else if (value instanceof UIPosition) {
+            UIPosition p = (UIPosition) value;
+            SetUIPosition(Key, p.x, p.y);
+        }
+    }
+    public Object GetConfig(String Key,Type type)
+    {
+        if(type == Boolean.class) {
+            return GetBool(Key);
+        } else if(type == String.class) {
+            return GetString(Key);
+        } else if(type == Float.class) {
+            return GetFloat(Key);
+        } else if(type == Integer.class) {
+            return GetInt(Key);
+        } else if(type == Color.class) {
+            return GetColor(Key);
+        } else if(type == DataType_DropDown.class) {
+            return GetDropDown(Key);
+        } else if(type == int[].class) {
+            return GetUIPosition(Key);
+        } else if (type == UIPosition.class) {
+            int[] xy = GetUIPosition(Key);
+            return xy == null ? null : new UIPosition(xy[0], xy[1]);
+        }
+        return null;
+    }
+    //Set Property Field
+    public void SetString( String Key, String value) {
+        properties.setProperty( Key, value);
+    }
+    public void SetBool(String Key, boolean value) {
+        String Value = Boolean.toString(value);
+        properties.setProperty(Key,Value);
+    }
+    public void SetFloat(String Key, float value) {
+        String Value = Float.toString(value);
+        properties.setProperty(Key,Value);
+    }
+    public void SetInt(String Key, int value) {
+        String Value = Integer.toString(value);
+        properties.setProperty(Key,Value);
+    }
+    public void SetColor(String Key, Color value) {
+        String Value = Integer.toString(value.getRGB());
+        properties.setProperty(Key,Value);
+    }
+    public void SetDropDown( String Key, DataType_DropDown dropdown) {
+        String options = String.join(",",dropdown.options);
+        int selectedIndex = dropdown.selectedIndex;
+        properties.setProperty( Key + "_options", options);
+        properties.setProperty( Key + "_index", Integer.toString(selectedIndex));
+    }
+    public void SetDropDownSelect( String Key, int selectedIndex) {
+        properties.setProperty( Key + "_index", Integer.toString(selectedIndex));
+
+    }
+    public void SetUIPosition( String Key,int x, int y) {
+        properties.setProperty( Key, x + "," + y);
+
+    }
+
+    //Get Property Field
+    public String GetString(String Key) {
+        return properties.getProperty(Key);
+    }
+    public Boolean GetBool(String Key) {
+        String Value = properties.getProperty(Key);
+        if (Value == null) return null;
+        return Boolean.parseBoolean(Value);
+    }
+    public Float GetFloat(String Key) {
+        String Value = properties.getProperty( Key);
+        if (Value == null) return null;
+        try {
+            return Float.parseFloat(Value);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public DataType_DropDown GetDropDown( String Key) {
+        String options = properties.getProperty( Key + "_options");
+        String indexStr = properties.getProperty( Key + "_index");
+        if (options == null || indexStr == null) return null;
+        String[] optionArray = options.split(",");
+        int selectedIndex;
+        try {
+            selectedIndex = Integer.parseInt(indexStr);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            selectedIndex = 0; // Default to first option if parsing fails
+        }
+        return new DataType_DropDown(selectedIndex, optionArray);
+    }
+    public Integer GetInt( String Key) {
+        String Value = properties.getProperty( Key);
+        if (Value == null) return null;
+        try {
+            return Integer.parseInt(Value);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public Color GetColor( String Key) {
+        String Value = properties.getProperty( Key);
+        if (Value == null) return null;
+        try {
+            return new Color(Integer.parseInt(Value));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public java.util.List<FastHotkeyEntry> LoadFastHotKeyEntries() {
+        List<FastHotkeyEntry> entries = new ArrayList<>();
+        int length = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_length","0"));
+        for(int i = 0 ; i < length;i++)
+        {
+            String label = FastHotKeyProperties.getProperty("fhk_" + i + "_label");
+            String command = FastHotKeyProperties.getProperty("fhk_" + i + "_command");
+                FastHotkeyEntry entry = new FastHotkeyEntry(label,command,i);
+                entries.add(entry);
+
+        }
+        return entries;
+    }
+    public void SaveFastHotKeyEntries(List<FastHotkeyEntry> entries) {
+        FastHotKeyProperties.setProperty("fhk_length", String.valueOf(entries.size()));
+        for (int i = 0; i < entries.size(); i++) {
+            FastHotkeyEntry entry = entries.get(i);
+            FastHotKeyProperties.setProperty("fhk_" + i + "_label", entry.label);
+            FastHotKeyProperties.setProperty("fhk_" + i + "_command", entry.command);
+        }
+    }
+    public int[] GetUIPosition( String Key) {
+        String Value = properties.getProperty( Key);
+        if (Value == null) return null;
+        String[] parts = Value.split(",");
+        if (parts.length != 2) return null;
+        try {
+            int x = Integer.parseInt(parts[0]);
+            int y = Integer.parseInt(parts[1]);
+            return new int[]{x, y};
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+   
+
+    private Properties LoadProperties(File file) {
+        Properties properties = new Properties();
+        try {
+            if (file.exists()) {
+                properties.load(new java.io.FileReader(file));
+            } else {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return properties;
+    }
+
+
+    public void SaveProperties() {
+        try {
+            AllConfig.INSTANCE.SaveToProperty();
+            properties.store(new java.io.FileWriter(CONFIG_FILE), "RatAllOfYou Configurations");
+            FastHotKeyProperties.store(new java.io.FileWriter(FastHotKey_FILE), "RatAllOfYou Fast Hotkey Configurations");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+}

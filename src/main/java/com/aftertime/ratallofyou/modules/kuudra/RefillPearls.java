@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -9,7 +11,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class RefillPearls {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Pearl Refill (Use at your own risk!)");
     private boolean allowPearlRefill = true;
     private long lastRefillTime = 0;
     private long lastInteractTime = 0;
@@ -89,9 +90,7 @@ public class RefillPearls {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_pearlrefill");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }
-
-
-

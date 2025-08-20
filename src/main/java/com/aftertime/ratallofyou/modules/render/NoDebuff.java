@@ -1,5 +1,7 @@
 package com.aftertime.ratallofyou.modules.render;
 
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
@@ -8,11 +10,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class NoDebuff {
-    private static boolean enabled = false;
-    private static boolean noBlindness = false;
-    private static boolean noFire = false;
-    private static boolean clearLiquidVision = false;
-
     // Event handler instance & registration state
     private static NoDebuff handlerInstance;
     private static boolean registered = false;
@@ -32,34 +29,35 @@ public class NoDebuff {
         }
     }
 
-    // Setters (no direct file I/O; persistence handled by ConfigStorage)
-    public static void setEnabled(boolean state) {
-        enabled = state;
-        if (enabled) ensureRegistered(); else ensureUnregistered();
+    private static boolean isEnabled() {
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("render_nodebuff");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
-
-    public static void setNoBlindness(boolean state) { noBlindness = state; }
-    public static void setNoFire(boolean state) { noFire = state; }
-    public static void setClearLiquidVision(boolean state) { clearLiquidVision = state; }
-
-    // Getters
-    public static boolean isEnabled() { return enabled; }
-    public static boolean isNoBlindness() { return noBlindness; }
-    public static boolean isNoFire() { return noFire; }
-    public static boolean isClearLiquidVision() { return clearLiquidVision; }
+    private static boolean noBlindness() {
+        Boolean b = (Boolean) AllConfig.INSTANCE.NODEBUFF_CONFIGS.get("nodebuff_ignore_blindness").Data;
+        return Boolean.TRUE.equals(b);
+    }
+    private static boolean noFire() {
+        Boolean b = (Boolean) AllConfig.INSTANCE.NODEBUFF_CONFIGS.get("nodebuff_remove_fire_overlay").Data;
+        return Boolean.TRUE.equals(b);
+    }
+    private static boolean clearLiquidVision() {
+        Boolean b = (Boolean) AllConfig.INSTANCE.NODEBUFF_CONFIGS.get("nodebuff_clear_liquid_vision").Data;
+        return Boolean.TRUE.equals(b);
+    }
 
     @SubscribeEvent
     public void onRenderFog(EntityViewRenderEvent.FogDensity event) {
-        if (!enabled) return;
+        if (!isEnabled()) return;
 
-        if (noBlindness) {
+        if (noBlindness()) {
             event.density = 0f;
             event.setCanceled(true);
             GlStateManager.setFogStart(998f);
             GlStateManager.setFogEnd(999f);
         }
 
-        if (clearLiquidVision && (event.entity.isInWater() || event.entity.isInLava())) {
+        if (clearLiquidVision() && (event.entity.isInWater() || event.entity.isInLava())) {
             event.density = 0.1f;
             event.setCanceled(true);
             GlStateManager.setFogStart(998f);
@@ -69,18 +67,18 @@ public class NoDebuff {
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Pre event) {
-        if (!enabled) return;
+        if (!isEnabled()) return;
 
-        if (noBlindness && event.type == RenderGameOverlayEvent.ElementType.HELMET) {
+        if (noBlindness() && event.type == RenderGameOverlayEvent.ElementType.HELMET) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public void onBlockOverlay(RenderBlockOverlayEvent event) {
-        if (!enabled) return;
+        if (!isEnabled()) return;
 
-        if (noFire && event.overlayType == RenderBlockOverlayEvent.OverlayType.FIRE) {
+        if (noFire() && event.overlayType == RenderBlockOverlayEvent.OverlayType.FIRE) {
             event.setCanceled(true);
         }
     }

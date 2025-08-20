@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -11,7 +12,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class GoldorStartTimer {
-    private static final BooleanSetting PHASE_3_TIMER_ENABLED = new BooleanSetting("Phase 3 Start CountDown");
 
     private int ticks = -1;
     private final Minecraft mc = Minecraft.getMinecraft();
@@ -55,6 +55,7 @@ public class GoldorStartTimer {
     }
 
     private boolean isModuleEnabled() {
-        return PHASE_3_TIMER_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_phase3countdown");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }
