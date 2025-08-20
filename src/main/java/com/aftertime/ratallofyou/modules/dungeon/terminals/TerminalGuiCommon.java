@@ -18,26 +18,45 @@ import java.util.List;
  * Common helpers and constants shared by dungeon terminal custom GUIs.
  */
 public final class TerminalGuiCommon {
-    private TerminalGuiCommon() {}
+    private TerminalGuiCommon() {
+    }
 
 
     // Force-load certain terminal classes so their static initializers can register event listeners
     static {
-        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.numbers"); } catch (Throwable ignored) {}
-        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.startswith"); } catch (Throwable ignored) {}
-        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.Colors"); } catch (Throwable ignored) {}
-        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.redgreen"); } catch (Throwable ignored) {}
-        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.rubix"); } catch (Throwable ignored) {}
-        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.melody"); } catch (Throwable ignored) {}
+        try {
+            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.numbers");
+        } catch (Throwable ignored) {
+        }
+        try {
+            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.startswith");
+        } catch (Throwable ignored) {
+        }
+        try {
+            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.Colors");
+        } catch (Throwable ignored) {
+        }
+        try {
+            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.redgreen");
+        } catch (Throwable ignored) {
+        }
+        try {
+            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.rubix");
+        } catch (Throwable ignored) {
+        }
+        try {
+            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.melody");
+        } catch (Throwable ignored) {
+        }
     }
 
     // ===================== Shared defaults/config =====================
     public static final class Defaults {
-        public static boolean highPingMode = true;
+        public static boolean highPingMode = false;
         public static boolean phoenixClientCompat = false;
         public static int timeoutMs = 500;
         public static int firstClickBlockMs = 0;
-        public static float scale = 2.0f;
+        public static float scale = 1.0f;
         public static int offsetX = 0;
         public static int offsetY = 0;
         public static int overlayColor = 0xFF00FF00;    // opaque green
@@ -48,7 +67,11 @@ public final class TerminalGuiCommon {
     public static class ClickTracker {
         public boolean clicked = false;
         public long lastClickAt = 0L;
-        public void reset() { clicked = false; lastClickAt = 0L; }
+
+        public void reset() {
+            clicked = false;
+            lastClickAt = 0L;
+        }
     }
 
     public static final int[] ALLOWED_SLOTS = new int[]{
@@ -67,17 +90,20 @@ public final class TerminalGuiCommon {
                     if (s0 != null && s0.inventory != null) {
                         return s0.inventory.getSizeInventory();
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
                 return Math.min(54, Math.max(9, cont.inventorySlots.size() - 36));
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         // Reflection fallback
         try {
             Object lower = ReflectionHelper.getPrivateValue(GuiChest.class, chest, "lowerChestInventory", "field_147015_w");
             if (lower != null) {
                 return (Integer) lower.getClass().getMethod("getSizeInventory").invoke(lower);
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         return 54;
     }
 
@@ -91,14 +117,16 @@ public final class TerminalGuiCommon {
                         IChatComponent comp = ((IInventory) lowerInv).getDisplayName();
                         if (comp != null) return comp.getUnformattedText();
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
                 try {
                     Object lower = ReflectionHelper.getPrivateValue(ContainerChest.class, (ContainerChest) cont, "lowerChestInventory", "field_75155_e");
                     if (lower instanceof IInventory) {
                         IChatComponent comp = ((IInventory) lower).getDisplayName();
                         if (comp != null) return comp.getUnformattedText();
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
                 try {
                     if (cont.inventorySlots != null && !cont.inventorySlots.isEmpty()) {
                         Slot s0 = cont.getSlot(0);
@@ -107,9 +135,11 @@ public final class TerminalGuiCommon {
                             if (comp != null) return comp.getUnformattedText();
                         }
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         try {
             Object lower = ReflectionHelper.getPrivateValue(GuiChest.class, chest, "lowerChestInventory", "field_147015_w");
             if (lower instanceof IInventory) {
@@ -120,10 +150,12 @@ public final class TerminalGuiCommon {
                 if (comp != null) {
                     try {
                         return (String) comp.getClass().getMethod("getUnformattedText").invoke(comp);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         return null;
     }
 
@@ -212,7 +244,7 @@ public final class TerminalGuiCommon {
             short actionNumber = mc.thePlayer.openContainer.getNextTransactionID(mc.thePlayer.inventory);
             // clickType 0 = PICKUP, see Container.java for click types
             net.minecraft.network.play.client.C0EPacketClickWindow packet =
-                new net.minecraft.network.play.client.C0EPacketClickWindow(windowId, slot, button, 0, null, actionNumber);
+                    new net.minecraft.network.play.client.C0EPacketClickWindow(windowId, slot, button, 0, null, actionNumber);
             mc.getNetHandler().addToSendQueue(packet);
             return true;
         } catch (Throwable ignored) {
@@ -255,7 +287,10 @@ public final class TerminalGuiCommon {
      */
     public static int[] processQueueIfReady(Deque<int[]> queue, List<Integer> solution) {
         if (queue == null || queue.isEmpty()) return null;
-        if (solution == null) { queue.clear(); return null; }
+        if (solution == null) {
+            queue.clear();
+            return null;
+        }
         for (int[] q : queue) {
             if (q == null || q.length < 2 || !solution.contains(q[0])) {
                 queue.clear();

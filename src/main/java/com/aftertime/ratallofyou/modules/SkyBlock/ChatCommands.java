@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
@@ -16,27 +18,25 @@ import java.util.regex.Matcher;
 
 public class ChatCommands {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Party Commands");
     private static final Pattern PARTY_MSG_REGEX = Pattern.compile("^Party > (\\[[^]]*?])? ?(\\w{1,16})(?: [ቾ⚒])?: ?!(\\w+)(?: (.+))?$");
 
     // Command toggles
-    private boolean warp = isCommandEnabled("warp");
-    private boolean warptransfer = isCommandEnabled("warptransfer");
-    private boolean coords = isCommandEnabled("coords");
-    private boolean allinvite = isCommandEnabled("allinvite");
-    private boolean boop = isCommandEnabled("boop");
-    private boolean kick = isCommandEnabled("kick");
-    private boolean cf = isCommandEnabled("cf");
-    private boolean eightball = isCommandEnabled("8ball");
-    private boolean dice = isCommandEnabled("dice");
-    private boolean pt = isCommandEnabled("pt");
-    private boolean tps = isCommandEnabled("tps");
-    private boolean dt = isCommandEnabled("dt");
-    private boolean queInstance = isCommandEnabled("queInstance");
-    private boolean demote = isCommandEnabled("demote");
-    private boolean promote = isCommandEnabled("promote");
-    private boolean disband = isCommandEnabled("disband");
-    private boolean ptandwarp = isCommandEnabled("ptandwarp");
+    private final Boolean warp = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_warp").Data;
+    private final Boolean warptransfer = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_warp_transfer").Data;
+    private final Boolean coords = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_coords").Data;
+    private final Boolean allinvite = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_all_invite").Data;
+    private final Boolean boop = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_boop").Data;
+    private final Boolean cf = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_coin_flip").Data;
+    private final Boolean eightball = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_8ball").Data;
+    private final Boolean dice = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_dice").Data;
+    private final Boolean pt = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_party_transfer").Data;
+    private final Boolean tps = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_tps").Data;
+    private final Boolean dt = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_downtime").Data;
+    private final Boolean queInstance = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_queue_instance").Data;
+    private final Boolean demote = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_demote").Data;
+    private final Boolean promote = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_promote").Data;
+    private final Boolean disband = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_disband").Data;
+    private final Boolean ptandwarp = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_pt_warp").Data;
 
     private final List<Pair> dtReason = new ArrayList<Pair>();
 
@@ -99,267 +99,278 @@ public class ChatCommands {
     }
 
     private void handleCommand(String command, String args, String sender) {
-        warp = isCommandEnabled("warp");
-        warptransfer = isCommandEnabled("warptransfer");
-        coords = isCommandEnabled("coords");
-        allinvite = isCommandEnabled("allinvite");
-        boop = isCommandEnabled("boop");
-        kick = isCommandEnabled("kick");
-        cf = isCommandEnabled("cf");
-        eightball = isCommandEnabled("8ball");
-        dice = isCommandEnabled("dice");
-        pt = isCommandEnabled("pt");
-        tps = isCommandEnabled("tps");
-        dt = isCommandEnabled("dt");
-        queInstance = isCommandEnabled("queInstance");
-        demote = isCommandEnabled("demote");
-        promote = isCommandEnabled("promote");
-        disband = isCommandEnabled("disband");
-        ptandwarp = isCommandEnabled("ptandwarp");
+        switch (command) {
+            case "help":
+            case "h":
+                List<String> availableCommands = new ArrayList<String>();
+                if (coords) availableCommands.add("coords/co");
+                if (boop) availableCommands.add("boop [player]");
+                if (cf) availableCommands.add("cf");
+                if (eightball) availableCommands.add("8ball");
+                if (dice) availableCommands.add("dice");
+                if (tps) availableCommands.add("tps");
+                if (warp && PartyUtils.isLeader()) availableCommands.add("warp/w");
+                if (warptransfer && PartyUtils.isLeader()) availableCommands.add("warptransfer/wt");
+                if (allinvite && PartyUtils.isLeader()) availableCommands.add("allinvite/allinv");
+                if (pt && PartyUtils.isLeader()) availableCommands.add("pt/ptme/transfer [player]");
+                if (dt) availableCommands.add("dt/downtime [reason]");
+                if (queInstance && PartyUtils.isLeader()) availableCommands.add("m1-m7/f1-f7/t1-t5");
+                if (demote && PartyUtils.isLeader()) availableCommands.add("demote [player]");
+                if (promote && PartyUtils.isLeader()) availableCommands.add("promote [player]");
+                if (disband && PartyUtils.isLeader()) availableCommands.add("disband");
+                if (ptandwarp) availableCommands.add("ptandwarp");
 
-        if (command.equals("help") || command.equals("h")) {
-            List<String> availableCommands = new ArrayList<String>();
-            if (coords) availableCommands.add("coords/co");
-            if (boop) availableCommands.add("boop [player]");
-            if (cf) availableCommands.add("cf");
-            if (eightball) availableCommands.add("8ball");
-            if (dice) availableCommands.add("dice");
-            if (tps) availableCommands.add("tps");
-            if (warp && PartyUtils.isLeader()) availableCommands.add("warp/w");
-            if (warptransfer && PartyUtils.isLeader()) availableCommands.add("warptransfer/wt");
-            if (allinvite && PartyUtils.isLeader()) availableCommands.add("allinvite/allinv");
-            if (pt && PartyUtils.isLeader()) availableCommands.add("pt/ptme/transfer [player]");
-            if (dt) availableCommands.add("dt/downtime [reason]");
-            if (queInstance && PartyUtils.isLeader()) availableCommands.add("m1-m7/f1-f7/t1-t5");
-            if (demote && PartyUtils.isLeader()) availableCommands.add("demote [player]");
-            if (promote && PartyUtils.isLeader()) availableCommands.add("promote [player]");
-            if (disband && PartyUtils.isLeader()) availableCommands.add("disband");
-            if (ptandwarp) availableCommands.add("ptandwarp");
+                partyMessage("Available commands: " + join(availableCommands, ", "));
+                break;
 
-            partyMessage("Available commands: " + join(availableCommands, ", "));
-        }
-        else if (command.equals("coords") || command.equals("co")) {
-            if (coords) {
-                partyMessage(getPositionString());
-            }
-        }
-        else if (command.equals("boop")) {
-            if (boop && args != null) {
-                sendCommand("boop " + args);
-            }
-        }
-        else if (command.equals("cf")) {
-            if (cf) {
-                partyMessage(Math.random() < 0.5 ? "heads" : "tails");
-            }
-        }
-        else if (command.equals("8ball")) {
-            if (eightball) {
-                partyMessage(getRandomResponse());
-            }
-        }
-        else if (command.equals("dice")) {
-            if (dice) {
-                partyMessage(String.valueOf(new Random().nextInt(6) + 1));
-            }
-        }
-        else if (command.equals("tps")) {
-            if (tps) {
-                partyMessage("TPS: " + String.format("%.1f", getAverageTps()));
-            }
-        }
-        else if (command.equals("warp") || command.equals("w")) {
-            if (warp && PartyUtils.isLeader()) {
-                sendCommand("p warp");
-            }
-        }
-        else if (command.equals("warptransfer") || command.equals("wt")) {
-            if (warptransfer && PartyUtils.isLeader()) {
-                sendCommand("p warp");
-                final String finalSender = sender;
+            case "coords":
+            case "co":
+                if (coords) {
+                    partyMessage(getPositionString());
+                }
+                break;
+
+            case "boop":
+                if (boop && args != null) {
+                    sendCommand("boop " + args);
+                }
+                break;
+
+            case "cf":
+                if (cf) {
+                    partyMessage(Math.random() < 0.5 ? "heads" : "tails");
+                }
+                break;
+
+            case "8ball":
+                if (eightball) {
+                    partyMessage(getRandomResponse());
+                }
+                break;
+
+            case "dice":
+                if (dice) {
+                    partyMessage(String.valueOf(new Random().nextInt(6) + 1));
+                }
+                break;
+
+            case "tps":
+                if (tps) {
+                    partyMessage("TPS: " + String.format("%.1f", getAverageTps()));
+                }
+                break;
+
+            case "warp":
+            case "w":
+                if (warp && PartyUtils.isLeader()) {
+                    sendCommand("p warp");
+                }
+                break;
+
+            case "warptransfer":
+            case "wt":
+                if (warptransfer && PartyUtils.isLeader()) {
+                    sendCommand("p warp");
+                    final String finalSender = sender;
+                    new Timer().schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            sendCommand("p transfer " + finalSender);
+                        }
+                    }, 12000);
+                }
+                break;
+
+            case "allinvite":
+            case "allinv":
+                if (allinvite && PartyUtils.isLeader()) {
+                    sendCommand("p settings allinvite");
+                }
+                break;
+
+            case "pt":
+            case "ptme":
+            case "transfer":
+                if (pt && PartyUtils.isLeader()) {
+                    String target = args != null ? findPartyMember(args) : sender;
+                    if (target == null) target = sender;
+                    sendCommand("p transfer " + target);
+                }
+                break;
+
+            case "downtime":
+            case "dt":
+                if (dt) {
+                    String reason = args != null ? args : "No reason given";
+                    for (Pair pair : dtReason) {
+                        if (pair.getFirst().equals(sender)) {
+                            modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " already has a reminder!");
+                            return;
+                        }
+                    }
+                    modMessage(EnumChatFormatting.GREEN + "Reminder set for the end of the run!");
+                    dtReason.add(new Pair(sender, reason));
+                }
+                break;
+
+            case "undowntime":
+            case "undt":
+                if (dt) {
+                    boolean removed = false;
+                    Iterator<Pair> iterator = dtReason.iterator();
+                    while (iterator.hasNext()) {
+                        Pair pair = iterator.next();
+                        if (pair.getFirst().equals(sender)) {
+                            iterator.remove();
+                            removed = true;
+                        }
+                    }
+                    if (removed) {
+                        modMessage(EnumChatFormatting.GREEN + "Reminder removed!");
+                    } else {
+                        modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " has no reminder set!");
+                    }
+                }
+                break;
+
+            case "demote":
+                if (demote && PartyUtils.isLeader() && args != null) {
+                    String target = findPartyMember(args);
+                    if (target != null) {
+                        sendCommand("p demote " + target);
+                    }
+                }
+                break;
+
+            case "promote":
+                if (promote && PartyUtils.isLeader() && args != null) {
+                    String target = findPartyMember(args);
+                    if (target != null) {
+                        sendCommand("p promote " + target);
+                    }
+                }
+                break;
+
+            case "disband":
+                if (disband && PartyUtils.isLeader()) {
+                    sendCommand("p disband");
+                }
+                break;
+
+            case "ptw":
+            case "tw":
+                // Null check Minecraft and player
+                if (mc == null || mc.thePlayer == null || !ptandwarp) {
+                    return;
+                }
+
+                // Only ignore if someone else sends without args
+                if (args == null && !sender.equalsIgnoreCase(mc.thePlayer.getName())) {
+                    return;
+                }
+
+                // Create final copy of args for use in inner class
+                final String finalArgs = args;
+
+                // 1-second cooldown before processing
                 new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        sendCommand("p transfer " + finalSender);
-                    }
-                }, 12000);
-            }
-        }
-        else if (command.equals("allinvite") || command.equals("allinv")) {
-            if (allinvite && PartyUtils.isLeader()) {
-                sendCommand("p settings allinvite");
-            }
-        }
-        else if (command.equals("pt") || command.equals("ptme") || command.equals("transfer")) {
-            if (pt && PartyUtils.isLeader()) {
-                String target = args != null ? findPartyMember(args) : sender;
-                if (target == null) target = sender;
-                sendCommand("p transfer " + target);
-            }
-        }
-        else if (command.equals("downtime") || command.equals("dt")) {
-            if (dt) {
-                String reason = args != null ? args : "No reason given";
-                for (Pair pair : dtReason) {
-                    if (pair.getFirst().equals(sender)) {
-                        modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " already has a reminder!");
-                        return;
-                    }
-                }
-                modMessage(EnumChatFormatting.GREEN + "Reminder set for the end of the run!");
-                dtReason.add(new Pair(sender, reason));
-            }
-        }
-        else if (command.equals("undowntime") || command.equals("undt")) {
-            if (dt) {
-                boolean removed = false;
-                Iterator<Pair> iterator = dtReason.iterator();
-                while (iterator.hasNext()) {
-                    Pair pair = iterator.next();
-                    if (pair.getFirst().equals(sender)) {
-                        iterator.remove();
-                        removed = true;
-                    }
-                }
-                if (removed) {
-                    modMessage(EnumChatFormatting.GREEN + "Reminder removed!");
-                } else {
-                    modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " has no reminder set!");
-                }
-            }
-        }
-        else if (command.matches("^[mf][1-7]$")) {
-            if (queInstance && PartyUtils.isLeader()) {
-                String floorType = command.substring(0, 1);
-                String floorNum = command.substring(1);
+                        if (finalArgs != null) {
+                            // Case with args - convert everything to lowercase
+                            String targetInput = finalArgs.toLowerCase();
+                            String myName = mc.thePlayer.getName().toLowerCase();
 
-                String[] numberWords = {"", "one", "two", "three", "four",
-                        "five", "six", "seven"};
-                String floorWord = numberWords[Integer.parseInt(floorNum)];
-
-                String dungeonCommand;
-                if (floorType.equals("m")) {
-                    dungeonCommand = "joindungeon master_catacombs_floor_" + floorWord;
-                } else {
-                    dungeonCommand = "joindungeon catacombs_floor_" + floorWord;
-                }
-
-                sendCommand(dungeonCommand);
-            }
-        }
-        else if (command.matches("^t[1-5]$")) {
-            if (queInstance && PartyUtils.isLeader()) {
-                String[] kuudraTiers = {
-                        "kuudra_normal",
-                        "kuudra_hot",
-                        "kuudra_burning",
-                        "kuudra_fiery",
-                        "kuudra_infernal"
-                };
-
-                int tierIndex = Integer.parseInt(command.substring(1)) - 1;
-                sendCommand("joininstance " + kuudraTiers[tierIndex]);
-            }
-        }
-        else if (command.equals("demote")) {
-            if (demote && PartyUtils.isLeader() && args != null) {
-                String target = findPartyMember(args);
-                if (target != null) {
-                    sendCommand("p demote " + target);
-                }
-            }
-        }
-        else if (command.equals("promote")) {
-            if (promote && PartyUtils.isLeader() && args != null) {
-                String target = findPartyMember(args);
-                if (target != null) {
-                    sendCommand("p promote " + target);
-                }
-            }
-        }
-        else if (command.equals("disband")) {
-            if (disband && PartyUtils.isLeader()) {
-                sendCommand("p disband");
-            }
-        }
-        else if (command.equals("ptw") || command.equals("tw")) {
-            // Null check Minecraft and player
-            if (mc == null || mc.thePlayer == null || !ptandwarp) {
-                return;
-            }
-
-            // Only ignore if someone else sends without args
-            if (args == null && !sender.equalsIgnoreCase(mc.thePlayer.getName())) {
-                return;
-            }
-
-            // Create final copy of args for use in inner class
-            final String finalArgs = args;
-            final String finalSender = sender;
-
-            // 1-second cooldown before processing
-            new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    if (finalArgs != null) {
-                        // Case with args - convert everything to lowercase
-                        String targetInput = finalArgs.toLowerCase();
-                        String myName = mc.thePlayer.getName().toLowerCase();
-
-                        if (targetInput.equals(myName)) {
-                            // If args matches my username
-                            partyMessage("!ptme");
-
-                            new Timer().schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    if (mc != null && mc.thePlayer != null) {
-                                        sendCommand("p warp");
-                                    }
-                                }
-                            }, 2000); // Additional 2s delay for warp
-                        } else {
-                            // Check if target exists in party (null-safe)
-                            List<String> partyMembers = PartyUtils.getPartyMembers();
-                            String foundMember = null;
-
-                            if (partyMembers != null) {
-                                for (String member : partyMembers) {
-                                    if (member != null && (member.toLowerCase().equals(targetInput) ||
-                                            member.toLowerCase().startsWith(targetInput))) {
-                                        foundMember = member;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (foundMember != null && PartyUtils.isLeader()) {
-                                // Transfer to target and request warp
-                                sendCommand("p transfer " + foundMember);
+                            if (targetInput.equals(myName)) {
+                                // If args matches my username
+                                partyMessage("!ptme");
 
                                 new Timer().schedule(new TimerTask() {
                                     @Override
                                     public void run() {
                                         if (mc != null && mc.thePlayer != null) {
-                                            partyMessage("!warp");
+                                            sendCommand("p warp");
                                         }
                                     }
-                                }, 2000); // Additional 2s delay for warp request
-                            } else if (foundMember == null) {
-                                partyMessage("Player not found in party: " + finalArgs);
+                                }, 2000); // Additional 2s delay for warp
+                            } else {
+                                // Check if target exists in party (null-safe)
+                                List<String> partyMembers = PartyUtils.getPartyMembers();
+                                String foundMember = null;
+
+                                if (partyMembers != null) {
+                                    for (String member : partyMembers) {
+                                        if (member != null && (member.toLowerCase().equals(targetInput) ||
+                                                member.toLowerCase().startsWith(targetInput))) {
+                                            foundMember = member;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (foundMember != null && PartyUtils.isLeader()) {
+                                    // Transfer to target and request warp
+                                    sendCommand("p transfer " + foundMember);
+
+                                    new Timer().schedule(new TimerTask() {
+                                        @Override
+                                        public void run() {
+                                            if (mc != null && mc.thePlayer != null) {
+                                                partyMessage("!warp");
+                                            }
+                                        }
+                                    }, 2000); // Additional 2s delay for warp request
+                                } else if (foundMember == null) {
+                                    partyMessage("Player not found in party: " + finalArgs);
+                                }
+                            }
+                        } else {
+                            // Case without args - just warp if I'm leader
+                            if (PartyUtils.isLeader()) {
+                                sendCommand("p warp");
                             }
                         }
-                    } else {
-                        // Case without args - just warp if I'm leader
-                        if (PartyUtils.isLeader()) {
-                            sendCommand("p warp");
-                        }
                     }
+                }, 1000); // Initial 1-second cooldown
+                break;
+
+            default:
+                // Handle regex patterns for floor commands
+                if (command.matches("^[mf][1-7]$")) {
+                    if (queInstance && PartyUtils.isLeader()) {
+                        String floorType = command.substring(0, 1);
+                        String floorNum = command.substring(1);
+
+                        String[] numberWords = {"", "one", "two", "three", "four",
+                                "five", "six", "seven"};
+                        String floorWord = numberWords[Integer.parseInt(floorNum)];
+
+                        String dungeonCommand;
+                        if (floorType.equals("m")) {
+                            dungeonCommand = "joindungeon master_catacombs_floor_" + floorWord;
+                        } else {
+                            dungeonCommand = "joindungeon catacombs_floor_" + floorWord;
+                        }
+
+                        sendCommand(dungeonCommand);
+                    }
+                } else if (command.matches("^t[1-5]$")) {
+                    if (queInstance && PartyUtils.isLeader()) {
+                        String[] kuudraTiers = {
+                                "kuudra_normal",
+                                "kuudra_hot",
+                                "kuudra_burning",
+                                "kuudra_fiery",
+                                "kuudra_infernal"
+                        };
+
+                        int tierIndex = Integer.parseInt(command.substring(1)) - 1;
+                        sendCommand("joininstance " + kuudraTiers[tierIndex]);
+                    }
+                } else {
+                    partyMessage("Unknown command. Use !help for available commands.");
                 }
-            }, 1000); // Initial 1-second cooldown
-        }
-        else {
-            partyMessage("Unknown command. Use !help for available commands.");
+                break;
         }
     }
 
@@ -435,7 +446,8 @@ public class ChatCommands {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_partycommands");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 
     public static void setCommandEnabled(String commandName, boolean enabled) {

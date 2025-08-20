@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -15,7 +17,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.regex.Pattern;
 
 public class StarMobHighlighter {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Star Mob Highlighter");
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final Pattern starredPattern = Pattern.compile(".*§6✯.*§c❤.*");
 
@@ -88,6 +89,7 @@ public class StarMobHighlighter {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_starmobhighlighter");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

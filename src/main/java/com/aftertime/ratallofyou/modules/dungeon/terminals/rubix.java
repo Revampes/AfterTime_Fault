@@ -60,6 +60,10 @@ public class rubix {
     private static final int OVERLAY_LEFT = 0xFF00AA00;  // green-ish for left clicks
     private static final int OVERLAY_RIGHT = 0xFFAA0000; // red-ish for right clicks
 
+    // Track inventory changes to unblock queued clicks immediately after server updates
+    private static int invHash = 0;
+    private static int hashAtClick = 0;
+
     // API (kept for parity)
     public static void setEnabled(boolean on) {
         if (enabled == on) return;
@@ -124,8 +128,11 @@ public class rubix {
         }
 
         event.setCanceled(true);
-        // Recompute from inventory, then process queued predictions, then draw
+        // Recompute from inventory, detect update to clear click lock, then process queued predictions, then draw
         solveFromInventory();
+        if (CLICK.clicked && invHash != hashAtClick) {
+            CLICK.clicked = false; // server inventory changed; allow next queued click immediately
+        }
         processQueueIfReady();
         drawOverlay();
     }
@@ -177,6 +184,8 @@ public class rubix {
             if (TerminalGuiCommon.Defaults.highPingMode && CLICK.clicked) {
                 queue.addLast(new int[]{slot, button});
             } else {
+                // Capture current inventory hash so we can detect the next server update
+                hashAtClick = invHash;
                 TerminalGuiCommon.doClickAndMark(slot, button, CLICK);
             }
         }
@@ -232,7 +241,7 @@ public class rubix {
         ensureSolutionSize();
         Arrays.fill(solutionBySlot, 0);
         Container container = Minecraft.getMinecraft().thePlayer != null ? Minecraft.getMinecraft().thePlayer.openContainer : null;
-        if (!(container instanceof ContainerChest)) return;
+        if (!(container instanceof ContainerChest)) { invHash = 0; return; }
         int rows = Math.max(1, windowSize / 9);
 
         // Collect metas for allowed slots present in this chest size
@@ -244,6 +253,13 @@ public class rubix {
             if (stack == null) continue;
             metas.add(new int[]{s, stack.getItemDamage()});
         }
+        // Compute simple inventory hash from metas list
+        int h = 1;
+        for (int[] sm : metas) {
+            h = 31 * h + sm[0];
+            h = 31 * h + sm[1];
+        }
+        invHash = h;
         if (metas.isEmpty()) return;
 
         // Compute click counts for each possible origin index

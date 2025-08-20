@@ -1,6 +1,8 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.settings.BooleanSetting;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.ChatComponentText;
@@ -10,7 +12,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 
 public class AutoSprint {
-    private static final BooleanSetting MODULE_ENABLED = new BooleanSetting("Auto Sprint");
     private boolean wasEnabled = false;
     private boolean messageSent = false;
     private boolean temporaryDisabled = false;
@@ -87,6 +88,7 @@ public class AutoSprint {
     }
 
     private boolean isModuleEnabled() {
-        return MODULE_ENABLED.isEnabled();
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_autosprint");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }
