@@ -54,7 +54,7 @@ public class CrateAura {
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !isModuleEnabled()) return;
+        if (event.phase != TickEvent.Phase.END || !isModuleEnabled() || !cratesSpawned) return;
         if (mc.theWorld == null || mc.thePlayer == null) return;
 
         if (pickingUpCooldown > 0) {

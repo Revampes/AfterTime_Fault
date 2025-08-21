@@ -158,7 +158,8 @@ public class ConfigIO {
         String Value = properties.getProperty( Key);
         if (Value == null) return null;
         try {
-            return new Color(Integer.parseInt(Value));
+            // Preserve alpha channel; stored value is ARGB from Color#getRGB()
+            return new Color(Integer.parseInt(Value), true);
         } catch (NumberFormatException e) {
             e.printStackTrace();
             return null;

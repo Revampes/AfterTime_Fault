@@ -71,20 +71,15 @@ public class FastHotKeyGui extends GuiScreen {
         // Background hover animation config
         int bgInfluence = getBgInfluenceRadius();
         float bgMaxExtend = getBgMaxExtend();
-        // Near: 95% black, Far: 85% grey
-        Color bgNear = getColorOrDefault("fhk_bg_near_color", new Color(0, 0, 0, 242));
-        Color bgFar  = getColorOrDefault("fhk_bg_far_color",  new Color(128, 128, 128, 217));
-        // If user config has both colors effectively the same (e.g., legacy all-white), enforce visible gradient
-        if (colorsEffectivelySame(bgNear, bgFar)) {
-            bgNear = new Color(0, 0, 0, 242);
-            bgFar  = new Color(128, 128, 128, 217);
-        }
-        // If both are very bright (near-white/very light grey), also enforce fallback to avoid white overlays
+        // Defaults now 50% grey (uniform)
+        Color bgNear = getColorOrDefault("fhk_bg_near_color", new Color(128, 128, 128, 255));
+        Color bgFar  = getColorOrDefault("fhk_bg_far_color",  new Color(128, 128, 128, 255));
+        // If user saved very bright colors for both, force to mid-grey to avoid white-out
         if (isVeryBright(bgNear) && isVeryBright(bgFar)) {
-            bgNear = new Color(0, 0, 0, 242);
-            bgFar  = new Color(128, 128, 128, 217);
+            bgNear = new Color(128, 128, 128, 255);
+            bgFar  = new Color(128, 128, 128, 255);
         }
-        // Ensure gradient direction: far lighter than near; if reversed, swap
+        // Only ensure gradient direction if mismatched; don't force a gradient when equal
         if (luminance(bgNear) > luminance(bgFar)) {
             Color tmp = bgNear; bgNear = bgFar; bgFar = tmp;
         }
@@ -129,11 +124,15 @@ public class FastHotKeyGui extends GuiScreen {
         }
 
         // Direction arrow following mouse, positioned near inner radius
-        double dx = mouseX - centerX;
-        double dy = mouseY - centerY;
-        double mouseAngle = Math.atan2(dy, dx);
-        double arrowRadius = innerRadius + (ARROW_LENGTH * 0.5f) + ARROW_MARGIN;
-        drawArrowAtAngle(centerX, centerY, mouseAngle, arrowRadius, ARROW_BASE_HALFWIDTH, ARROW_LENGTH, 0xFFFFFFFF);
+        Object showArrowCfg = safeCfgGet("fhk_show_arrow");
+        boolean showArrow = !(showArrowCfg instanceof Boolean) || ((Boolean) showArrowCfg);
+        if (showArrow) {
+            double dx = mouseX - centerX;
+            double dy = mouseY - centerY;
+            double mouseAngle = Math.atan2(dy, dx);
+            double arrowRadius = innerRadius + (ARROW_LENGTH * 0.5f) + ARROW_MARGIN;
+            drawArrowAtAngle(centerX, centerY, mouseAngle, arrowRadius, ARROW_BASE_HALFWIDTH, ARROW_LENGTH, 0xFFFFFFFF);
+        }
 
         // On-screen quick labels to clarify settings (placeholders like terminal settings)
         int infoX = 8;
@@ -562,6 +561,8 @@ public class FastHotKeyGui extends GuiScreen {
         if (regionCount <= 0 || outerRadius <= innerRadius) return;
         double sectorSize = (Math.PI * 2.0) / regionCount;
         double mouseAngle = Math.atan2(mouseY - cy, mouseX - cx);
+        double mouseDist = Math.hypot(mouseX - cx, mouseY - cy);
+        boolean centerMode = mouseDist <= innerRadius;
 
         // Precompute color channels for near/far
         float nr = near.getRed() / 255f, ng = near.getGreen() / 255f, nb = near.getBlue() / 255f, na = near.getAlpha() / 255f;
@@ -579,7 +580,7 @@ public class FastHotKeyGui extends GuiScreen {
         double outerTrim = gapPx / (2.0 * Math.max(1.0, outerRadius));
         double trim = Math.max(innerTrim, outerTrim);
 
-        int stepsPerFull = 128; // revert to previous
+        int stepsPerFull = 128; // smoothness
         int stepsPerSector = Math.max(10, stepsPerFull / Math.max(1, regionCount));
 
         for (int i = 0; i < regionCount; i++) {
@@ -590,44 +591,58 @@ public class FastHotKeyGui extends GuiScreen {
             if (end <= start) continue;
 
             GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-            for (int s = 0; s <= stepsPerSector; s++) {
-                double t = (double)s / (double)stepsPerSector;
-                double a = start + t * (end - start);
+            if (centerMode || colorsEffectivelySame(near, far)) {
+                // Uniform color, no extension in center mode
+                GL11.glColor4f(fr, fg, fb, fa);
+                for (int s = 0; s <= stepsPerSector; s++) {
+                    double t = (double)s / (double)stepsPerSector;
+                    double a = start + t * (end - start);
+                    float ix = (float)(cx + Math.cos(a) * innerRadius);
+                    float iy = (float)(cy + Math.sin(a) * innerRadius);
+                    float ox = (float)(cx + Math.cos(a) * outerRadius);
+                    float oy = (float)(cy + Math.sin(a) * outerRadius);
+                    GL11.glVertex2f(ox, oy);
+                    GL11.glVertex2f(ix, iy);
+                }
+            } else {
+                for (int s = 0; s <= stepsPerSector; s++) {
+                    double t = (double)s / (double)stepsPerSector;
+                    double a = start + t * (end - start);
 
-                // Angular influence for outward extension (1 near the cursor direction, 0 opposite)
-                double dAng = angularDistance(a, mouseAngle);
-                float angInfluence = clamp01((float)(1.0 - dAng / Math.PI));
+                    // Angular influence for outward extension (1 near the cursor direction, 0 opposite)
+                    double dAng = angularDistance(a, mouseAngle);
+                    float angInfluence = clamp01((float)(1.0 - dAng / Math.PI));
 
-                // Compute outward extension based on angular influence and radial closeness to the outer edge
-                double mouseDist = Math.hypot(mouseX - cx, mouseY - cy);
-                float radCloseness = clamp01(1.0f - (float)(Math.abs(mouseDist - outerRadius) / Math.max(1, influenceRadius)));
-                float extend = (i == hoveredIndex) ? (maxExtend * (angInfluence * radCloseness)) : 0f;
+                    // Compute outward extension based on angular influence and radial closeness to the outer edge
+                    float radCloseness = clamp01(1.0f - (float)(Math.abs(mouseDist - outerRadius) / Math.max(1, influenceRadius)));
+                    float extend = (i == hoveredIndex) ? (maxExtend * (angInfluence * radCloseness)) : 0f;
 
-                // Vertex positions
-                float ix = (float)(cx + Math.cos(a) * innerRadius);
-                float iy = (float)(cy + Math.sin(a) * innerRadius);
-                float ox = (float)(cx + Math.cos(a) * (outerRadius + extend));
-                float oy = (float)(cy + Math.sin(a) * (outerRadius + extend));
+                    // Vertex positions
+                    float ix = (float)(cx + Math.cos(a) * innerRadius);
+                    float iy = (float)(cy + Math.sin(a) * innerRadius);
+                    float ox = (float)(cx + Math.cos(a) * (outerRadius + extend));
+                    float oy = (float)(cy + Math.sin(a) * (outerRadius + extend));
 
-                // Distance-driven color at each vertex (closer to cursor -> closer to 'near' color)
-                float pOuter = clamp01(1.0f - (float)(Math.hypot(mouseX - ox, mouseY - oy) / Math.max(1, influenceRadius)));
-                float pInner = clamp01(1.0f - (float)(Math.hypot(mouseX - ix, mouseY - iy) / Math.max(1, influenceRadius)));
+                    // Distance-driven color at each vertex (closer to cursor -> closer to 'near' color)
+                    float pOuter = clamp01(1.0f - (float)(Math.hypot(mouseX - ox, mouseY - oy) / Math.max(1, influenceRadius)));
+                    float pInner = clamp01(1.0f - (float)(Math.hypot(mouseX - ix, mouseY - iy) / Math.max(1, influenceRadius)));
 
-                // Outer vertex color
-                float oR = fr + (nr - fr) * pOuter;
-                float oG = fg + (ng - fg) * pOuter;
-                float oB = fb + (nb - fb) * pOuter;
-                float oA = fa + (na - fa) * pOuter;
-                GL11.glColor4f(oR, oG, oB, oA);
-                GL11.glVertex2f(ox, oy);
+                    // Outer vertex color
+                    float oR = fr + (nr - fr) * pOuter;
+                    float oG = fg + (ng - fg) * pOuter;
+                    float oB = fb + (nb - fb) * pOuter;
+                    float oA = fa + (na - fa) * pOuter;
+                    GL11.glColor4f(oR, oG, oB, oA);
+                    GL11.glVertex2f(ox, oy);
 
-                // Inner vertex color
-                float iR = fr + (nr - fr) * pInner;
-                float iG = fg + (ng - fg) * pInner;
-                float iB = fb + (nb - fb) * pInner;
-                float iA = fa + (na - fa) * pInner;
-                GL11.glColor4f(iR, iG, iB, iA);
-                GL11.glVertex2f(ix, iy);
+                    // Inner vertex color
+                    float iR = fr + (nr - fr) * pInner;
+                    float iG = fg + (ng - fg) * pInner;
+                    float iB = fb + (nb - fb) * pInner;
+                    float iA = fa + (na - fa) * pInner;
+                    GL11.glColor4f(iR, iG, iB, iA);
+                    GL11.glVertex2f(ix, iy);
+                }
             }
             GL11.glEnd();
         }

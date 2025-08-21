@@ -129,11 +129,12 @@ public class AllConfig {
         put("fhk_outer_far_color", new BaseConfig<>("Outer Far Color", "Color farthest from cursor on outer ring (RGBA)", new Color(0, 0, 0, 255)));
         put("fhk_outline_prox_range", new BaseConfig<>("Outline Proximity Range", "How far from ring counts as close (px)", 120));
         // Background hover animation
-        put("fhk_bg_near_color", new BaseConfig<>("BG Near Color", "Background color near cursor (RGBA, alpha drives intensity)", new Color(0, 0, 0, 180)));
-        put("fhk_bg_far_color", new BaseConfig<>("BG Far Color", "Background color far from cursor (RGBA, light grey)", new Color(160, 160, 160, 50)));
-        // Lowered default so the gradient range is tighter by default
+        put("fhk_bg_near_color", new BaseConfig<>("BG Near Color", "Background color near cursor (RGBA, alpha drives intensity)", new Color(96, 96, 96, 128)));
+        put("fhk_bg_far_color", new BaseConfig<>("BG Far Color", "Background color far from cursor (RGBA, light grey)", new Color(160, 160, 160, 128)));
         put("fhk_bg_influence_radius", new BaseConfig<>("BG Influence Radius", "Distance where background hover fades out (px)", 60));
         put("fhk_bg_max_extend", new BaseConfig<>("BG Max Extend", "Max outward extension of background near cursor (px)", 14.0f));
+        // UI toggles
+        put("fhk_show_arrow", new BaseConfig<>("Show Arrow", "Show direction arrow near inner ring", true));
     }};
 
     // After individual maps are ready, build the index map

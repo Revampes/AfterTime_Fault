@@ -239,8 +239,14 @@ public class ModSettingsGui extends GuiScreen {
             for (FastHotkeyEntry e : entries) fastRows.add(new FastRow(guiLeft, e));
         }
 
-        // 1) Draw Fast Hotkey appearance options (labelled + color inputs)
+        // 0) Draw toggles first (e.g., Show Arrow)
         int yCursor = contentY;
+        for (Toggle t : Toggles) {
+            t.draw(mouseX, mouseY, yCursor, fontRendererObj);
+            yCursor += 22;
+        }
+
+        // 1) Draw Fast Hotkey appearance options (labelled + color inputs)
         for (LabelledInput t : labelledInputs) {
             t.draw(mouseX, mouseY, yCursor, fontRendererObj);
             yCursor += t.getVerticalSpace();
@@ -297,6 +303,7 @@ public class ModSettingsGui extends GuiScreen {
 
         // Scrollbar
         int optionsHeight = 0;
+        optionsHeight += Toggles.size() * 22;
         for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
         optionsHeight += ColorInputs.size() * 50;
         int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
@@ -317,7 +324,17 @@ public class ModSettingsGui extends GuiScreen {
         int x = panelX + 5;
         int contentY = panelY + 25 - commandScroll.getOffset();
 
-        // First, delegate clicks to Fast Hotkey appearance options
+        // First, handle toggle clicks (e.g., Show Arrow)
+        int yCursor = contentY;
+        for (Toggle toggle : Toggles) {
+            if (toggle.isMouseOver(mouseX, mouseY, yCursor)) {
+                toggle.toggle();
+                return;
+            }
+            yCursor += 22;
+        }
+
+        // Then delegate clicks to Fast Hotkey appearance options
         if (handleLabelledInputClicks(mouseX, mouseY)) return;
         if (handleColorInputClicks(mouseX, mouseY)) return;
 
@@ -325,6 +342,7 @@ public class ModSettingsGui extends GuiScreen {
 
         // Add button
         int optionsHeight = 0;
+        optionsHeight += Toggles.size() * 22;
         for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
         optionsHeight += ColorInputs.size() * 50;
         int addY = contentY + optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
@@ -638,8 +656,12 @@ public class ModSettingsGui extends GuiScreen {
         addFhkEntry("fhk_outer_near_color", y);
         addFhkEntry("fhk_outer_far_color", y);
         // Background hover settings
+        addFhkEntry("fhk_bg_near_color", y);
+        addFhkEntry("fhk_bg_far_color", y);
         addFhkEntry("fhk_bg_influence_radius", y);
         addFhkEntry("fhk_bg_max_extend", y);
+        // UI toggles
+        addFhkEntry("fhk_show_arrow", y);
     }
 
     private void addFhkEntry(String key, Integer y) {
