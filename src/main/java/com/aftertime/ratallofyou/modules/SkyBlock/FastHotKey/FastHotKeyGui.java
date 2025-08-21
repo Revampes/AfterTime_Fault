@@ -27,7 +27,11 @@ public class FastHotKeyGui extends GuiScreen {
     private static final float LABEL_MAX_SCALE = 3.5f;         // Avoid absurdly large text
 
     // Outline
-    private static final float OUTLINE_THICKNESS = 8f;         // Outline stroke thickness
+    private static final float OUTLINE_THICKNESS = 10f;         // Outline stroke thickness
+
+    // Background hover animation defaults
+    private static final int DEFAULT_BG_INFLUENCE_RADIUS = 30;   // px distance where background hover fades out
+    private static final float DEFAULT_BG_MAX_EXTEND = 18f;       // px maximum outward bulge at outer edge
 
     private int centerX;
     private int centerY;
@@ -64,6 +68,27 @@ public class FastHotKeyGui extends GuiScreen {
         Color outerNear = getColorOrDefault("fhk_outer_near_color", new Color(255,255,255,255));
         Color outerFar  = getColorOrDefault("fhk_outer_far_color",  new Color(0,0,0,255));
 
+        // Background hover animation config
+        int bgInfluence = getBgInfluenceRadius();
+        float bgMaxExtend = getBgMaxExtend();
+        // Near: 95% black, Far: 85% grey
+        Color bgNear = getColorOrDefault("fhk_bg_near_color", new Color(0, 0, 0, 242));
+        Color bgFar  = getColorOrDefault("fhk_bg_far_color",  new Color(128, 128, 128, 217));
+        // If user config has both colors effectively the same (e.g., legacy all-white), enforce visible gradient
+        if (colorsEffectivelySame(bgNear, bgFar)) {
+            bgNear = new Color(0, 0, 0, 242);
+            bgFar  = new Color(128, 128, 128, 217);
+        }
+        // If both are very bright (near-white/very light grey), also enforce fallback to avoid white overlays
+        if (isVeryBright(bgNear) && isVeryBright(bgFar)) {
+            bgNear = new Color(0, 0, 0, 242);
+            bgFar  = new Color(128, 128, 128, 217);
+        }
+        // Ensure gradient direction: far lighter than near; if reversed, swap
+        if (luminance(bgNear) > luminance(bgFar)) {
+            Color tmp = bgNear; bgNear = bgFar; bgFar = tmp;
+        }
+
         // No commands configured
         if (regionCount == 0) {
             String msg = "No Fast Hotkey commands configured";
@@ -74,23 +99,25 @@ public class FastHotKeyGui extends GuiScreen {
             return;
         }
 
-        // Draw ring sectors with constant pixel gaps
-        double sectorSize = 2 * Math.PI / regionCount;
-        for (int i = 0; i < regionCount; i++) {
-            double baseStart = i * sectorSize;
-            double baseEnd = (i + 1) * sectorSize;
-            drawRingSectorWithPixelGap(centerX, centerY, innerRadius, outerRadius, baseStart, baseEnd, GAP_PIXELS, 0x80000000);
-        }
+        // Determine hovered sector index for extension logic
+        int hoveredIndex = getHoveredRegion(mouseX, mouseY, innerRadius, outerRadius);
+
+        // Draw ring sector backgrounds with distance-following alpha and outward extension near the cursor
+        drawRingSectorBackgroundWithHover(centerX, centerY, innerRadius, outerRadius, regionCount,
+                GAP_PIXELS, mouseX, mouseY, bgInfluence, bgNear, bgFar, bgMaxExtend, hoveredIndex);
 
         // New: Angular gradient outlines (near->far colors), with gaps preserved per sector
         drawAngularGradientRingOutlineWithGaps(centerX, centerY, innerRadius, regionCount, GAP_PIXELS, mouseX, mouseY, proxRange, innerNear, innerFar);
-        drawAngularGradientRingOutlineWithGaps(centerX, centerY, outerRadius, regionCount, GAP_PIXELS, mouseX, mouseY, proxRange, outerNear, outerFar);
+        // Outer outline now extends outward with animation to match background extension, but only on hovered sector
+        drawAngularGradientOuterOutlineWithExtend(centerX, centerY, outerRadius, regionCount, GAP_PIXELS,
+                mouseX, mouseY, proxRange, outerNear, outerFar, bgInfluence, bgMaxExtend, hoveredIndex);
 
         // Temporarily disabled old hover effect (white arcs on hovered region)
         // ...existing code for old hover arcs removed...
 
         // Labels (scaled to fit their wedge)
         List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        double sectorSize = 2 * Math.PI / regionCount;
         for (int i = 0; i < regionCount; i++) {
             double midAngle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
             double rLabel = (innerRadius + (outerRadius - innerRadius) * LABEL_RADIUS_FACTOR);
@@ -107,6 +134,16 @@ public class FastHotKeyGui extends GuiScreen {
         double mouseAngle = Math.atan2(dy, dx);
         double arrowRadius = innerRadius + (ARROW_LENGTH * 0.5f) + ARROW_MARGIN;
         drawArrowAtAngle(centerX, centerY, mouseAngle, arrowRadius, ARROW_BASE_HALFWIDTH, ARROW_LENGTH, 0xFFFFFFFF);
+
+        // On-screen quick labels to clarify settings (placeholders like terminal settings)
+        int infoX = 8;
+        int infoY = 8;
+        int cInfo = 0xCCFFFFFF; // semi-white
+        fontRendererObj.drawString("Inner radius (px): " + innerRadius, infoX, infoY, cInfo);
+        fontRendererObj.drawString("Outer radius (px): " + outerRadius, infoX, infoY + 10, cInfo);
+        fontRendererObj.drawString("Outline influence (px): " + proxRange, infoX, infoY + 20, cInfo);
+        fontRendererObj.drawString("BG influence (px): " + bgInfluence, infoX, infoY + 30, cInfo);
+        fontRendererObj.drawString("BG max extend (px): " + (int)bgMaxExtend, infoX, infoY + 40, cInfo);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
@@ -353,23 +390,49 @@ public class FastHotKeyGui extends GuiScreen {
     // Helpers for config + outlines
     // =============================
     private int getSafeInnerRadius() {
-        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get("fhk_inner_radius").Data;
+        Object v = safeCfgGet("fhk_inner_radius");
         int r = (v instanceof Integer) ? (Integer) v : DEFAULT_INNER_RADIUS;
         return Math.max(10, Math.min(400, r));
     }
     private int getSafeOuterRadius(int innerRadius) {
-        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get("fhk_outer_radius").Data;
+        Object v = safeCfgGet("fhk_outer_radius");
         int r = (v instanceof Integer) ? (Integer) v : DEFAULT_OUTER_RADIUS;
         return Math.max(innerRadius + 10, Math.min(600, r));
     }
     private int getOutlineProxRange() {
-        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get("fhk_outline_prox_range").Data;
+        Object v = safeCfgGet("fhk_outline_prox_range");
         int r = (v instanceof Integer) ? (Integer) v : 120;
         return Math.max(10, Math.min(2000, r));
     }
     private Color getColorOrDefault(String key, Color def) {
-        Object v = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key).Data;
+        Object v = safeCfgGet(key);
         return (v instanceof Color) ? (Color) v : def;
+    }
+    private Object safeCfgGet(String key) {
+        try {
+            Object entry = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key);
+            // entry may be null or may not have a Data field accessible in this context
+            if (entry == null) return null;
+            try {
+                // Reflective safety not needed; directly access Data if possible
+                return AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key).Data;
+            } catch (Throwable t) {
+                return null;
+            }
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+    // Background hover config
+    private int getBgInfluenceRadius() {
+        Object v = safeCfgGet("fhk_bg_influence_radius");
+        int r = (v instanceof Integer) ? (Integer) v : DEFAULT_BG_INFLUENCE_RADIUS;
+        return Math.max(20, Math.min(3000, r));
+    }
+    private float getBgMaxExtend() {
+        Object v = safeCfgGet("fhk_bg_max_extend");
+        float f = (v instanceof Number) ? ((Number) v).floatValue() : DEFAULT_BG_MAX_EXTEND;
+        return Math.max(0f, Math.min(60f, f));
     }
 
     // New: Angular gradient outline with gaps preserved
@@ -430,11 +493,177 @@ public class FastHotKeyGui extends GuiScreen {
         GlStateManager.disableBlend();
     }
 
+    // New: Angular gradient outer outline that also extends outward following the background animation
+    private void drawAngularGradientOuterOutlineWithExtend(int cx, int cy, int baseRadius, int regionCount, float gapPx,
+                                                           int mouseX, int mouseY, int proxRange, Color near, Color far,
+                                                           int influenceRadius, float maxExtend, int hoveredIndex) {
+        if (regionCount <= 0 || baseRadius <= 0) return;
+        double mouseAngle = Math.atan2(mouseY - cy, mouseX - cx);
+        double dist = Math.hypot(mouseX - cx, mouseY - cy);
+        float fRad = clamp01(1.0f - (float)(Math.abs(dist - baseRadius) / Math.max(1, proxRange)));
+        double sectorSize = (Math.PI * 2.0) / regionCount;
+
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+        GlStateManager.disableTexture2D();
+        GlStateManager.disableDepth();
+        GlStateManager.depthMask(false);
+        GL11.glLineWidth(OUTLINE_THICKNESS);
+
+        float nr = near.getRed() / 255f, ng = near.getGreen() / 255f, nb = near.getBlue() / 255f, na = near.getAlpha() / 255f;
+        float fr = far.getRed() / 255f,  fg = far.getGreen() / 255f,  fb = far.getBlue() / 255f,  fa = far.getAlpha() / 255f;
+
+        double gapAngle = (gapPx / Math.max(1.0, baseRadius));
+        int stepsPerFull = 192; // revert to previous smoothness
+        int stepsPerSector = Math.max(8, stepsPerFull / Math.max(1, regionCount));
+
+        for (int i = 0; i < regionCount; i++) {
+            double baseStart = i * sectorSize;
+            double baseEnd = (i + 1) * sectorSize;
+            double start = baseStart + gapAngle * 0.5;
+            double end = baseEnd - gapAngle * 0.5;
+            if (end <= start) continue;
+
+            GL11.glBegin(GL11.GL_LINE_STRIP);
+            for (int s = 0; s <= stepsPerSector; s++) {
+                double t = (double)s / (double)stepsPerSector;
+                double a = start + t * (end - start);
+
+                // Per-vertex angular influence relative to cursor angle; extend only hovered sector
+                double dAng = angularDistance(a, mouseAngle);
+                float angInfluence = clamp01((float)(1.0 - dAng / Math.PI));
+                float radCloseness = clamp01(1.0f - (float)(Math.abs(dist - baseRadius) / Math.max(1, influenceRadius)));
+                float extend = (i == hoveredIndex) ? (maxExtend * (angInfluence * radCloseness)) : 0f;
+                double radius = baseRadius + extend;
+
+                // Color blend relative to cursor angle
+                float fAng = clamp01((float)(1.0 - (dAng / Math.PI)));
+                float mix = clamp01(fAng * fRad);
+                float cr = fr + (nr - fr) * mix;
+                float cg = fg + (ng - fg) * mix;
+                float cb = fb + (nb - fb) * mix;
+                float ca = fa + (na - fa) * mix;
+                GL11.glColor4f(cr, cg, cb, ca);
+                GL11.glVertex2f((float)(cx + Math.cos(a) * radius), (float)(cy + Math.sin(a) * radius));
+            }
+            GL11.glEnd();
+        }
+
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepth();
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+    }
+
+    // New: background sector fill that follows cursor distance with alpha, and extends outward when close
+    private void drawRingSectorBackgroundWithHover(int cx, int cy, int innerRadius, int outerRadius, int regionCount,
+                                                   float gapPx, int mouseX, int mouseY, int influenceRadius,
+                                                   Color near, Color far, float maxExtend, int hoveredIndex) {
+        if (regionCount <= 0 || outerRadius <= innerRadius) return;
+        double sectorSize = (Math.PI * 2.0) / regionCount;
+        double mouseAngle = Math.atan2(mouseY - cy, mouseX - cx);
+
+        // Precompute color channels for near/far
+        float nr = near.getRed() / 255f, ng = near.getGreen() / 255f, nb = near.getBlue() / 255f, na = near.getAlpha() / 255f;
+        float fr = far.getRed() / 255f,  fg = far.getGreen() / 255f,  fb = far.getBlue() / 255f,  fa = far.getAlpha() / 255f;
+
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+        GlStateManager.disableTexture2D();
+        GlStateManager.disableDepth();
+        GlStateManager.depthMask(false);
+        GlStateManager.disableCull();
+
+        // Gaps: compute trims at inner and outer edges, then use the stricter one
+        double innerTrim = gapPx / (2.0 * Math.max(1.0, innerRadius));
+        double outerTrim = gapPx / (2.0 * Math.max(1.0, outerRadius));
+        double trim = Math.max(innerTrim, outerTrim);
+
+        int stepsPerFull = 128; // revert to previous
+        int stepsPerSector = Math.max(10, stepsPerFull / Math.max(1, regionCount));
+
+        for (int i = 0; i < regionCount; i++) {
+            double baseStart = i * sectorSize;
+            double baseEnd = (i + 1) * sectorSize;
+            double start = baseStart + trim;
+            double end = baseEnd - trim;
+            if (end <= start) continue;
+
+            GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+            for (int s = 0; s <= stepsPerSector; s++) {
+                double t = (double)s / (double)stepsPerSector;
+                double a = start + t * (end - start);
+
+                // Angular influence for outward extension (1 near the cursor direction, 0 opposite)
+                double dAng = angularDistance(a, mouseAngle);
+                float angInfluence = clamp01((float)(1.0 - dAng / Math.PI));
+
+                // Compute outward extension based on angular influence and radial closeness to the outer edge
+                double mouseDist = Math.hypot(mouseX - cx, mouseY - cy);
+                float radCloseness = clamp01(1.0f - (float)(Math.abs(mouseDist - outerRadius) / Math.max(1, influenceRadius)));
+                float extend = (i == hoveredIndex) ? (maxExtend * (angInfluence * radCloseness)) : 0f;
+
+                // Vertex positions
+                float ix = (float)(cx + Math.cos(a) * innerRadius);
+                float iy = (float)(cy + Math.sin(a) * innerRadius);
+                float ox = (float)(cx + Math.cos(a) * (outerRadius + extend));
+                float oy = (float)(cy + Math.sin(a) * (outerRadius + extend));
+
+                // Distance-driven color at each vertex (closer to cursor -> closer to 'near' color)
+                float pOuter = clamp01(1.0f - (float)(Math.hypot(mouseX - ox, mouseY - oy) / Math.max(1, influenceRadius)));
+                float pInner = clamp01(1.0f - (float)(Math.hypot(mouseX - ix, mouseY - iy) / Math.max(1, influenceRadius)));
+
+                // Outer vertex color
+                float oR = fr + (nr - fr) * pOuter;
+                float oG = fg + (ng - fg) * pOuter;
+                float oB = fb + (nb - fb) * pOuter;
+                float oA = fa + (na - fa) * pOuter;
+                GL11.glColor4f(oR, oG, oB, oA);
+                GL11.glVertex2f(ox, oy);
+
+                // Inner vertex color
+                float iR = fr + (nr - fr) * pInner;
+                float iG = fg + (ng - fg) * pInner;
+                float iB = fb + (nb - fb) * pInner;
+                float iA = fa + (na - fa) * pInner;
+                GL11.glColor4f(iR, iG, iB, iA);
+                GL11.glVertex2f(ix, iy);
+            }
+            GL11.glEnd();
+        }
+
+        GlStateManager.enableCull();
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepth();
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+    }
+
     private static double angularDistance(double a, double b) {
         double d = Math.abs(a - b) % (Math.PI * 2.0);
         return d > Math.PI ? (2.0 * Math.PI - d) : d;
     }
     private static float clamp01(float v) {
         return v < 0f ? 0f : (v > 1f ? 1f : v);
+    }
+
+    // Helper: consider two colors effectively the same if RGBA differences are tiny
+    private boolean colorsEffectivelySame(Color a, Color b) {
+        if (a == null || b == null) return false;
+        int dr = Math.abs(a.getRed()   - b.getRed());
+        int dg = Math.abs(a.getGreen() - b.getGreen());
+        int db = Math.abs(a.getBlue()  - b.getBlue());
+        int da = Math.abs(a.getAlpha() - b.getAlpha());
+        return dr < 8 && dg < 8 && db < 8 && da < 8;
+    }
+
+    private boolean isVeryBright(Color c) {
+        if (c == null) return false;
+        return luminance(c) >= 200f; // threshold for near-white/very light grey
+    }
+
+    private float luminance(Color c) {
+        if (c == null) return 0f;
+        return (0.299f * c.getRed() + 0.587f * c.getGreen() + 0.114f * c.getBlue());
     }
 }

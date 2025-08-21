@@ -637,6 +637,9 @@ public class ModSettingsGui extends GuiScreen {
         addFhkEntry("fhk_inner_far_color", y);
         addFhkEntry("fhk_outer_near_color", y);
         addFhkEntry("fhk_outer_far_color", y);
+        // Background hover settings
+        addFhkEntry("fhk_bg_influence_radius", y);
+        addFhkEntry("fhk_bg_max_extend", y);
     }
 
     private void addFhkEntry(String key, Integer y) {
