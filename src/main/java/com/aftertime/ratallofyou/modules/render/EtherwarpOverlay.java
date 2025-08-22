@@ -32,8 +32,8 @@ public class EtherwarpOverlay {
 
     public static void onRenderWorld() {
         if (!isModuleEnabled() || mc.thePlayer == null || mc.theWorld == null) return;
-        if (etherwarpOverlayOnlySneak() && !mc.thePlayer.isSneaking()) return;
-        if (!isHoldingAOTV()) return;
+        if (etherwarpOverlayOnlySneak() && !mc.thePlayer.isSneaking() && !isHoldingEtherwarpConduit()) return;
+        if (!isHoldingAOTV() && !isHoldingEtherwarpConduit()) return;
 
         if (etherwarpSyncWithServer()) {
             doSyncedEther();
@@ -47,6 +47,12 @@ public class EtherwarpOverlay {
                 && mc.thePlayer.getHeldItem() != null
                 && (mc.thePlayer.getHeldItem().getDisplayName().contains("Aspect of the Void")
                 || mc.thePlayer.getHeldItem().getDisplayName().contains("AOTV"));
+    }
+
+    private static boolean isHoldingEtherwarpConduit() {
+        return mc.thePlayer != null
+                && mc.thePlayer.getHeldItem() != null
+                && mc.thePlayer.getHeldItem().getDisplayName().contains("Etherwarp Conduit");
     }
 
     private static void doSyncedEther() {

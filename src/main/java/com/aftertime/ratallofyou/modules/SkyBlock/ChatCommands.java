@@ -367,8 +367,6 @@ public class ChatCommands {
                         int tierIndex = Integer.parseInt(command.substring(1)) - 1;
                         sendCommand("joininstance " + kuudraTiers[tierIndex]);
                     }
-                } else {
-                    partyMessage("Unknown command. Use !help for available commands.");
                 }
                 break;
         }

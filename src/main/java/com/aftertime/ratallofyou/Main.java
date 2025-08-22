@@ -22,6 +22,8 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import com.aftertime.ratallofyou.UI.config.ConfigIO;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
+import com.aftertime.ratallofyou.modules.kuudra.CrateBeaconBeam;
+import com.aftertime.ratallofyou.modules.kuudra.CheckNoPre;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -52,7 +54,6 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new LeapAnnounce());
         MinecraftForge.EVENT_BUS.register(new KeyHighlighter());
         MinecraftForge.EVENT_BUS.register(new StarMobHighlighter());
-        MinecraftForge.EVENT_BUS.register(new CrateBeam());
         MinecraftForge.EVENT_BUS.register(new CrateHighlighter());
         MinecraftForge.EVENT_BUS.register(new CrateAura());
         MinecraftForge.EVENT_BUS.register(new PartyUtils());
@@ -66,6 +67,8 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new FastHotKey());
         MinecraftForge.EVENT_BUS.register(new FastHotKeyGui());
         MinecraftForge.EVENT_BUS.register(new startswith());
+        MinecraftForge.EVENT_BUS.register(new CrateBeaconBeam());
+        MinecraftForge.EVENT_BUS.register(new CheckNoPre());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

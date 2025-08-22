@@ -74,10 +74,11 @@ public class FastHotKeyGui extends GuiScreen {
         // Defaults now 50% grey (uniform)
         Color bgNear = getColorOrDefault("fhk_bg_near_color", new Color(128, 128, 128, 255));
         Color bgFar  = getColorOrDefault("fhk_bg_far_color",  new Color(128, 128, 128, 255));
-        // If user saved very bright colors for both, force to mid-grey to avoid white-out
+        // If user saved very bright colors for both, gently clamp to mid-grey but PRESERVE alpha
         if (isVeryBright(bgNear) && isVeryBright(bgFar)) {
-            bgNear = new Color(128, 128, 128, 255);
-            bgFar  = new Color(128, 128, 128, 255);
+            int preservedA = Math.min(bgNear.getAlpha(), bgFar.getAlpha());
+            bgNear = new Color(128, 128, 128, preservedA);
+            bgFar  = new Color(128, 128, 128, preservedA);
         }
         // Only ensure gradient direction if mismatched; don't force a gradient when equal
         if (luminance(bgNear) > luminance(bgFar)) {
@@ -575,10 +576,9 @@ public class FastHotKeyGui extends GuiScreen {
         GlStateManager.depthMask(false);
         GlStateManager.disableCull();
 
-        // Gaps: compute trims at inner and outer edges, then use the stricter one
+        // Compute separate trims for inner and outer edges to keep pixel gaps PARALLEL
         double innerTrim = gapPx / (2.0 * Math.max(1.0, innerRadius));
         double outerTrim = gapPx / (2.0 * Math.max(1.0, outerRadius));
-        double trim = Math.max(innerTrim, outerTrim);
 
         int stepsPerFull = 128; // smoothness
         int stepsPerSector = Math.max(10, stepsPerFull / Math.max(1, regionCount));
@@ -586,42 +586,64 @@ public class FastHotKeyGui extends GuiScreen {
         for (int i = 0; i < regionCount; i++) {
             double baseStart = i * sectorSize;
             double baseEnd = (i + 1) * sectorSize;
-            double start = baseStart + trim;
-            double end = baseEnd - trim;
-            if (end <= start) continue;
+            double innerStart = baseStart + innerTrim;
+            double innerEnd = baseEnd - innerTrim;
+            double outerStart = baseStart + outerTrim;
+            double outerEnd = baseEnd - outerTrim;
+            if (innerEnd <= innerStart || outerEnd <= outerStart) continue;
 
             GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
             if (centerMode || colorsEffectivelySame(near, far)) {
-                // Uniform color, no extension in center mode
+                // Uniform color, no extension in center mode; still respect per-edge trims for parallel gaps
                 GL11.glColor4f(fr, fg, fb, fa);
                 for (int s = 0; s <= stepsPerSector; s++) {
                     double t = (double)s / (double)stepsPerSector;
-                    double a = start + t * (end - start);
-                    float ix = (float)(cx + Math.cos(a) * innerRadius);
-                    float iy = (float)(cy + Math.sin(a) * innerRadius);
-                    float ox = (float)(cx + Math.cos(a) * outerRadius);
-                    float oy = (float)(cy + Math.sin(a) * outerRadius);
+                    double oa = outerStart + t * (outerEnd - outerStart);
+                    double ia = innerStart + t * (innerEnd - innerStart);
+                    float ix = (float)(cx + Math.cos(ia) * innerRadius);
+                    float iy = (float)(cy + Math.sin(ia) * innerRadius);
+                    float ox = (float)(cx + Math.cos(oa) * outerRadius);
+                    float oy = (float)(cy + Math.sin(oa) * outerRadius);
                     GL11.glVertex2f(ox, oy);
                     GL11.glVertex2f(ix, iy);
                 }
             } else {
                 for (int s = 0; s <= stepsPerSector; s++) {
                     double t = (double)s / (double)stepsPerSector;
-                    double a = start + t * (end - start);
+                    // Base angles before applying dynamic outer trim
+                    double baseOuterStart = outerStart;
+                    double baseOuterEnd = outerEnd;
+                    double baseInnerStart = innerStart;
+                    double baseInnerEnd = innerEnd;
+
+                    // Angular positions for inner with fixed trim (inner radius doesn't change)
+                    double ia = baseInnerStart + t * (baseInnerEnd - baseInnerStart);
 
                     // Angular influence for outward extension (1 near the cursor direction, 0 opposite)
-                    double dAng = angularDistance(a, mouseAngle);
-                    float angInfluence = clamp01((float)(1.0 - dAng / Math.PI));
+                    double mouseAng = mouseAngle;
+                    // We'll derive a provisional outer angle to evaluate influence; start with untrimmed interpolation
+                    double oaProvisional = baseOuterStart + t * (baseOuterEnd - baseOuterStart);
+                    double dAngOuter = angularDistance(oaProvisional, mouseAng);
+                    float angInfluence = clamp01((float)(1.0 - dAngOuter / Math.PI));
 
                     // Compute outward extension based on angular influence and radial closeness to the outer edge
                     float radCloseness = clamp01(1.0f - (float)(Math.abs(mouseDist - outerRadius) / Math.max(1, influenceRadius)));
                     float extend = (i == hoveredIndex) ? (maxExtend * (angInfluence * radCloseness)) : 0f;
 
-                    // Vertex positions
-                    float ix = (float)(cx + Math.cos(a) * innerRadius);
-                    float iy = (float)(cy + Math.sin(a) * innerRadius);
-                    float ox = (float)(cx + Math.cos(a) * (outerRadius + extend));
-                    float oy = (float)(cy + Math.sin(a) * (outerRadius + extend));
+                    // Compute dynamic outer trim based on the local effective radius (outerRadius + extend)
+                    double localOuterRadius = outerRadius + extend;
+                    double dynTrim = gapPx / (2.0 * Math.max(1.0, localOuterRadius));
+                    // Ensure trim never collapses the sector
+                    double maxTrim = (baseOuterEnd - baseOuterStart) * 0.49;
+                    dynTrim = Math.min(dynTrim, maxTrim);
+
+                    double oa = (baseOuterStart + dynTrim) + t * ((baseOuterEnd - dynTrim) - (baseOuterStart + dynTrim));
+
+                    // Vertex positions (outer uses its own angle plus dynamic extension)
+                    float ix = (float)(cx + Math.cos(ia) * innerRadius);
+                    float iy = (float)(cy + Math.sin(ia) * innerRadius);
+                    float ox = (float)(cx + Math.cos(oa) * localOuterRadius);
+                    float oy = (float)(cy + Math.sin(oa) * localOuterRadius);
 
                     // Distance-driven color at each vertex (closer to cursor -> closer to 'near' color)
                     float pOuter = clamp01(1.0f - (float)(Math.hypot(mouseX - ox, mouseY - oy) / Math.max(1, influenceRadius)));

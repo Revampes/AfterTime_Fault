@@ -88,6 +88,7 @@ public class AllConfig {
             put("kuudra_pearlrefill",new ModuleInfo("Pearl Refill (Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false));
             put("kuudra_pearlcancel",new ModuleInfo("Pearl Cancel (Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false));
             put("kuudra_cratebeam",new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies", "Kuudra", false));
+            put("kuudra_checknopre", new ModuleInfo("Check No Pre", "Send message if no pre", "Kuudra", false));
             put("kuudra_cratehighlighter",new ModuleInfo("Crate Highlighter", "Box Kuudra crates", "Kuudra", false));
             put("kuudra_pearllineups",new ModuleInfo("Moveable Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
             put("kuudra_fixedpearllineups",new ModuleInfo("Fixed Pos Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
