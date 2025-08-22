@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
+import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PearlLineUp.CalcPearlLineUp;
@@ -24,6 +25,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigIO;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.modules.kuudra.CrateBeaconBeam;
 import com.aftertime.ratallofyou.modules.kuudra.CheckNoPre;
+import scala.collection.parallel.ParIterableLike;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -69,6 +71,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new startswith());
         MinecraftForge.EVENT_BUS.register(new CrateBeaconBeam());
         MinecraftForge.EVENT_BUS.register(new CheckNoPre());
+        MinecraftForge.EVENT_BUS.register(new WaypointGrab());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

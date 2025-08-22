@@ -106,6 +106,7 @@ public class AllConfig {
 
             // SkyBlock
             put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
+            put("skyblock-waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
             put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
             put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
 
@@ -147,7 +148,6 @@ public class AllConfig {
         put(3, ETHERWARP_CONFIGS);
         put(4, TERMINAL_CONFIGS);
         put(5, Pos_CONFIGS);
-        // Index 6 reserved for Fast Hotkey appearance
         put(6, FASTHOTKEY_CONFIGS);
     }};
 

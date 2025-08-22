@@ -163,9 +163,15 @@ public class ChatCommands {
             case "warp":
             case "w":
                 if (warp && PartyUtils.isLeader()) {
-                    sendCommand("p warp");
+                    new Timer().schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            if (mc != null && mc.thePlayer != null) {
+                                sendCommand("p warp");
+                            }
+                        }
+                    }, 1000); // 1s delay before warp
                 }
-                break;
 
             case "warptransfer":
             case "wt":
@@ -394,7 +400,7 @@ public class ChatCommands {
     }
 
     private String getPositionString() {
-        return String.format("X: %.1f, Y: %.1f, Z: %.1f",
+        return String.format("x: %.1f, y: %.1f, z: %.1f",
                 mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ);
     }
 

@@ -43,8 +43,6 @@ public class numbers {
 
     // Solution order: only red panes (meta 14), sorted by stack size asc
     private static final List<Integer> solution = new ArrayList<>();
-    // Show numeric order overlay for all panes (any color), sorted by stack size asc
-    private static final List<Integer> fullSolution = new ArrayList<>();
     // Queue of clicks for high ping mode: {slot, button}
     private static final Deque<int[]> queue = new ArrayDeque<>();
 
@@ -74,7 +72,6 @@ public class numbers {
         openedAt = 0L;
         windowSize = 0;
         solution.clear();
-        fullSolution.clear();
         queue.clear();
         lastHeadSlot = null;
     }
@@ -92,7 +89,6 @@ public class numbers {
                 CLICK.reset();
                 openedAt = System.currentTimeMillis();
                 queue.clear();
-                fullSolution.clear(); // reset fixed number mapping for new session
                 windowSize = TerminalGuiCommon.getChestWindowSize(chest);
                 return;
             }
@@ -107,9 +103,8 @@ public class numbers {
         if (!(event.gui instanceof GuiChest)) return;
         if (!inTerminal) return;
         event.setCanceled(true);
-        // Recompute state from inventory
-        solveFullFromInventory(); // compute fixed number positions once per session
-        solveFromInventory();     // compute dynamic next steps
+        // Recompute state from inventory (dynamic next steps only)
+        solveFromInventory();
         processQueueIfReady();
         drawOverlay();
     }
@@ -174,7 +169,7 @@ public class numbers {
         TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
 
-        // Highlight next up to 3 steps directly
+        // Highlight next up to 3 steps directly (show color only, no numeric labels)
         int[] stepColors = new int[]{ 0xFF00FF00, 0xFFFFFF00, 0xFFFF0000 };
         int max = Math.min(3, solution.size());
         for (int i = 0; i < max; i++) {
@@ -182,15 +177,6 @@ public class numbers {
             int curX = (slot % 9) * 18 + offX;
             int curY = (slot / 9) * 18 + offY;
             TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, stepColors[i]);
-        }
-
-        // Draw numeric labels for all panes according to fullSolution order
-        for (int idx = 0; idx < fullSolution.size(); idx++) {
-            int slot = fullSolution.get(idx);
-            int curX = (slot % 9) * 18 + offX;
-            int curY = (slot / 9) * 18 + offY;
-            String text = String.valueOf(idx + 1);
-            fr.drawStringWithShadow(text, curX + (int) ((16 - fr.getStringWidth(text)) / 2f), curY + 4, 0xFFFFFFFF);
         }
 
         GlStateManager.popMatrix();
@@ -227,28 +213,6 @@ public class numbers {
         }
     }
 
-    private static void solveFullFromInventory() {
-        // Keep number labels fixed for the entire terminal session
-        if (!fullSolution.isEmpty()) return;
-        Container container = Minecraft.getMinecraft().thePlayer != null ? Minecraft.getMinecraft().thePlayer.openContainer : null;
-        if (!(container instanceof ContainerChest)) return;
-        int rows = Math.max(1, windowSize / 9);
-
-        Arrays.stream(ALLOWED_SLOTS_NUMBERS)
-                .filter(s -> s < rows * 9)
-                .mapToObj(s -> {
-                    Slot slotObj = container.getSlot(s);
-                    ItemStack stack = slotObj == null ? null : slotObj.getStack();
-                    if (stack == null) return null;
-                    int id = net.minecraft.item.Item.getIdFromItem(stack.getItem());
-                    if (id != 160) return null; // stained glass (pane) only, any color
-                    return new int[]{s, stack.stackSize};
-                })
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparingInt(a -> a[1]))
-                .map(a -> a[0])
-                .forEachOrdered(fullSolution::add);
-    }
 
     private static void predict(int slot) {
         if (!solution.isEmpty() && solution.get(0) == slot) {

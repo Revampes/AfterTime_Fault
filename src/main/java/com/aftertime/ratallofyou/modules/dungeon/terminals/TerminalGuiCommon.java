@@ -218,21 +218,6 @@ public final class TerminalGuiCommon {
     }
 
     /**
-     * Sends a window click to the server for the player's currently open container.
-     * Returns true if the click was attempted, false if player/controller was null.
-     */
-//    public static boolean windowClick(int slot, int button) { //it can be used for someone who disable "middle click"
-//        Minecraft mc = Minecraft.getMinecraft();
-//        if (mc.thePlayer == null || mc.playerController == null) return false;
-//        try {
-//            mc.playerController.windowClick(mc.thePlayer.openContainer.windowId, slot, button, 0, mc.thePlayer);
-//            return true;
-//        } catch (Throwable ignored) {
-//            return false;
-//        }
-//    }
-
-    /**
      * Sends a window click to the server for the player's currently open container, without picking up or moving any item.
      * Returns true if the click was attempted, false if player/controller was null.
      */
