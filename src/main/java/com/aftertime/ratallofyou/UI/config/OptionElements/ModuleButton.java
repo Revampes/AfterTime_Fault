@@ -32,4 +32,9 @@ public class ModuleButton extends GuiElement{
     public boolean isMouseOver(int mx, int my) { return mx >= x && mx <= x + width && my >= y && my <= y + height; }
     public boolean isDropdownClicked(int mx, int my) { return hasSettings && isMouseOver(mx, my) && mx >= x + width - 18; }
     public ModuleInfo getModule() { return module; }
+    // New safe accessors
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
 }
