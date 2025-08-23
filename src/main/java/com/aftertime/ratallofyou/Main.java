@@ -72,6 +72,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new CrateBeaconBeam());
         MinecraftForge.EVENT_BUS.register(new CheckNoPre());
         MinecraftForge.EVENT_BUS.register(new WaypointGrab());
+        MinecraftForge.EVENT_BUS.register(new FreshMesage());
 
         // Register keybind handler
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());

@@ -92,6 +92,7 @@ public class AllConfig {
             put("kuudra_cratehighlighter",new ModuleInfo("Crate Highlighter", "Box Kuudra crates", "Kuudra", false));
             put("kuudra_pearllineups",new ModuleInfo("Moveable Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
             put("kuudra_fixedpearllineups",new ModuleInfo("Fixed Pos Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
+            put("kuudra-freshmessage",new ModuleInfo("Fresh Message", "Sends a message when you get fresh tool", "Kuudra", false));
 
             // Dungeons
             put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
