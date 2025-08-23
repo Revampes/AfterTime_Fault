@@ -140,6 +140,10 @@ public class AllConfig {
         put("fhk_show_arrow", new BaseConfig<>("Show Arrow", "Show direction arrow near inner ring", true));
     }};
 
+    // New: Fast Hotkey presets model and active pointer
+    public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
+    public int FHK_ACTIVE_PRESET = 0;
+
     // After individual maps are ready, build the index map
     public final HashMap<Integer,HashMap<String,BaseConfig<?>>> ALLCONFIGS = new HashMap<Integer,HashMap<String,BaseConfig<?>>>()
     {{
@@ -180,8 +184,21 @@ public class AllConfig {
                 }
             }
         }
-        // Load FastHotkey Entries
-        FAST_HOTKEY_ENTRIES = ConfigIO.INSTANCE.LoadFastHotKeyEntries();
+        // Load FastHotkey Entries (backward compatible presets)
+        // Prefer new presets storage; fallback to legacy single list
+        List<FastHotkeyPreset> loaded = com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.LoadFastHotKeyPresets();
+        if (loaded != null && !loaded.isEmpty()) {
+            FHK_PRESETS = loaded;
+            FHK_ACTIVE_PRESET = Math.max(0, Math.min(com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.GetActiveFhkPresetIndex(loaded.size()), loaded.size() - 1));
+            FAST_HOTKEY_ENTRIES = FHK_PRESETS.get(FHK_ACTIVE_PRESET).entries;
+        } else {
+            FAST_HOTKEY_ENTRIES = com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.LoadFastHotKeyEntries();
+            FHK_PRESETS.clear();
+            FastHotkeyPreset def = new FastHotkeyPreset("Default");
+            def.entries.addAll(FAST_HOTKEY_ENTRIES);
+            FHK_PRESETS.add(def);
+            FHK_ACTIVE_PRESET = 0;
+        }
 
     }
     public void SaveToProperty()
@@ -191,11 +208,21 @@ public class AllConfig {
             for (Map.Entry<String, BaseConfig<?>> entry : bc.getValue().entrySet()) {
                 BaseConfig<?> config = entry.getValue();
                 String key = index + "," + entry.getKey();
-                ConfigIO.INSTANCE.SetConfig(key, config.Data);
+                com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SetConfig(key, config.Data);
             }
         }
-            ConfigIO.INSTANCE.SaveFastHotKeyEntries(FAST_HOTKEY_ENTRIES);
+        // Persist Fast Hotkey presets and active pointer
+        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyPresets(FHK_PRESETS, FHK_ACTIVE_PRESET);
 
     }
 
+    // Helper to switch active preset safely and keep alias list in sync
+    public void setActiveFhkPreset(int idx) {
+        if (FHK_PRESETS == null || FHK_PRESETS.isEmpty()) return;
+        int clamped = Math.max(0, Math.min(idx, FHK_PRESETS.size() - 1));
+        FHK_ACTIVE_PRESET = clamped;
+        FAST_HOTKEY_ENTRIES = FHK_PRESETS.get(FHK_ACTIVE_PRESET).entries;
+        // save immediately to keep runtime in sync
+        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyPresets(FHK_PRESETS, FHK_ACTIVE_PRESET);
+    }
 }

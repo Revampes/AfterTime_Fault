@@ -31,4 +31,6 @@ public final class Colors {
     public static final int BUTTON_GREEN_HOVER = 0xFF388E3C;
     public static final int BUTTON_RED = 0xFFC62828;
     public static final int BUTTON_RED_HOVER = 0xFFD32F2F;
+    public static final int BUTTON_BLUE = 0xFF1565C0;
+    public static final int BUTTON_BLUE_HOVER = 0xFF1976D2;
 }

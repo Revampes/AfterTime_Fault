@@ -36,7 +36,11 @@ public abstract class Option<T> extends GuiElement {
                         } else if ("command".equals(field)) {
                             e.command = String.valueOf(Data);
                         }
-                        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyEntries(AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES);
+                        // Persist presets (also mirrors legacy keys)
+                        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyPresets(
+                                AllConfig.INSTANCE.FHK_PRESETS,
+                                AllConfig.INSTANCE.FHK_ACTIVE_PRESET
+                        );
                     }
                 } catch (NumberFormatException ignored) { }
             }

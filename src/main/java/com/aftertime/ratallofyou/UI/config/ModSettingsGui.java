@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.Gui;
 import org.lwjgl.input.Mouse;
 
 import java.awt.*;
@@ -46,6 +47,10 @@ public class ModSettingsGui extends GuiScreen {
     private boolean showCommandSettings = false;
     private int guiLeft, guiTop;
 
+    // New: Fast Hotkey preset UI state
+    private SimpleTextField fhkPresetNameInput = null;
+    private int fhkSelectedPreset = -1; // opened in detail panel when >= 0
+
     // =============================================
     // Core GUI Methods
     // =============================================
@@ -64,6 +69,8 @@ public class ModSettingsGui extends GuiScreen {
         this.showCommandSettings = false;
         this.SelectedModule = null;
         this.fastRows.clear();
+        this.fhkSelectedPreset = -1;
+        this.fhkPresetNameInput = new SimpleTextField("", 0, 0, 100, 16);
 
         buildCategoryButtons();
         buildModuleButtons();
@@ -111,9 +118,13 @@ public class ModSettingsGui extends GuiScreen {
             int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
             int panelHeight = Dimensions.GUI_HEIGHT - 60;
             boolean insidePanel = mouseX >= panelX && mouseX <= panelX + panelWidth && mouseY >= panelY && mouseY <= panelY + panelHeight;
-            if (insidePanel) {
+            // Also include detail panel area to the right
+            int detailX = panelX + panelWidth + 6;
+            int detailW = 170;
+            boolean insideDetail = mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelHeight;
+            if (insidePanel || insideDetail) {
                 handleFastHotKeyClicks(mouseX, mouseY, mouseButton);
-                return; // do not propagate to module/category clicks when interacting inside panel
+                return; // do not propagate to module/category clicks when interacting inside panel(s)
             }
         }
 
@@ -139,6 +150,11 @@ public class ModSettingsGui extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
         if (showCommandSettings && SelectedModule != null && SelectedModule.name.equals("Fast Hotkey")) {
+            // Preset input typing
+            if (fhkPresetNameInput != null && fhkPresetNameInput.isEditing) {
+                fhkPresetNameInput.handleKeyTyped(typedChar, keyCode);
+                return;
+            }
             handleFastHotKeyTyping(typedChar, keyCode);
             return;
         }
@@ -213,6 +229,10 @@ public class ModSettingsGui extends GuiScreen {
 
         if (SelectedModule.name.equals("Fast Hotkey")) {
             drawFastHotKeyPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
+            // Draw detail panel to the right if a preset is opened
+            if (fhkSelectedPreset >= 0) {
+                drawFastHotkeyDetailPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
+            }
             return;
         }
 
@@ -231,22 +251,63 @@ public class ModSettingsGui extends GuiScreen {
         int x = panelX + 5;
         int w = panelWidth - 10;
 
-        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        // Do not build fastRows here; rows are constructed for the detail panel when a preset is opened/created
 
-        // Ensure rows match entries count
-        if (fastRows.size() != entries.size()) {
-            fastRows.clear();
-            for (FastHotkeyEntry e : entries) fastRows.add(new FastRow(guiLeft, e));
+        int yCursor = contentY;
+
+        // 0) Create settings (preset) UI
+        fontRendererObj.drawStringWithShadow("Create settings:", x, yCursor, Colors.COMMAND_TEXT);
+        yCursor += 12;
+        if (fhkPresetNameInput != null) {
+            fhkPresetNameInput.setBounds(x, yCursor, Math.max(60, w - 65), 16);
+            fhkPresetNameInput.draw(mouseX, mouseY);
+            // Confirm button
+            int btnW = 60;
+            int btnX = x + w - btnW;
+            int btnY = yCursor;
+            boolean hover = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + 16;
+            drawRect(btnX, btnY, btnX + btnW, btnY + 16, hover ? Colors.BUTTON_GREEN_HOVER : Colors.BUTTON_GREEN);
+            drawCenteredString(fontRendererObj, "Confirm", btnX + btnW / 2, btnY + 4, Colors.BUTTON_TEXT);
+            yCursor += 22;
         }
 
-        // 0) Draw toggles first (e.g., Show Arrow)
-        int yCursor = contentY;
+        // 1) Saved settings list
+        fontRendererObj.drawStringWithShadow("Saved settings:", x, yCursor, Colors.COMMAND_TEXT);
+        yCursor += 12;
+        int presetBtnH = 16;
+        for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
+            FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(i);
+            // [Open] button with preset name
+            int openW = Math.max(60, w - 70);
+            int openX = x;
+            int openY = yCursor;
+            boolean hoverOpen = mouseX >= openX && mouseX <= openX + openW && mouseY >= openY && mouseY <= openY + presetBtnH;
+            boolean isActivePreset = (i == AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+            int openColor = isActivePreset
+                    ? (hoverOpen ? Colors.BUTTON_GREEN_HOVER : Colors.BUTTON_GREEN)
+                    : (hoverOpen ? Colors.BUTTON_RED_HOVER : Colors.BUTTON_RED);
+            drawRect(openX, openY, openX + openW, openY + presetBtnH, openColor);
+            String label = p.name + (isActivePreset ? "  (Active)" : "");
+            drawCenteredString(fontRendererObj, label, openX + openW / 2, openY + 4, Colors.BUTTON_TEXT);
+            // [Remove] button
+            int rmW = 60;
+            int rmX = x + w - rmW;
+            int rmY = openY;
+            boolean hoverRm = mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + presetBtnH;
+            drawRect(rmX, rmY, rmX + rmW, rmY + presetBtnH, hoverRm ? Colors.BUTTON_RED_HOVER : Colors.BUTTON_RED);
+            drawCenteredString(fontRendererObj, "Remove", rmX + rmW / 2, rmY + 4, Colors.BUTTON_TEXT);
+            yCursor += presetBtnH + 4;
+        }
+
+        // Separator line before appearance options
+        drawRect(x, yCursor, x + w, yCursor + 1, 0x33000000);
+        yCursor += 6;
+
+        // 2) Draw Fast Hotkey appearance options (labelled + color inputs + toggles)
         for (Toggle t : Toggles) {
             t.draw(mouseX, mouseY, yCursor, fontRendererObj);
             yCursor += 22;
         }
-
-        // 1) Draw Fast Hotkey appearance options (labelled + color inputs)
         for (LabelledInput t : labelledInputs) {
             t.draw(mouseX, mouseY, yCursor, fontRendererObj);
             yCursor += t.getVerticalSpace();
@@ -256,15 +317,51 @@ public class ModSettingsGui extends GuiScreen {
             yCursor += 50;
         }
 
-        // Separator line
-        drawRect(x, yCursor, x + w, yCursor + 1, 0x33000000);
-        yCursor += 6;
+        glDisable(GL_SCISSOR_TEST);
 
-        // 2) Draw Fast Hotkey command rows
+        // Scrollbar
+        int optionsHeight = 0;
+        // height includes preset creator + saved list + toggles + inputs
+        optionsHeight += 12 + 22; // Create settings label + row
+        optionsHeight += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (presetBtnH + 4)); // Saved list
+        optionsHeight += Toggles.size() * 22;
+        for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
+        optionsHeight += ColorInputs.size() * 50;
+        int totalHeight = optionsHeight; // rows moved to right pane
+        commandScroll.update(totalHeight, panelHeight - 25);
+        if (commandScroll.shouldRenderScrollbar()) {
+            commandScroll.updateScrollbarPosition(panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, panelHeight - 25);
+            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
+        }
+    }
+
+    // New: Right-side detail panel for the selected preset; contains command rows editor
+    private void drawFastHotkeyDetailPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
+        int detailX = panelX + panelWidth + 6;
+        int detailW = 170;
+        int detailY = panelY;
+        int detailH = panelHeight;
+        // Frame
+        drawRect(detailX, detailY, detailX + detailW, detailY + detailH, Colors.COMMAND_PANEL);
+        drawRect(detailX - 1, detailY - 1, detailX + detailW + 1, detailY + detailH + 1, Colors.COMMAND_BORDER);
+        drawCenteredString(fontRendererObj, "Preset Editor", detailX + detailW / 2, detailY + 5, Colors.COMMAND_TEXT);
+
+        // Clip content
+        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(detailX * scale, (height - (detailY + detailH)) * scale, detailW * scale, (detailH - 25) * scale);
+
+        int x = detailX + 5;
+        int w = detailW - 10;
+        int contentY = panelY + 25 - commandScroll.getOffset();
+
+        // Rows
+        int yCursor = contentY;
+        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
         for (int i = 0; i < fastRows.size(); i++) {
             FastRow row = fastRows.get(i);
             int rowTop = yCursor + i * Dimensions.FH_ROW_HEIGHT;
-            if (rowTop + Dimensions.FH_ROW_HEIGHT < panelY + 25 || rowTop > panelY + panelHeight) continue;
+            if (rowTop + Dimensions.FH_ROW_HEIGHT < detailY + 25 || rowTop > detailY + detailH) continue;
 
             // Background line separator
             drawRect(x, rowTop - 2, x + w, rowTop - 1, 0x33000000);
@@ -280,7 +377,7 @@ public class ModSettingsGui extends GuiScreen {
             fontRendererObj.drawStringWithShadow(labelTitle, x, title1Y, Colors.COMMAND_TEXT);
             fontRendererObj.drawStringWithShadow(cmdTitle, x, title2Y, Colors.COMMAND_TEXT);
 
-            // Inputs full width
+            // Temporarily rebase row inputs to this x (FastRow keeps its own x but uses given y)
             row.DrawElements(mouseX, mouseY, labelInputY, commandInputY);
             // Remove button (below inputs, left-aligned)
             int removeX = x;
@@ -291,7 +388,7 @@ public class ModSettingsGui extends GuiScreen {
         }
 
         // Add button
-        int addY = yCursor + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
+        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
         int addW = 60;
         boolean canAdd = entries.size() < 12;
         boolean hoverAdd = mouseX >= x && mouseX <= x + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT;
@@ -301,17 +398,7 @@ public class ModSettingsGui extends GuiScreen {
 
         glDisable(GL_SCISSOR_TEST);
 
-        // Scrollbar
-        int optionsHeight = 0;
-        optionsHeight += Toggles.size() * 22;
-        for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
-        optionsHeight += ColorInputs.size() * 50;
-        int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-        commandScroll.update(totalHeight, panelHeight - 25);
-        if (commandScroll.shouldRenderScrollbar()) {
-            commandScroll.updateScrollbarPosition(panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, panelHeight - 25);
-            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
-        }
+        // Scrollbar: reuse commandScroll (already drawn on left panel)
     }
 
     private void handleFastHotKeyClicks(int mouseX, int mouseY, int mouseButton) {
@@ -319,79 +406,114 @@ public class ModSettingsGui extends GuiScreen {
         int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
         int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
         int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
+        // int panelHeight = Dimensions.GUI_HEIGHT - 60; // unused
 
-        int x = panelX + 5;
-        int contentY = panelY + 25 - commandScroll.getOffset();
+        int leftX = panelX + 5;
+        int leftContentY = panelY + 25 - commandScroll.getOffset();
+        int leftW = panelWidth - 10;
 
-        // First, handle toggle clicks (e.g., Show Arrow)
-        int yCursor = contentY;
-        for (Toggle toggle : Toggles) {
-            if (toggle.isMouseOver(mouseX, mouseY, yCursor)) {
-                toggle.toggle();
+        // 0) Preset input + confirm
+        int yCursor = leftContentY + 12; // after "Create settings:" label
+        if (fhkPresetNameInput != null) {
+            fhkPresetNameInput.setBounds(leftX, yCursor, Math.max(60, leftW - 65), 16);
+            if (fhkPresetNameInput.isMouseOver(mouseX, mouseY)) {
+                fhkPresetNameInput.beginEditing(mouseX);
+                return;
+            }
+            // Confirm button
+            int btnW = 60;
+            int btnX = leftX + leftW - btnW;
+            int btnY = yCursor;
+            if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + 16) {
+                String name = fhkPresetNameInput.text.trim();
+                if (!name.isEmpty()) {
+                    // Prevent duplicates
+                    boolean exists = false;
+                    for (FastHotkeyPreset p : AllConfig.INSTANCE.FHK_PRESETS) {
+                        if (p.name.equalsIgnoreCase(name)) { exists = true; break; }
+                    }
+                    if (!exists) {
+                        FastHotkeyPreset p = new FastHotkeyPreset(name);
+                        AllConfig.INSTANCE.FHK_PRESETS.add(p);
+                        // Select it and open detail panel
+                        AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_PRESETS.size() - 1);
+                        fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET;
+                        // Build rows for new empty preset bound to detail panel coords
+                        fastRows.clear();
+                        int detailBaseX = panelX + panelWidth + 6 + 5;
+                        int detailInputW = 170 - 10;
+                        for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) {
+                            fastRows.add(new FastRow(detailBaseX, detailInputW, e));
+                        }
+                        // Persist presets
+                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                        // Clear input
+                        fhkPresetNameInput.text = "";
+                    }
+                }
                 return;
             }
             yCursor += 22;
         }
 
-        // Then delegate clicks to Fast Hotkey appearance options
-        if (handleLabelledInputClicks(mouseX, mouseY)) return;
-        if (handleColorInputClicks(mouseX, mouseY)) return;
-
-        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
-
-        // Add button
-        int optionsHeight = 0;
-        optionsHeight += Toggles.size() * 22;
-        for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace();
-        optionsHeight += ColorInputs.size() * 50;
-        int addY = contentY + optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8;
-        int addW = 60;
-        if (entries.size() < 12 && mouseX >= x && mouseX <= x + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT) {
-            FastHotkeyEntry e = new FastHotkeyEntry("", "", entries.size());
-            entries.add(e);
-            fastRows.add(new FastRow(guiLeft, e));
-            e.SetProperty();
-            int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-            commandScroll.update(totalHeight, panelHeight - 25);
-            return;
+        // 1) Saved settings list entries
+        yCursor += 12; // after "Saved settings:" label
+        int presetBtnH = 16;
+        for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
+            int openW = Math.max(60, leftW - 70);
+            int openX = leftX;
+            int openY = yCursor;
+            int rmW = 60;
+            int rmX = leftX + leftW - rmW;
+            int rmY = openY;
+            boolean inOpen = mouseX >= openX && mouseX <= openX + openW && mouseY >= openY && mouseY <= openY + presetBtnH;
+            boolean inRm = mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + presetBtnH;
+            if (inOpen) {
+                // Switch active + open detail
+                AllConfig.INSTANCE.setActiveFhkPreset(i);
+                fhkSelectedPreset = i;
+                // Build rows bound to active entries and detail panel position
+                fastRows.clear();
+                int detailBaseX = panelX + panelWidth + 6 + 5;
+                int detailInputW = 170 - 10;
+                for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
+                return;
+            }
+            if (inRm) {
+                if (AllConfig.INSTANCE.FHK_PRESETS.size() > 1) {
+                    // Remove preset i
+                    AllConfig.INSTANCE.FHK_PRESETS.remove(i);
+                    // Adjust active and selected
+                    int newActive = Math.max(0, Math.min(AllConfig.INSTANCE.FHK_ACTIVE_PRESET - (i <= AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? 1 : 0), AllConfig.INSTANCE.FHK_PRESETS.size() - 1));
+                    AllConfig.INSTANCE.setActiveFhkPreset(newActive);
+                    if (fhkSelectedPreset == i) fhkSelectedPreset = -1;
+                    if (fhkSelectedPreset > i) fhkSelectedPreset--;
+                    // Rebuild rows for new active preset if detail open
+                    fastRows.clear();
+                    if (fhkSelectedPreset >= 0) {
+                        int detailBaseX = panelX + panelWidth + 6 + 5;
+                        int detailInputW = 170 - 10;
+                        for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
+                    }
+                    // Persist
+                    ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                }
+                return;
+            }
+            yCursor += presetBtnH + 4;
         }
 
-        // Rows
-        for (int i = 0; i < fastRows.size(); i++) {
-            FastRow row = fastRows.get(i);
-            int rowTop = contentY + optionsHeight + i * Dimensions.FH_ROW_HEIGHT;
-
-            // Titles and inputs to compute remove button position
-            int title1Y = rowTop + 2;
-            int labelInputY = title1Y + 12;
-            int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4;
-            int commandInputY = title2Y + 12;
-
-            // Remove button click (below inputs, left-aligned)
-            int removeX = x;
-            int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
-            if (mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT) {
-                row.entry.RemoveProperty();
-                entries.remove(row.entry);
-                fastRows.remove(i);
-
-                int totalHeight = optionsHeight + fastRows.size() * Dimensions.FH_ROW_HEIGHT + Dimensions.FH_ADD_HEIGHT + 10;
-                commandScroll.update(totalHeight, panelHeight - 25);
+        // 2) Delegate clicks to appearance options
+        if (handleLabelledInputClicks(mouseX, mouseY)) return;
+        if (handleColorInputClicks(mouseX, mouseY)) return;
+        // Toggles
+        int yToggle = leftContentY + 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (presetBtnH + 4)) + 6; // match draw
+        for (Toggle toggle : Toggles) {
+            if (toggle.isMouseOver(mouseX, mouseY, yToggle)) {
+                toggle.toggle();
                 return;
             }
-
-
-            if (row.labelInput.isMouseOver(mouseX, mouseY, labelInputY)) {
-                unfocusAllFastInputs();
-                row.labelInput.beginEditing(mouseX);
-                return;
-            }
-            if (row.commandInput.isMouseOver(mouseX, mouseY, commandInputY)) {
-                unfocusAllFastInputs();
-                row.commandInput.beginEditing(mouseX);
-                return;
-            }
+            yToggle += 22;
         }
     }
 
@@ -416,6 +538,7 @@ public class ModSettingsGui extends GuiScreen {
             r.labelInput.isEditing = false;
             r.commandInput.isEditing = false;
         }
+        if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
     }
 
     // =============================================
@@ -432,6 +555,7 @@ public class ModSettingsGui extends GuiScreen {
                 row.labelInput.isEditing = false;
                 row.commandInput.isEditing = false;
             }
+            if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
         }
     }
 
@@ -477,6 +601,12 @@ public class ModSettingsGui extends GuiScreen {
             SelectedModule = module;
             showCommandSettings = true;
             initializeCommandToggles();
+            // Also initialize Fast Hotkey preset selection state
+            if (SelectedModule.name.equals("Fast Hotkey")) {
+                fhkSelectedPreset = -1; // not opened until user clicks
+                // Clear rows; they will be built when user opens a preset
+                fastRows.clear();
+            }
             return;
         }
         // Toggle on main row click
@@ -713,13 +843,16 @@ public class ModSettingsGui extends GuiScreen {
                 Add_SubSetting_Etherwarp(y);
                 break;
             case "Fast Hotkey":
-                // Add appearance options for Fast Hotkey panel
+                // Add appearance options for Fast Hotkey panel; rows moved to detail panel
                 Add_SubSetting_FastHotkey(y);
                 break;
         }
 
         // Compute content height based on elements rather than absolute coordinates
         int contentHeight = 0;
+        // Include space for preset creator and saved list headers roughly
+        contentHeight += 12 + 22; // Create settings
+        contentHeight += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4)); // Saved list
         contentHeight += Toggles.size() * 22;
         for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace();
         contentHeight += ColorInputs.size() * 50;
@@ -958,6 +1091,65 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
+    // Lightweight text field for preset name (does not bind to config directly)
+    private static class SimpleTextField {
+        String text;
+        int x, y, w, h;
+        boolean isEditing = false;
+        long cursorBlinkMs = 0;
+        boolean cursorVisible = false;
+        int cursorPos = 0;
+        int maxLen = 48;
+        SimpleTextField(String t, int x, int y, int w, int h) { this.text = t == null ? "" : t; setBounds(x,y,w,h); cursorPos = this.text.length(); }
+        void setBounds(int x, int y, int w, int h) { this.x=x; this.y=y; this.w=w; this.h=h; }
+        void draw(int mx, int my) {
+            Gui.drawRect(x, y, x + w, y + h, Colors.INPUT_BG);
+            Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(text, x + 3, y + 4, Colors.INPUT_FG);
+            if (isEditing) {
+                cursorBlinkMs += 10;
+                if (cursorBlinkMs >= 500) { cursorBlinkMs = 0; cursorVisible = !cursorVisible; }
+                if (cursorVisible) {
+                    int cx = x + 3 + Minecraft.getMinecraft().fontRendererObj.getStringWidth(text.substring(0, Math.min(cursorPos, text.length())));
+                    Gui.drawRect(cx, y + 3, cx + 1, y + h - 3, Colors.INPUT_FG);
+                }
+            }
+        }
+        boolean isMouseOver(int mx, int my) { return mx >= x && mx <= x + w && my >= y && my <= y + h; }
+        void beginEditing(int mx) {
+            isEditing = true; cursorBlinkMs = 0; cursorVisible = true;
+            // place cursor by x
+            int rel = Math.max(0, mx - x);
+            int pos = 0; String s = text;
+            while (pos < s.length()) {
+                int cw = Minecraft.getMinecraft().fontRendererObj.getCharWidth(s.charAt(pos));
+                if (rel < cw / 2) break;
+                rel -= cw; pos++;
+            }
+            cursorPos = pos;
+        }
+        void handleKeyTyped(char c, int key) {
+            if (!isEditing) return;
+            if (key == org.lwjgl.input.Keyboard.KEY_RETURN) { isEditing = false; return; }
+            if (key == org.lwjgl.input.Keyboard.KEY_BACK) {
+                if (cursorPos > 0 && text.length() > 0) {
+                    text = text.substring(0, cursorPos - 1) + text.substring(cursorPos);
+                    cursorPos--;
+                }
+            } else if (key == org.lwjgl.input.Keyboard.KEY_LEFT) {
+                cursorPos = Math.max(0, cursorPos - 1);
+            } else if (key == org.lwjgl.input.Keyboard.KEY_RIGHT) {
+                cursorPos = Math.min(text.length(), cursorPos + 1);
+            } else {
+                if (c >= 32 && c != 127) {
+                    if (text.length() >= maxLen) return;
+                    text = text.substring(0, cursorPos) + c + text.substring(cursorPos);
+                    cursorPos++;
+                }
+            }
+            cursorBlinkMs = 0; cursorVisible = true;
+        }
+    }
+
     @Override
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
@@ -985,6 +1177,13 @@ public class ModSettingsGui extends GuiScreen {
             int panelW = Dimensions.COMMAND_PANEL_WIDTH;
             int panelH = (Dimensions.GUI_HEIGHT - 60) - 25;
             if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= panelY && mouseY <= panelY + panelH) {
+                commandScroll.handleWheelScroll(dWheel, null);
+                return;
+            }
+            // Detail panel scroll shares the same scroll manager
+            int detailX = panelX + Dimensions.COMMAND_PANEL_WIDTH + 6;
+            int detailW = 170;
+            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) {
                 commandScroll.handleWheelScroll(dWheel, null);
             }
         }

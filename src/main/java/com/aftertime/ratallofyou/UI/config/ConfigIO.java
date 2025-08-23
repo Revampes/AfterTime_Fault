@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
 import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset;
 
 import java.awt.*;
 import java.io.File;
@@ -165,6 +166,8 @@ public class ConfigIO {
             return null;
         }
     }
+
+    // Legacy single-list FHK API (kept for backward compatibility)
     public java.util.List<FastHotkeyEntry> LoadFastHotKeyEntries() {
         List<FastHotkeyEntry> entries = new ArrayList<>();
         int length = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_length","0"));
@@ -186,6 +189,63 @@ public class ConfigIO {
             FastHotKeyProperties.setProperty("fhk_" + i + "_command", entry.command);
         }
     }
+
+    // New multi-preset FHK API
+    public List<FastHotkeyPreset> LoadFastHotKeyPresets() {
+        List<FastHotkeyPreset> presets = new ArrayList<>();
+        try {
+            int pCount = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_count", "0"));
+            if (pCount <= 0) return presets;
+            for (int p = 0; p < pCount; p++) {
+                String name = FastHotKeyProperties.getProperty("fhk_preset_" + p + "_name", "Preset " + (p + 1));
+                FastHotkeyPreset preset = new FastHotkeyPreset(name);
+                int len = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_length", "0"));
+                for (int i = 0; i < len; i++) {
+                    String label = FastHotKeyProperties.getProperty("fhk_preset_" + p + "_" + i + "_label", "");
+                    String cmd = FastHotKeyProperties.getProperty("fhk_preset_" + p + "_" + i + "_command", "");
+                    preset.entries.add(new FastHotkeyEntry(label, cmd, i));
+                }
+                presets.add(preset);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return presets;
+    }
+
+    public void SaveFastHotKeyPresets(List<FastHotkeyPreset> presets, int activeIndex) {
+        if (presets == null) presets = new ArrayList<>();
+        if (activeIndex < 0 || activeIndex >= presets.size()) activeIndex = 0;
+        // Write presets
+        FastHotKeyProperties.setProperty("fhk_preset_count", String.valueOf(presets.size()));
+        FastHotKeyProperties.setProperty("fhk_active_preset", String.valueOf(activeIndex));
+        for (int p = 0; p < presets.size(); p++) {
+            FastHotkeyPreset preset = presets.get(p);
+            FastHotKeyProperties.setProperty("fhk_preset_" + p + "_name", preset.name);
+            FastHotKeyProperties.setProperty("fhk_preset_" + p + "_length", String.valueOf(preset.entries.size()));
+            for (int i = 0; i < preset.entries.size(); i++) {
+                FastHotkeyEntry e = preset.entries.get(i);
+                FastHotKeyProperties.setProperty("fhk_preset_" + p + "_" + i + "_label", e.label);
+                FastHotKeyProperties.setProperty("fhk_preset_" + p + "_" + i + "_command", e.command);
+            }
+        }
+        // Also mirror the active preset into legacy keys for runtime code that still reads them
+        if (!presets.isEmpty()) {
+            List<FastHotkeyEntry> active = presets.get(activeIndex).entries;
+            SaveFastHotKeyEntries(active);
+        }
+    }
+
+    public int GetActiveFhkPresetIndex(int bounds) {
+        try {
+            int idx = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_active_preset", "0"));
+            if (bounds > 0) idx = Math.max(0, Math.min(idx, bounds - 1));
+            return idx;
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
     public int[] GetUIPosition( String Key) {
         String Value = properties.getProperty( Key);
         if (Value == null) return null;

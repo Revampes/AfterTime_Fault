@@ -21,12 +21,13 @@ public class FastHotkeyEntry {
      */
     public void SetProperty()
     {
-        ConfigIO.INSTANCE.SaveFastHotKeyEntries(AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES);
+        // Save full presets (also mirrors active preset into legacy keys)
+        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
     }
     public void RemoveProperty()
     {
-        // Caller removes from FAST_HOTKEY_ENTRIES; persist updated list
-        ConfigIO.INSTANCE.SaveFastHotKeyEntries(AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES);
+        // Caller removes from active entries already; persist updated presets
+        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
     }
 
 }
