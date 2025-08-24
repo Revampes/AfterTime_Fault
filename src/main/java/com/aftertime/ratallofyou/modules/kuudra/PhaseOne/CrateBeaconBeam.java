@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.modules.kuudra;
+package com.aftertime.ratallofyou.modules.kuudra.PhaseOne;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;

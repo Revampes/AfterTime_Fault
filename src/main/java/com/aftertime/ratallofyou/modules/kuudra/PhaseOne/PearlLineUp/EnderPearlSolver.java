@@ -1,7 +1,6 @@
-package com.aftertime.ratallofyou.modules.kuudra.PearlLineUp;
+package com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp;
 
 import net.minecraft.util.Vec3;
-import com.aftertime.ratallofyou.modules.kuudra.PearlLineUp.PearlThrowPlan;
 
 /**
  * Standalone ender pearl trajectory solver (no external config deps).

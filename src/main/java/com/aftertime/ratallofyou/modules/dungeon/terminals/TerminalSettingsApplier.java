@@ -24,7 +24,7 @@ public final class TerminalSettingsApplier {
 
         // Defaults mapping
         TerminalGuiCommon.Defaults.highPingMode = getBool(term, "terminal_high_ping_mode", TerminalGuiCommon.Defaults.highPingMode);
-        TerminalGuiCommon.Defaults.phoenixClientCompat = getBool(term, "terminal_phoenix_client_compat", TerminalGuiCommon.Defaults.phoenixClientCompat);
+//        TerminalGuiCommon.Defaults.phoenixClientCompat = getBool(term, "terminal_phoenix_client_compat", TerminalGuiCommon.Defaults.phoenixClientCompat);
         TerminalGuiCommon.Defaults.timeoutMs = getInt(term, "terminal_timeout_ms", TerminalGuiCommon.Defaults.timeoutMs);
         TerminalGuiCommon.Defaults.firstClickBlockMs = getInt(term, "terminal_first_click_ms", TerminalGuiCommon.Defaults.firstClickBlockMs);
         TerminalGuiCommon.Defaults.scale = getFloat(term, "terminal_scale", TerminalGuiCommon.Defaults.scale);

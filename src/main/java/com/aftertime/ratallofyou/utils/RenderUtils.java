@@ -150,7 +150,8 @@ public class RenderUtils {
             GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, 10497.0f);
 
             GlStateManager.disableLighting();
-            GlStateManager.enableCull();
+            // Disable culling so the core beam is always visible from any angle
+            GlStateManager.disableCull();
             GlStateManager.enableTexture2D();
             GlStateManager.enableBlend();
             GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
@@ -208,7 +209,7 @@ public class RenderUtils {
 
             tessellator.draw();
 
-            GlStateManager.disableCull();
+            // For glow we also want culling disabled (already disabled)
             double d12 = -1.0 + d1;
             double d13 = height + d12;
 
@@ -239,6 +240,7 @@ public class RenderUtils {
 
             tessellator.draw();
 
+            // Restore GL state for depth/cull etc.
             GlStateManager.enableCull();
             GlStateManager.depthMask(true);
             GlStateManager.enableLighting();
@@ -464,6 +466,51 @@ public class RenderUtils {
         GlStateManager.rotate(-rm.playerViewY, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(rm.playerViewX, 1.0F, 0.0F, 0.0F);
         GlStateManager.scale(-0.025F * scale, -0.025F * scale, 0.025F * scale);
+
+        GlStateManager.disableLighting();
+        if (!depthTest) GlStateManager.disableDepth();
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+
+        int width = fr.getStringWidth(text) / 2;
+        GlStateManager.disableTexture2D();
+        Tessellator tess = Tessellator.getInstance();
+        WorldRenderer wr = tess.getWorldRenderer();
+        wr.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        // background rectangle (semi-transparent black)
+        wr.pos(-width - 2, -2, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        wr.pos(-width - 2, 9, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        wr.pos(width + 2, 9, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        wr.pos(width + 2, -2, 0).color(0F, 0F, 0F, 0.4F).endVertex();
+        tess.draw();
+        GlStateManager.enableTexture2D();
+
+        fr.drawString(text, -width, 0, color, true);
+
+        GlStateManager.enableDepth();
+        GlStateManager.disableBlend();
+        GlStateManager.enableLighting();
+        GlStateManager.popMatrix();
+    }
+
+    // New: floating text at world position, camera-facing, constant on-screen size
+    public static void renderFloatingTextConstant(String text, double x, double y, double z, float pixelScale, int color, boolean depthTest) {
+        if (text == null || text.isEmpty()) return;
+        RenderManager rm = mc.getRenderManager();
+        FontRenderer fr = mc.fontRendererObj;
+
+        double dx = x - rm.viewerPosX;
+        double dy = y - rm.viewerPosY;
+        double dz = z - rm.viewerPosZ;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // Scale strictly with distance so on-screen size remains constant regardless of distance
+        float s = pixelScale * dist;
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(dx, dy, dz);
+        GlStateManager.rotate(-rm.playerViewY, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(rm.playerViewX, 1.0F, 0.0F, 0.0F);
+        GlStateManager.scale(-0.025F * s, -0.025F * s, 0.025F * s);
 
         GlStateManager.disableLighting();
         if (!depthTest) GlStateManager.disableDepth();

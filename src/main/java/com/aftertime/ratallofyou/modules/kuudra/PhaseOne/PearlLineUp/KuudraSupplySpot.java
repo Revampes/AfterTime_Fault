@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.modules.kuudra.PearlLineUp;
+package com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp;
 
 import net.minecraft.util.Vec3;
 

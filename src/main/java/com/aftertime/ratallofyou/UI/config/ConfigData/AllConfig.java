@@ -54,7 +54,7 @@ public class AllConfig {
     public final HashMap<String, BaseConfig<?>> TERMINAL_CONFIGS = new HashMap<String, BaseConfig<?>>()
     {{
         put("terminal_high_ping_mode", new BaseConfig<>("Smooth Terminal", "Smooth Terminal GUI Especially for High Ping Users", false));
-        put("terminal_phoenix_client_compat", new BaseConfig<>("Phoenix Client Compatibility", "Enable compatibility with Phoenix Client", false));
+//        put("terminal_phoenix_client_compat", new BaseConfig<>("Phoenix Client Compatibility", "Enable compatibility with Phoenix Client", false));
         put("terminal_scale", new BaseConfig<>("Terminal Scale", "Scale factor for terminal display", 1.0f));
         put("terminal_timeout_ms", new BaseConfig<>("Timeout (ms)", "Timeout in milliseconds for terminal operations", 500));
         put("terminal_first_click_ms", new BaseConfig<>("First Click Delay (ms)", "Delay in milliseconds for first click", 0));
@@ -93,6 +93,11 @@ public class AllConfig {
             put("kuudra_pearllineups",new ModuleInfo("Moveable Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
             put("kuudra_fixedpearllineups",new ModuleInfo("Fixed Pos Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
             put("kuudra-freshmessage",new ModuleInfo("Fresh Message", "Sends a message when you get fresh tool", "Kuudra", false));
+            put("kuudra_buildpiles",new ModuleInfo("Build Piles", "Show build pile locations", "Kuudra", false));
+            put("kuudra_buildbuilders", new ModuleInfo("Builders Count", "Show number of players helping", "Kuudra", false));
+            put("kuudra_kuudradirection", new ModuleInfo("Kuudra Directions", "Show directions of kuudra in P5", "Kuudra", false));
+            put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
+            put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
 
             // Dungeons
             put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
@@ -107,7 +112,7 @@ public class AllConfig {
 
             // SkyBlock
             put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
-            put("skyblock-waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
+            put("skyblock_waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
             put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
             put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
 

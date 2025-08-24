@@ -1,4 +1,4 @@
-package com.aftertime.ratallofyou.modules.kuudra.PearlLineUp;
+package com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp;
 
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
@@ -149,7 +149,7 @@ public class CalcPearlLineUp {
         if (distanceToPlayer(SQUARE) < 20) return KuudraSupplySpot.SUPPLY6;   // square -> S6 (fixed)
         if (distanceToPlayer(SHOP) < 20) return KuudraSupplySpot.SUPPLY5;     // shop -> S5
         // Rarely pre but mapped if needed
-        if (distanceToPlayer(XCANNON) < 20) return KuudraSupplySpot.SUPPLY6;  // xcannon -> S6
+        if (distanceToPlayer(XCANNON) < 20) return KuudraSupplySpot.SUPPLY6;  // xcannon -> S6 (correct)
         return null;
     }
 
@@ -253,7 +253,7 @@ public class CalcPearlLineUp {
         if (throwInMs <= 0) countdownInfo = "  THROW NOW";
         else countdownInfo = String.format("  %sThrow in %dms", approximate ? "~" : "", throwInMs);
         String text = String.format("%s  %s%s", label, timeInfo, countdownInfo);
-        RenderUtils.renderFloatingText(text, pos.xCoord, pos.yCoord + size + 0.2, pos.zCoord, 1.0f, 0xFFFFFFFF, false);
+        RenderUtils.renderFloatingTextConstant(text, pos.xCoord, pos.yCoord + size + 0.2, pos.zCoord, 0.03f, 0xFFFFFFFF, false);
     }
 
     @SubscribeEvent
@@ -351,7 +351,7 @@ public class CalcPearlLineUp {
         if (s.equals("=") || s.equalsIgnoreCase("equals")) return KuudraSupplySpot.SUPPLY3;
         if (s.equals("/") || s.equalsIgnoreCase("slash")) return KuudraSupplySpot.SUPPLY4;
         if (s.equalsIgnoreCase("x")) return KuudraSupplySpot.SUPPLY2;
-        if (s.equalsIgnoreCase("xcannon") || s.equalsIgnoreCase("x cannon")) return KuudraSupplySpot.SUPPLY6;
+        if (s.equalsIgnoreCase("xcannon") || s.equalsIgnoreCase("x cannon")) return KuudraSupplySpot.SUPPLY6; // corrected per request
         if (s.equalsIgnoreCase("square")) return KuudraSupplySpot.SUPPLY6; // fixed from S5 -> S6
         return null;
     }
