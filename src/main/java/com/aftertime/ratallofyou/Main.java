@@ -84,6 +84,5 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new FixedPearlLineUp());
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());
         KeybindHandler.registerKeybinds();
-        // UI positions are now part of the config (UIPosition entries) and load with InitializeConfigs()
     }
 }
