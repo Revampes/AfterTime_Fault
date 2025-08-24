@@ -16,7 +16,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Mouse;
 
-import java.util.Arrays;
 import java.util.regex.Pattern;
 
 /**
@@ -187,13 +186,13 @@ public class melody {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.scale, 1f);
-        TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
+        TerminalGuiCommon.drawRoundedRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.cornerRadiusBg, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
 
         // Column highlight (based on correct)
         if (correct >= 0) {
             int colX = offX + (correct + 1) * 18;
-            TerminalGuiCommon.drawRect(colX, offY + 18, colX + 16, offY + 18 + 70, COLOR_COLUMN);
+            TerminalGuiCommon.drawRoundedRect(colX, offY + 18, colX + 16, offY + 18 + 70, TerminalGuiCommon.Defaults.cornerRadiusCell, COLOR_COLUMN);
         }
 
         // Draw only the relevant slots without scanning the whole grid
@@ -203,18 +202,18 @@ public class melody {
         if (buttonSlot >= 0 && buttonSlot < windowSize) {
             int curX = (buttonSlot % 9) * 18 + offX;
             int curY = (buttonSlot / 9) * 18 + offY;
-            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_BUTTON_CORRECT);
+            TerminalGuiCommon.drawRoundedRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.cornerRadiusCell, COLOR_BUTTON_CORRECT);
         }
         for (int s : BUTTON_SLOTS) {
             if (s == buttonSlot || s >= windowSize) continue;
             int curX = (s % 9) * 18 + offX;
             int curY = (s / 9) * 18 + offY;
-            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_BUTTON_INCORRECT);
+            TerminalGuiCommon.drawRoundedRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.cornerRadiusCell, COLOR_BUTTON_INCORRECT);
         }
         if (currentSlot >= 0 && currentSlot < windowSize) {
             int curX = (currentSlot % 9) * 18 + offX;
             int curY = (currentSlot / 9) * 18 + offY;
-            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, COLOR_SLOT);
+            TerminalGuiCommon.drawRoundedRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.cornerRadiusCell, COLOR_SLOT);
         }
         GlStateManager.popMatrix();
     }

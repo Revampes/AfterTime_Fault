@@ -679,17 +679,17 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private void Add_SubSetting_Terminal(Integer y) {
-        addTerminalEntry("terminal_enable_numbers", y); addTerminalEntry("terminal_enable_starts_with", y); addTerminalEntry("terminal_enable_colors", y); addTerminalEntry("terminal_enable_red_green", y); addTerminalEntry("terminal_enable_rubix", y); addTerminalEntry("terminal_enable_melody", y);
-        addTerminalEntry("terminal_high_ping_mode", y); addTerminalEntry("terminal_phoenix_client_compat", y); addTerminalEntry("terminal_scale", y); addTerminalEntry("terminal_timeout_ms", y); addTerminalEntry("terminal_first_click_ms", y); addTerminalEntry("terminal_offset_x", y); addTerminalEntry("terminal_offset_y", y); addTerminalEntry("terminal_overlay_color", y); addTerminalEntry("terminal_background_color", y);
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.TERMINAL_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 4);
+        }
     }
 
     private void addTerminalEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.TERMINAL_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 4); }
 
     private void Add_SubSetting_FastHotkey(Integer y) {
-        addFhkEntry("fhk_inner_radius", y); addFhkEntry("fhk_outer_radius", y); addFhkEntry("fhk_outline_prox_range", y);
-        addFhkEntry("fhk_inner_near_color", y); addFhkEntry("fhk_inner_far_color", y); addFhkEntry("fhk_outer_near_color", y); addFhkEntry("fhk_outer_far_color", y);
-        addFhkEntry("fhk_bg_near_color", y); addFhkEntry("fhk_bg_far_color", y); addFhkEntry("fhk_bg_influence_radius", y); addFhkEntry("fhk_bg_max_extend", y);
-        addFhkEntry("fhk_show_arrow", y);
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 6);
+        }
     }
 
     private void addFhkEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 6); }

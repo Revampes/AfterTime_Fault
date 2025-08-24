@@ -34,6 +34,9 @@ public final class TerminalSettingsApplier {
         TerminalGuiCommon.Defaults.overlayColor = overlay.getRGB();
         Color bg = getColor(term, "terminal_background_color", new Color(TerminalGuiCommon.Defaults.backgroundColor, true));
         TerminalGuiCommon.Defaults.backgroundColor = bg.getRGB();
+        // Optional rounded corner radii (pixels)
+        TerminalGuiCommon.Defaults.cornerRadiusBg = getInt(term, "terminal_corner_radius_bg", TerminalGuiCommon.Defaults.cornerRadiusBg);
+        TerminalGuiCommon.Defaults.cornerRadiusCell = getInt(term, "terminal_corner_radius_cell", TerminalGuiCommon.Defaults.cornerRadiusCell);
 
         // Master module toggle: if disabled, force-disable all terminal helpers
         boolean masterOn = true;
@@ -63,7 +66,7 @@ public final class TerminalSettingsApplier {
     private static boolean getBool(Map<String, BaseConfig<?>> map, String key, boolean def) {
         BaseConfig<?> c = map.get(key);
         return c != null && c.Data instanceof Boolean ? (Boolean) c.Data : def;
-        }
+    }
     private static int getInt(Map<String, BaseConfig<?>> map, String key, int def) {
         BaseConfig<?> c = map.get(key);
         return c != null && c.Data instanceof Integer ? (Integer) c.Data : def;
@@ -77,4 +80,3 @@ public final class TerminalSettingsApplier {
         return c != null && c.Data instanceof Color ? (Color) c.Data : def;
     }
 }
-

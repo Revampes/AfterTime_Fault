@@ -220,7 +220,7 @@ public class rubix {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.scale, 1f);
-        TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
+        TerminalGuiCommon.drawRoundedRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.cornerRadiusBg, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
         // Draw overlays only for allowed 3x3 slots
         for (int i : ALLOWED_SLOTS) {
@@ -230,7 +230,7 @@ public class rubix {
             int curX = (i % 9) * 18 + offX;
             int curY = (i / 9) * 18 + offY;
             int color = need > 0 ? OVERLAY_LEFT : OVERLAY_RIGHT;
-            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, color);
+            TerminalGuiCommon.drawRoundedRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.cornerRadiusCell, color);
             String text = String.valueOf(need);
             fr.drawStringWithShadow(text, curX + (int) ((16 - fr.getStringWidth(text)) / 2f), curY + 4, 0xFFFFFFFF);
         }

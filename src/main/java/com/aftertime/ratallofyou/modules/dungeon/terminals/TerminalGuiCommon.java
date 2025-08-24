@@ -61,6 +61,9 @@ public final class TerminalGuiCommon {
         public static int offsetY = 0;
         public static int overlayColor = 0xFF00FF00;    // opaque green
         public static int backgroundColor = 0x7F000000; // semi-transparent black
+        // Corner radii for rounded UI (rounded corners, not circles)
+        public static int cornerRadiusBg = 1;   // background panel
+        public static int cornerRadiusCell = 1; // slot highlight
     }
 
     // Holder for per-terminal click timing state
@@ -162,6 +165,50 @@ public final class TerminalGuiCommon {
     // Simple filled-rect helper (ARGB)
     public static void drawRect(int left, int top, int right, int bottom, int color) {
         net.minecraft.client.gui.Gui.drawRect(left, top, right, bottom, color);
+    }
+
+    // Rounded filled-rect helper (ARGB). Falls back to drawRect if radius <= 0 or rect is too small.
+    public static void drawRoundedRect(int left, int top, int right, int bottom, int radius, int color) {
+        int w = right - left;
+        int h = bottom - top;
+        if (radius <= 0 || w <= 0 || h <= 0) { drawRect(left, top, right, bottom, color); return; }
+        int r = Math.min(radius, Math.min(w, h) / 2);
+
+        // Core rects (cross)
+        drawRect(left + r, top + r, right - r, bottom - r, color);            // center
+        drawRect(left, top + r, left + r, bottom - r, color);                  // left band
+        drawRect(right - r, top + r, right, bottom - r, color);                // right band
+        drawRect(left + r, top, right - r, top + r, color);                    // top band
+        drawRect(left + r, bottom - r, right - r, bottom, color);              // bottom band
+
+        // Corner scanlines using circle equation (x - cx)^2 + (y - cy)^2 <= r^2
+        int cxL = left + r, cxR = right - r;
+        int cyT = top + r, cyB = bottom - r;
+        for (int dy = 0; dy < r; dy++) {
+            int dx = (int) Math.floor(Math.sqrt(r * 1.0 - dy * dy));
+            // Top-left
+            int y = cyT - 1 - dy;
+            if (y >= top && y < top + r) {
+                int x0 = Math.max(left, cxL - dx);
+                if (x0 < cxL) drawRect(x0, y, cxL, y + 1, color);
+            }
+            // Top-right (same y)
+            if (y >= top && y < top + r) {
+                int x1 = Math.min(right, cxR + dx);
+                if (cxR < x1) drawRect(cxR, y, x1, y + 1, color);
+            }
+            // Bottom-left
+            y = cyB + dy;
+            if (y >= bottom - r && y < bottom) {
+                int x0 = Math.max(left, cxL - dx);
+                if (x0 < cxL) drawRect(x0, y, cxL, y + 1, color);
+            }
+            // Bottom-right (same y)
+            if (y >= bottom - r && y < bottom) {
+                int x1 = Math.min(right, cxR + dx);
+                if (cxR < x1) drawRect(cxR, y, x1, y + 1, color);
+            }
+        }
     }
 
     /**

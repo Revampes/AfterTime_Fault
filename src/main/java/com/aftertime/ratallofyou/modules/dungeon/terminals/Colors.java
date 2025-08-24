@@ -137,13 +137,13 @@ public class Colors {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.scale, 1f);
-        TerminalGuiCommon.drawRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.backgroundColor);
+        TerminalGuiCommon.drawRoundedRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.cornerRadiusBg, TerminalGuiCommon.Defaults.backgroundColor);
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
         // Iterate solution directly to avoid scanning all slots
         for (int slot : solution) {
             int curX = (slot % 9) * 18 + offX;
             int curY = (slot / 9) * 18 + offY;
-            TerminalGuiCommon.drawRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.overlayColor);
+            TerminalGuiCommon.drawRoundedRect(curX, curY, curX + 16, curY + 16, TerminalGuiCommon.Defaults.cornerRadiusCell, TerminalGuiCommon.Defaults.overlayColor);
         }
         GlStateManager.popMatrix();
     }
