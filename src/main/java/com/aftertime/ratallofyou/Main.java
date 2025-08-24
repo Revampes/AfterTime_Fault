@@ -6,9 +6,8 @@ import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import com.aftertime.ratallofyou.modules.kuudra.*;
-import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.CrateHighlighter;
+import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLineUp;
-import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.CrateAura;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseTwo.*;
 import com.aftertime.ratallofyou.modules.render.*;
 import com.aftertime.ratallofyou.modules.SkyBlock.AutoSprint;
@@ -26,8 +25,6 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import com.aftertime.ratallofyou.UI.config.ConfigIO;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
-import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.CrateBeaconBeam;
-import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.CheckNoPre;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.Direction;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHitbox;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHP;
@@ -84,8 +81,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new Direction());
         MinecraftForge.EVENT_BUS.register(new KuudraHitbox());
         MinecraftForge.EVENT_BUS.register(new KuudraHP());
-
-        // Register keybind handler
+        MinecraftForge.EVENT_BUS.register(new FixedPearlLineUp());
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());
         KeybindHandler.registerKeybinds();
         // UI positions are now part of the config (UIPosition entries) and load with InitializeConfigs()
