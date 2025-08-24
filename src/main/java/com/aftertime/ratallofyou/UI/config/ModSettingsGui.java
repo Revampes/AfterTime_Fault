@@ -6,6 +6,7 @@ import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
+import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;

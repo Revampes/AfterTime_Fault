@@ -83,14 +83,22 @@ public class CalcPearlLineUp {
             return;
         }
 
-        // Determine targets with priority: chat preferred > current pre spot > detected stands > all available
+        // Determine targets with priority: chat preferred (only if at Square) > current pre spot > detected stands > all available
         List<KuudraSupplySpot> targets = new ArrayList<>();
 
-        if (preferredSpot != null && available.contains(preferredSpot)) {
-            targets.add(preferredSpot);
-        } else if (preferredSpot != null && !available.contains(preferredSpot)) {
-            targets.addAll(available);
+        // Are we standing at the Square pre anchor? (Square and XC share SUPPLY6, so check coordinates explicitly)
+        boolean atSquare = distanceToPlayer(SQUARE) < 20.0;
+
+        if (atSquare && preferredSpot != null) {
+            // Square throws should land on the No-Pre call spot when available
+            if (available.contains(preferredSpot)) {
+                targets.add(preferredSpot);
+            } else {
+                // Fallback if that spot already received supplies
+                targets.addAll(available);
+            }
         } else {
+            // Regular behavior for all other pres (XC and others unchanged)
             KuudraSupplySpot prePref = detectCurrentPrePreferred();
             if (prePref != null && available.contains(prePref)) {
                 targets.add(prePref);
@@ -120,7 +128,7 @@ public class CalcPearlLineUp {
             PearlThrowPlan sky = EnderPearlSolver.solve(true, eye, landing);
             PearlThrowPlan flat = EnderPearlSolver.solve(false, eye, landing);
 
-            String labelPrefix = spotDisplayName(spot) + (spot.equals(preferredSpot) ? "* " : " ");
+            String labelPrefix = spotDisplayName(spot) + (spot.equals(preferredSpot) && atSquare ? "* " : " ");
 
             if (sky != null) {
                 long throwIn = computeThrowCountdown(currentElapsedMs(), sky.flightTimeMs);
@@ -351,7 +359,7 @@ public class CalcPearlLineUp {
         if (s.equals("=") || s.equalsIgnoreCase("equals")) return KuudraSupplySpot.SUPPLY3;
         if (s.equals("/") || s.equalsIgnoreCase("slash")) return KuudraSupplySpot.SUPPLY4;
         if (s.equalsIgnoreCase("x")) return KuudraSupplySpot.SUPPLY2;
-        if (s.equalsIgnoreCase("xcannon") || s.equalsIgnoreCase("x cannon")) return KuudraSupplySpot.SUPPLY6; // corrected per request
+        if (s.equalsIgnoreCase("xc") || s.equalsIgnoreCase("xcannon") || s.equalsIgnoreCase("x cannon")) return KuudraSupplySpot.SUPPLY6; // include "XC"
         if (s.equalsIgnoreCase("square")) return KuudraSupplySpot.SUPPLY6; // fixed from S5 -> S6
         return null;
     }

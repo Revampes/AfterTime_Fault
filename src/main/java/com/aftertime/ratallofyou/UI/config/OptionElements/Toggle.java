@@ -1,7 +1,5 @@
 package com.aftertime.ratallofyou.UI.config.OptionElements;
 
-import com.aftertime.ratallofyou.UI.config.ConfigIO;
-import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
 import com.aftertime.ratallofyou.UI.config.PropertyRef;
 import net.minecraft.client.gui.Gui;
 
