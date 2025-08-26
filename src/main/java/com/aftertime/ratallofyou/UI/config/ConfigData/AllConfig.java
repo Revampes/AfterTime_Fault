@@ -81,6 +81,15 @@ public class AllConfig {
 
     }};
 
+    // New: Kuudra Chest Open Notice sub-settings
+    public final HashMap<String, BaseConfig<?>> KUUDRA_CHESTOPEN_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("kuudra_auto_openchest", new BaseConfig<>("Auto Open Chest", "Automatically click Paid Chest (slot 31)", false));
+        put("kuudra_auto_requeue", new BaseConfig<>("Auto Requeue at 4", "Auto /instancerequeue when 4 players looted", false));
+        // New string input for custom announcement tag (e.g., IQ)
+        put("kuudra_chest_tag", new BaseConfig<>("Chest Tag", "Text inside brackets for chest announcement", "IQ"));
+    }};
+
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
     {{
             // Kuudra
@@ -98,6 +107,8 @@ public class AllConfig {
             put("kuudra_kuudradirection", new ModuleInfo("Kuudra Directions", "Show directions of kuudra in P5", "Kuudra", false));
             put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
             put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
+            // New: Chest Open Notice module
+            put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
 
             // Dungeons
             put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
@@ -115,6 +126,8 @@ public class AllConfig {
             put("skyblock_waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
             put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
             put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
+            // New: Hotbar Swap module (keybind/preset based)
+            put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
 
             // Render
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
@@ -138,7 +151,7 @@ public class AllConfig {
         put("fhk_outline_prox_range", new BaseConfig<>("Outline Proximity Range", "How far from ring counts as close (px)", 120));
         // Background hover animation
         put("fhk_bg_near_color", new BaseConfig<>("BG Near Color", "Background color near cursor (RGBA, alpha drives intensity)", new Color(96, 96, 96, 128)));
-        put("fhk_bg_far_color", new BaseConfig<>("BG Far Color", "Background color far from cursor (RGBA, light grey)", new Color(160, 160, 160, 128)));
+        put("fhk_bg_far_color", new BaseConfig<>("BG Far Color", "Background color far from cursor on outer ring (RGBA, light grey)", new Color(160, 160, 160, 128)));
         put("fhk_bg_influence_radius", new BaseConfig<>("BG Influence Radius", "Distance where background hover fades out (px)", 60));
         put("fhk_bg_max_extend", new BaseConfig<>("BG Max Extend", "Max outward extension of background near cursor (px)", 14.0f));
         // UI toggles
@@ -159,6 +172,8 @@ public class AllConfig {
         put(4, TERMINAL_CONFIGS);
         put(5, Pos_CONFIGS);
         put(6, FASTHOTKEY_CONFIGS);
+        // New: Chest Open Notice subsettings
+        put(7, KUUDRA_CHESTOPEN_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

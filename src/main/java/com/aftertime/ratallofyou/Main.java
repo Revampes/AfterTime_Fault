@@ -28,6 +28,7 @@ import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsAppli
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.Direction;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHitbox;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHP;
+import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -83,6 +84,10 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new KuudraHP());
         MinecraftForge.EVENT_BUS.register(new FixedPearlLineUp());
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());
+        // New: Kuudra chest open & notice port from JS
+        MinecraftForge.EVENT_BUS.register(new ChestOpenNotice());
+        // New: Hotbar swapper port from JS
+        MinecraftForge.EVENT_BUS.register(new HotbarSwap());
         KeybindHandler.registerKeybinds();
     }
 }

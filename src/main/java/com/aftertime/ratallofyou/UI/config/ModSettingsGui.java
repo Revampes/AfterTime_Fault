@@ -628,7 +628,7 @@ public class ModSettingsGui extends GuiScreen {
 
     private boolean hasSettings(ModuleInfo module) {
         if (module == null || module.name == null) return false;
-        switch (module.name) { case "Dungeon Terminals": case "Party Commands": case "No Debuff": case "Etherwarp Overlay": case "Fast Hotkey": return true; default: return false; }
+        switch (module.name) { case "Dungeon Terminals": case "Party Commands": case "No Debuff": case "Etherwarp Overlay": case "Fast Hotkey": case "Chest Open Notice": return true; default: return false; }
     }
 
     private void initializeCommandToggles() {
@@ -640,6 +640,7 @@ public class ModSettingsGui extends GuiScreen {
             case "No Debuff": Add_SubSetting_NoDebuff(y); break;
             case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
             case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
+            case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -699,6 +700,13 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_NoDebuff(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.NODEBUFF_CONFIGS.entrySet()) AddEntryAsOption(e, y, 2); }
     private void Add_SubSetting_Etherwarp(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.ETHERWARP_CONFIGS.entrySet()) AddEntryAsOption(e, y, 3); }
 
+    // New: Chest Open Notice sub-settings (index 7 in AllConfig.ALLCONFIGS)
+    private void Add_SubSetting_ChestOpen(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.KUUDRA_CHESTOPEN_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 7);
+        }
+    }
+
     private void rebuildFastHotkeyRowsForDetail() {
         fastRows.clear(); if (!("Fast Hotkey".equals(SelectedModule != null ? SelectedModule.name : null))) return;
         int detailBaseX = useSidePanelForSelected ? (guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH + 6 + 5) : (getInlineDetailX() + 5);
@@ -750,3 +758,4 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 }
+
