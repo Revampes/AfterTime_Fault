@@ -86,7 +86,6 @@ public class AllConfig {
     {{
         put("kuudra_auto_openchest", new BaseConfig<>("Auto Open Chest", "Automatically click Paid Chest (slot 31)", false));
         put("kuudra_auto_requeue", new BaseConfig<>("Auto Requeue at 4", "Auto /instancerequeue when 4 players looted", false));
-        // New string input for custom announcement tag (e.g., IQ)
         put("kuudra_chest_tag", new BaseConfig<>("Chest Tag", "Text inside brackets for chest announcement", "IQ"));
     }};
 
@@ -107,7 +106,6 @@ public class AllConfig {
             put("kuudra_kuudradirection", new ModuleInfo("Kuudra Directions", "Show directions of kuudra in P5", "Kuudra", false));
             put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
             put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
-            // New: Chest Open Notice module
             put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
 
             // Dungeons
@@ -133,6 +131,9 @@ public class AllConfig {
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
             put("render_nodebuff",new ModuleInfo("No Debuff", "Removes negative effects", "Render", false));
             put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false));
+
+            //Performance
+            put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));
 
             // GUI
             put("gui_moveguiposition",new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false));
@@ -180,9 +181,7 @@ public class AllConfig {
         put(4, TERMINAL_CONFIGS);
         put(5, Pos_CONFIGS);
         put(6, FASTHOTKEY_CONFIGS);
-        // New: Chest Open Notice subsettings
         put(7, KUUDRA_CHESTOPEN_CONFIGS);
-        // New: Hotbar Swap settings
         put(8, HOTBARSWAP_CONFIGS);
     }};
 
@@ -192,6 +191,7 @@ public class AllConfig {
         add("Dungeons");
         add("SkyBlock");
         add("Render");
+        add("Performance");
         add("GUI");
     }};
 
