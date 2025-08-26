@@ -426,19 +426,34 @@ public class HotbarSwap {
         keyTriggers.clear();
         // Keep existing client commands; add new ones as needed
         for (Hotbar p : presets) {
+            // Message trigger: exact incoming chat match
             if (p.message != null && !p.message.trim().isEmpty()) {
                 String msg = p.message.trim();
                 msgTriggers.put(msg, p);
-                // If trigger starts with '/', register a client-side command so typing it runs locally
+                // Backward compatibility: if message itself starts with a slash, also treat it as a command trigger
                 if (msg.startsWith("/")) {
                     String nameOnly = msg.substring(1).trim();
                     int sp = nameOnly.indexOf(' ');
                     if (sp > 0) nameOnly = nameOnly.substring(0, sp);
-                    if (!nameOnly.isEmpty() && !registeredClientCommands.contains(nameOnly)) {
-                        try {
-                            ClientCommandHandler.instance.registerCommand(new PresetClientCmd(nameOnly, p.name));
-                            registeredClientCommands.add(nameOnly);
-                        } catch (Throwable ignored) { }
+                    if (!nameOnly.isEmpty()) {
+                        msgTriggers.put("/" + nameOnly, p);
+                        if (!registeredClientCommands.contains(nameOnly)) {
+                            try { ClientCommandHandler.instance.registerCommand(new PresetClientCmd(nameOnly, p.name)); registeredClientCommands.add(nameOnly); } catch (Throwable ignored) { }
+                        }
+                    }
+                }
+            }
+            // Command trigger: user-entered command name, with or without leading '/'
+            if (p.command != null && !p.command.trim().isEmpty()) {
+                String cmd = p.command.trim();
+                String nameOnly = cmd.startsWith("/") ? cmd.substring(1).trim() : cmd;
+                int sp = nameOnly.indexOf(' ');
+                if (sp > 0) nameOnly = nameOnly.substring(0, sp);
+                if (!nameOnly.isEmpty()) {
+                    // Map "/name" to preset so tryTriggerLocal works
+                    msgTriggers.put("/" + nameOnly, p);
+                    if (!registeredClientCommands.contains(nameOnly)) {
+                        try { ClientCommandHandler.instance.registerCommand(new PresetClientCmd(nameOnly, p.name)); registeredClientCommands.add(nameOnly); } catch (Throwable ignored) { }
                     }
                 }
             }
@@ -463,7 +478,7 @@ public class HotbarSwap {
             ItemStack s = getStackInInventorySlot(i);
             list.add(new HotbarItem(s));
         }
-        Hotbar hb = new Hotbar(name, list, null, -1);
+        Hotbar hb = new Hotbar(name, list, null, null, -1);
         presets.add(hb);
         saveToDisk();
         indexTriggers();
@@ -475,10 +490,17 @@ public class HotbarSwap {
     }
 
     public synchronized void updatePresetMeta(int index, String name, String message, Integer keyCode) {
+        // Backward-compatible method: no command provided
+        updatePresetMeta(index, name, message, null, keyCode);
+    }
+
+    // New: accepts both message and command updates
+    public synchronized void updatePresetMeta(int index, String name, String message, String command, Integer keyCode) {
         if (index < 0 || index >= presets.size()) return;
         Hotbar p = presets.get(index);
         if (name != null) p.name = name;
         if (message != null) p.message = message;
+        if (command != null) p.command = command;
         if (keyCode != null) p.keyCode = keyCode;
         saveToDisk();
         indexTriggers();
@@ -516,7 +538,8 @@ public class HotbarSwap {
     private void printPreset(Hotbar p) {
         chatClient("§c------------------------------");
         chatClient("§a§lPreset Name:§r " + p.name);
-        chatClient("§a§lTrigger:§r " + (p.message != null ? p.message : "None"));
+        chatClient("§a§lTrigger Message:§r " + (p.message != null ? p.message : "None"));
+        chatClient("§a§lTrigger Command:§r " + (p.command != null ? p.command : "None"));
         // Show key if present
         String keyStr = (p.keyCode != null && p.keyCode > 0) ? Keyboard.getKeyName(p.keyCode) : "None";
         chatClient("§a§lKeybind:§r " + keyStr);
@@ -596,6 +619,7 @@ public class HotbarSwap {
             sb.append('{');
             sb.append("\"name\":\"").append(escape(p.name)).append("\",");
             sb.append("\"message\":").append(p.message == null ? "null" : ("\"" + escape(p.message) + "\""));
+            sb.append(',').append("\"command\":").append(p.command == null ? "null" : ("\"" + escape(p.command) + "\""));
             // keyCode persisted (use -1 for none)
             sb.append(',').append("\"key\":").append(p.keyCode == null ? -1 : p.keyCode.intValue());
             sb.append(',').append("\"slots\":[");
@@ -635,6 +659,7 @@ public class HotbarSwap {
             for (String obj : objs) {
                 String name = extractNullableString(obj, "name");
                 String message = extractNullableString(obj, "message");
+                String command = extractNullableString(obj, "command");
                 Integer key = extractNullableInt(obj, "key");
                 if (key == null) key = -1;
                 List<HotbarItem> slots = new ArrayList<HotbarItem>();
@@ -649,7 +674,7 @@ public class HotbarSwap {
                         slots.add(hi);
                     }
                 }
-                if (name != null && slots.size() == 9) presets.add(new Hotbar(name, slots, message, key));
+                if (name != null && slots.size() == 9) presets.add(new Hotbar(name, slots, message, command, key));
             }
         } catch (Throwable ignored) { }
         indexTriggers();
@@ -742,12 +767,15 @@ public class HotbarSwap {
         public String name;
         public List<HotbarItem> slots;
         public String message;
+        // New: separate command trigger (with or without leading '/')
+        public String command;
         // New: keybind code (LWJGL key code), -1 or null means none
         public Integer keyCode;
         public Hotbar() {}
-        public Hotbar(String name, List<HotbarItem> slots) { this.name = name; this.slots = slots; this.message = null; this.keyCode = -1; }
-        public Hotbar(String name, List<HotbarItem> slots, String message) { this.name = name; this.slots = slots; this.message = message; this.keyCode = -1; }
-        public Hotbar(String name, List<HotbarItem> slots, String message, Integer keyCode) { this.name = name; this.slots = slots; this.message = message; this.keyCode = keyCode == null ? -1 : keyCode; }
+        public Hotbar(String name, List<HotbarItem> slots) { this.name = name; this.slots = slots; this.message = null; this.command = null; this.keyCode = -1; }
+        public Hotbar(String name, List<HotbarItem> slots, String message) { this.name = name; this.slots = slots; this.message = message; this.command = null; this.keyCode = -1; }
+        public Hotbar(String name, List<HotbarItem> slots, String message, Integer keyCode) { this.name = name; this.slots = slots; this.message = message; this.command = null; this.keyCode = keyCode == null ? -1 : keyCode; }
+        public Hotbar(String name, List<HotbarItem> slots, String message, String command, Integer keyCode) { this.name = name; this.slots = slots; this.message = message; this.command = command; this.keyCode = keyCode == null ? -1 : keyCode; }
     }
 
     public static class HotbarItem {
