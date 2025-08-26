@@ -186,6 +186,9 @@ public class HotbarSwap {
             Hotbar mapped = msgTriggers.get("/" + cmd);
             if (mapped != null) {
                 loadPreset(mapped.name);
+            } else if (presetName != null) {
+                // Fallback: trigger the originally registered preset even if message text changed
+                loadPreset(presetName);
             }
         }
         @Override public boolean canCommandSenderUseCommand(ICommandSender sender) { return true; }
@@ -237,6 +240,29 @@ public class HotbarSwap {
     }
 
     /* ===================== Core logic ===================== */
+
+    // Public: allow other UIs (e.g., FastHotKey) to trigger swaps from a command/message string
+    public boolean tryTriggerLocal(String text) {
+        try {
+            if (!isModuleEnabled()) return false;
+            if (text == null) return false;
+            String s = text.trim();
+            if (s.isEmpty()) return false;
+            // Exact match first
+            Hotbar p = msgTriggers.get(s);
+            if (p != null) { loadPreset(p.name); return true; }
+            // If it looks like a command, try resolving by command name prefix (e.g., "/kuudra1 ...")
+            if (s.startsWith("/")) {
+                String nameOnly = s.substring(1).trim();
+                int sp = nameOnly.indexOf(' ');
+                if (sp > 0) nameOnly = nameOnly.substring(0, sp);
+                // Try exact "/name" key
+                p = msgTriggers.get("/" + nameOnly);
+                if (p != null) { loadPreset(p.name); return true; }
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
 
     private void loadPreset(String presetName) {
         if (presetName == null || mc.thePlayer == null) return;

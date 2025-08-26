@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.util.List;
 import java.awt.Color;
 
+// Added: allow direct triggering of HotbarSwap from commands
+import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
+
 public class FastHotKeyGui extends GuiScreen {
     // Default radii (will be overridden by config each frame)
     private static final int DEFAULT_OUTER_RADIUS = 150;
@@ -158,7 +161,13 @@ public class FastHotKeyGui extends GuiScreen {
             if (region < entries.size()) {
                 String cmd = entries.get(region).command;
                 if (cmd != null && !cmd.trim().isEmpty()) {
-                    Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                    boolean handled = false;
+                    try {
+                        if (HotbarSwap.INSTANCE != null) handled = HotbarSwap.INSTANCE.tryTriggerLocal(cmd);
+                    } catch (Throwable ignored) {}
+                    if (!handled) {
+                        Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                    }
                 }
             }
         }
@@ -371,7 +380,13 @@ public class FastHotKeyGui extends GuiScreen {
                 if (region < entries.size()) {
                     String cmd = entries.get(region).command;
                     if (cmd != null && !cmd.trim().isEmpty()) {
-                        Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                        boolean handled = false;
+                        try {
+                            if (HotbarSwap.INSTANCE != null) handled = HotbarSwap.INSTANCE.tryTriggerLocal(cmd);
+                        } catch (Throwable ignored) {}
+                        if (!handled) {
+                            Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                        }
                     }
                 }
                 mc.displayGuiScreen(null);
