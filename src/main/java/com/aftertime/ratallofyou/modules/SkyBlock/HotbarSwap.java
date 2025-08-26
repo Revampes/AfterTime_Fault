@@ -23,6 +23,8 @@ import java.util.*;
 // New imports
 import org.lwjgl.input.Keyboard;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+// Register client-side commands for preset triggers like "/kuudra1"
+import net.minecraftforge.client.ClientCommandHandler;
 
 /**
  * HotbarSwap: Port of the ChatTriggers HotbarSwapper.js to Forge 1.8.9 Java.
@@ -45,6 +47,8 @@ public class HotbarSwap {
     // Map of keyCode -> preset
     private final Map<Integer, Hotbar> keyTriggers = new HashMap<Integer, Hotbar>();
     private final Set<Integer> recentlyInteracted = new HashSet<Integer>(); // InventoryPlayer slot indices 0..35
+    // Track client commands registered for "/..." triggers to avoid duplicates
+    private final Set<String> registeredClientCommands = new HashSet<String>();
 
     private int moveCD = 0; // ticks left to block movement
 
@@ -57,6 +61,45 @@ public class HotbarSwap {
         indexTriggers();
         // Commands are deprecated for this feature; do not register.
         // registerCommands();
+    }
+
+    /* ===================== Config helpers ===================== */
+    private boolean isModuleEnabled() {
+        try {
+            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.MODULES.get("skyblock_hotbarswap");
+            if (cfg instanceof com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) {
+                return (Boolean) ((com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) cfg).Data;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    private boolean isKeybindsEnabled() {
+        try {
+            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.get("hotbarswap_enable_keybinds");
+            if (cfg != null && cfg.Data instanceof Boolean) return (Boolean) cfg.Data;
+        } catch (Throwable ignored) {}
+        return true;
+    }
+
+    private boolean isChatTriggersEnabled() {
+        try {
+            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.get("hotbarswap_enable_chat_triggers");
+            if (cfg != null && cfg.Data instanceof Boolean) return (Boolean) cfg.Data;
+        } catch (Throwable ignored) {}
+        return true;
+    }
+
+    private int getBlockTicks() {
+        try {
+            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.get("hotbarswap_block_ticks");
+            if (cfg != null && cfg.Data instanceof Integer) {
+                int v = (Integer) cfg.Data;
+                // Clamp to a small, safe maximum to avoid long movement locks
+                return Math.max(0, Math.min(20, v));
+            }
+        } catch (Throwable ignored) {}
+        return 10;
     }
 
     /* ===================== Commands (deprecated) ===================== */
@@ -130,6 +173,25 @@ public class HotbarSwap {
         }
     }
 
+    // Client-side command tied to a specific preset (e.g., "/kuudra1")
+    private class PresetClientCmd extends CommandBase {
+        private final String cmd;
+        private final String presetName; // kept for backward compatibility, but resolution now uses current mapping
+        PresetClientCmd(String cmd, String presetName) { this.cmd = cmd; this.presetName = presetName; }
+        @Override public String getCommandName() { return cmd; }
+        @Override public String getCommandUsage(ICommandSender sender) { return "/" + cmd; }
+        @Override public void processCommand(ICommandSender sender, String[] args) {
+            if (!isModuleEnabled() || !isChatTriggersEnabled()) return;
+            // Resolve using the latest mapping so edits take effect immediately
+            Hotbar mapped = msgTriggers.get("/" + cmd);
+            if (mapped != null) {
+                loadPreset(mapped.name);
+            }
+        }
+        @Override public boolean canCommandSenderUseCommand(ICommandSender sender) { return true; }
+        @Override public int getRequiredPermissionLevel() { return 0; }
+    }
+
     /* ===================== Events ===================== */
 
     @SubscribeEvent
@@ -137,15 +199,9 @@ public class HotbarSwap {
         if (moveCD > 0) HotbarSwapUtils.stopInputs();
         try {
             if (mc == null || mc.thePlayer == null) return;
-            // Only respond when module enabled and no GUI is open
-            boolean enabled = false;
-            try {
-                com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.MODULES.get("skyblock_hotbarswap");
-                if (cfg instanceof com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) {
-                    enabled = (Boolean) ((com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) cfg).Data;
-                }
-            } catch (Throwable ignored) {}
-            if (!enabled) return;
+            // Only respond when module and keybind triggers are enabled and no GUI is open
+            if (!isModuleEnabled()) return;
+            if (!isKeybindsEnabled()) return;
             if (mc.currentScreen != null) return;
 
             int key = Keyboard.getEventKey();
@@ -166,14 +222,18 @@ public class HotbarSwap {
         }
     }
 
-    // Listen for chat messages to trigger presets
+    // Listen for chat messages to trigger presets (incoming from server)
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        String msg = event.message.getUnformattedText();
-        if (msg == null) return;
-        Hotbar preset = msgTriggers.get(msg);
-        if (preset == null) return;
-        loadPreset(preset.name);
+        try {
+            if (!isModuleEnabled()) return;
+            if (!isChatTriggersEnabled()) return;
+            String msg = event.message.getUnformattedText();
+            if (msg == null) return;
+            Hotbar preset = msgTriggers.get(msg);
+            if (preset == null) return;
+            loadPreset(preset.name);
+        } catch (Throwable ignored) {}
     }
 
     /* ===================== Core logic ===================== */
@@ -310,8 +370,12 @@ public class HotbarSwap {
             int windowId = c.windowId;
             // type=2 => SWAP_WITH_HOTBAR, mouseButton = hotbar index
             mc.playerController.windowClick(windowId, containerSlotId, targetHotbarIndex, 2, mc.thePlayer);
-            HotbarSwapUtils.stopInputs();
-            moveCD = 10; // ~0.5s
+            // Only trigger movement suppression if not already active, to avoid extending the lock with multiple clicks
+            int blockTicks = getBlockTicks();
+            if (blockTicks > 0 && moveCD <= 0) {
+                HotbarSwapUtils.stopInputs();
+                moveCD = blockTicks;
+            }
         } catch (Throwable ignored) { }
     }
 
@@ -334,8 +398,24 @@ public class HotbarSwap {
     private void indexTriggers() {
         msgTriggers.clear();
         keyTriggers.clear();
+        // Keep existing client commands; add new ones as needed
         for (Hotbar p : presets) {
-            if (p.message != null && !p.message.trim().isEmpty()) msgTriggers.put(p.message, p);
+            if (p.message != null && !p.message.trim().isEmpty()) {
+                String msg = p.message.trim();
+                msgTriggers.put(msg, p);
+                // If trigger starts with '/', register a client-side command so typing it runs locally
+                if (msg.startsWith("/")) {
+                    String nameOnly = msg.substring(1).trim();
+                    int sp = nameOnly.indexOf(' ');
+                    if (sp > 0) nameOnly = nameOnly.substring(0, sp);
+                    if (!nameOnly.isEmpty() && !registeredClientCommands.contains(nameOnly)) {
+                        try {
+                            ClientCommandHandler.instance.registerCommand(new PresetClientCmd(nameOnly, p.name));
+                            registeredClientCommands.add(nameOnly);
+                        } catch (Throwable ignored) { }
+                    }
+                }
+            }
             if (p.keyCode != null && p.keyCode > 0) keyTriggers.put(p.keyCode, p);
         }
     }
@@ -374,6 +454,14 @@ public class HotbarSwap {
         if (name != null) p.name = name;
         if (message != null) p.message = message;
         if (keyCode != null) p.keyCode = keyCode;
+        saveToDisk();
+        indexTriggers();
+    }
+
+    // New: remove by index for UI
+    public synchronized void removePreset(int index) {
+        if (index < 0 || index >= presets.size()) return;
+        presets.remove(index);
         saveToDisk();
         indexTriggers();
     }
@@ -472,7 +560,7 @@ public class HotbarSwap {
     }
 
     // Minimal JSON (no external deps assumed). Format:
-    // {"presets":[{"name":"...","message":"...","key":123,"slots":[{"uuid":"..","id":"..","name":".."},...]},...]}
+    // {"presets":[{"name":"...","message":"...","key":123,"slots":[{"uuid":"..","id":"..","name":".."},...]}...]}
     private String serializePresets() {
         StringBuilder sb = new StringBuilder();
         sb.append('{').append("\"presets\":[");
@@ -519,7 +607,7 @@ public class HotbarSwap {
             // Split objects by '},{' at top level (no nested braces inside slots arrays for our simple values)
             List<String> objs = splitTopLevel(arr);
             for (String obj : objs) {
-                String name = extractString(obj, "name");
+                String name = extractNullableString(obj, "name");
                 String message = extractNullableString(obj, "message");
                 Integer key = extractNullableInt(obj, "key");
                 if (key == null) key = -1;

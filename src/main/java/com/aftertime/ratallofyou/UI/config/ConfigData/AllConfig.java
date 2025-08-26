@@ -158,6 +158,14 @@ public class AllConfig {
         put("fhk_show_arrow", new BaseConfig<>("Show Arrow", "Show direction arrow near inner ring", true));
     }};
 
+    // New: Hotbar Swap settings
+    public final HashMap<String, BaseConfig<?>> HOTBARSWAP_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("hotbarswap_enable_chat_triggers", new BaseConfig<>("Enable Chat Triggers", "Trigger presets from exact chat messages", true));
+        put("hotbarswap_enable_keybinds", new BaseConfig<>("Enable Keybinds", "Trigger presets from keybinds", true));
+        put("hotbarswap_block_ticks", new BaseConfig<>("Block Movement Ticks", "Ticks to suppress movement after a swap", 10));
+    }};
+
     // New: Fast Hotkey presets model and active pointer
     public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
     public int FHK_ACTIVE_PRESET = 0;
@@ -174,6 +182,8 @@ public class AllConfig {
         put(6, FASTHOTKEY_CONFIGS);
         // New: Chest Open Notice subsettings
         put(7, KUUDRA_CHESTOPEN_CONFIGS);
+        // New: Hotbar Swap settings
+        put(8, HOTBARSWAP_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

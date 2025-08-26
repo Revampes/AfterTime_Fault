@@ -38,6 +38,9 @@ public class ModSettingsGui extends GuiScreen {
     // Fast Hotkey editor rows (right-side detail panel)
     private final List<FastRow> fastRows = new ArrayList<>();
 
+    // New: Hotbar Swap inline rows
+    private final List<HotbarPresetRow> hotbarRows = new ArrayList<>();
+
     private String selectedCategory = "Kuudra";
     private ModuleInfo SelectedModule = null;
     private boolean showCommandSettings = false;
@@ -70,6 +73,7 @@ public class ModSettingsGui extends GuiScreen {
         this.fhkPresetNameInput = new SimpleTextField("", 0, 0, 100, 16);
         this.useSidePanelForSelected = false;
         this.optionsInline = false;
+        this.hotbarRows.clear();
 
         buildCategoryButtons();
         buildModuleButtons();
@@ -178,6 +182,10 @@ public class ModSettingsGui extends GuiScreen {
         if (showCommandSettings && useSidePanelForSelected && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
             if (fhkPresetNameInput != null && fhkPresetNameInput.isEditing) { fhkPresetNameInput.handleKeyTyped(typedChar, keyCode); return; }
             handleFastHotKeyTyping(typedChar, keyCode); return;
+        }
+        // New: Hotbar Swap inline typing
+        if (showCommandSettings && optionsInline && SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
+            handleHotbarSwapTyping(typedChar, keyCode); return;
         }
         handleAllInputTyping(typedChar, keyCode);
     }
@@ -307,6 +315,36 @@ public class ModSettingsGui extends GuiScreen {
             }
             drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x33000000); y += 6;
         }
+        // New: Hotbar Swap inline drawing
+        if ("Hotbar Swap".equals(SelectedModule.name)) {
+            // Render each preset row
+            for (int i = 0; i < hotbarRows.size(); i++) {
+                HotbarPresetRow row = hotbarRows.get(i);
+                fontRendererObj.drawStringWithShadow("Preset Label:", ia.contentX, y, Colors.COMMAND_TEXT);
+                row.labelInput.setBounds(ia.contentX, y + 12, ia.contentW, 16);
+                row.labelInput.draw(mouseX, mouseY);
+                y += 12 + 16 + 6;
+                fontRendererObj.drawStringWithShadow("Preset Trigger Command:", ia.contentX, y, Colors.COMMAND_TEXT);
+                row.triggerInput.setBounds(ia.contentX, y + 12, ia.contentW, 16);
+                row.triggerInput.draw(mouseX, mouseY);
+                y += 12 + 16 + 6;
+                int rmW = 70; int rmH = 16; int rmX = ia.contentX; int rmY = y;
+                drawRect(rmX, rmY, rmX + rmW, rmY + rmH, Colors.BUTTON_RED);
+                drawCenteredString(fontRendererObj, "Remove", rmX + rmW / 2, rmY + 4, Colors.BUTTON_TEXT);
+                row.removeBtnX = rmX; row.removeBtnY = rmY; row.removeBtnW = rmW; row.removeBtnH = rmH;
+                y += rmH + 8;
+                drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x22000000); y += 6;
+            }
+            // Add button at bottom
+            int addW = 90; int addH = 16; int addX = ia.contentX; int addY = y;
+            drawRect(addX, addY, addX + addW, addY + addH, Colors.BUTTON_GREEN);
+            drawCenteredString(fontRendererObj, hotbarRows.isEmpty() ? "Add Preset" : "Add Another", addX + addW / 2, addY + 4, Colors.BUTTON_TEXT);
+            // store last add button bounds for click handling
+            lastHotbarAddBtnX = addX; lastHotbarAddBtnY = addY; lastHotbarAddBtnW = addW; lastHotbarAddBtnH = addH;
+            y += addH + 6;
+            // small separator before generic options
+            drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x33000000); y += 6;
+        }
         for (Toggle t : Toggles) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
         for (LabelledInput t : labelledInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += t.getVerticalSpace(); }
         for (ColorInput t : ColorInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 50; }
@@ -319,6 +357,15 @@ public class ModSettingsGui extends GuiScreen {
             int presetBtnH = 16; h += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (presetBtnH + 4));
             h += 6; // separator
             h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; return h + 6;
+        }
+        // New: Hotbar Swap rows height
+        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
+            int perRow = (12 + 16 + 6) + (12 + 16 + 6) + (16 + 8) + 6; // label+input, trigger+input, remove, separator
+            int h = perRow * hotbarRows.size();
+            h += 16 + 6; // add button and gap
+            // plus generic options (toggles/inputs)
+            h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22;
+            return h + 6;
         }
         int h = Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
     }
@@ -361,6 +408,33 @@ public class ModSettingsGui extends GuiScreen {
                 y += presetBtnH + 4;
             }
             y += 6; // separator gap
+        }
+        // New: Hotbar Swap inline clicks
+        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
+            // Iterate rows for input focus and remove
+            for (int i = 0; i < hotbarRows.size(); i++) {
+                HotbarPresetRow row = hotbarRows.get(i);
+                // Label input
+                int labelY = y + 12; // after title
+                row.labelInput.setBounds(ia.contentX, labelY, ia.contentW, 16);
+                if (row.labelInput.isMouseOver(mouseX, mouseY)) { unfocusAllHotbarInputs(); row.labelInput.beginEditing(mouseX); return; }
+                y += 12 + 16 + 6;
+                // Trigger input
+                int trigY = y + 12;
+                row.triggerInput.setBounds(ia.contentX, trigY, ia.contentW, 16);
+                if (row.triggerInput.isMouseOver(mouseX, mouseY)) { unfocusAllHotbarInputs(); row.triggerInput.beginEditing(mouseX); return; }
+                y += 12 + 16 + 6;
+                // Remove button
+                int rmX = ia.contentX; int rmY = y; int rmW = 70; int rmH = 16;
+                if (mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + rmH) { removeHotbarPresetAtIndex(i); return; }
+                y += rmH + 8;
+                y += 6; // separator gap
+            }
+            // Add button at bottom
+            int addX = ia.contentX; int addY = y; int addW = 90; int addH = 16;
+            if (mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + addH) { addCurrentHotbarAsPreset(); return; }
+            // Continue to other inputs after a small gap
+            y += addH + 12;
         }
         // Inputs and toggles
         int yToggle = y;
@@ -538,13 +612,33 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
+    // New: Hotbar Swap typing handler
+    private void handleHotbarSwapTyping(char typedChar, int keyCode) {
+        // Update any focused hotbar preset input and propagate to HotbarSwap
+        handleAllInputTyping(typedChar, keyCode);
+        for (int i = 0; i < hotbarRows.size(); i++) {
+            HotbarPresetRow row = hotbarRows.get(i);
+            boolean changed = false;
+            if (row.labelInput.isEditing) { row.labelInput.handleKeyTyped(typedChar, keyCode); changed = true; }
+            else if (row.triggerInput.isEditing) { row.triggerInput.handleKeyTyped(typedChar, keyCode); changed = true; }
+            if (changed) {
+                // Persist without rebuilding rows to preserve input focus
+                com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.updatePresetMeta(i, row.labelInput.text.trim(), row.triggerInput.text.trim(), null);
+                return;
+            }
+        }
+    }
+
     private void unfocusAllFastInputs() {
         for (FastRow r : fastRows) { r.labelInput.isEditing = false; r.commandInput.isEditing = false; }
         if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
     }
 
+    // New: unfocus Hotbar Swap inputs
+    private void unfocusAllHotbarInputs() { for (HotbarPresetRow r : hotbarRows) { r.labelInput.isEditing = false; r.triggerInput.isEditing = false; } }
+
     // Input and scroll helpers
-    private void handleInputFieldEditingState() { for (ColorInput c : ColorInputs) c.unfocus(); if (showCommandSettings && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) unfocusAllFastInputs(); }
+    private void handleInputFieldEditingState() { for (ColorInput c : ColorInputs) c.unfocus(); if (showCommandSettings && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) unfocusAllFastInputs(); if (showCommandSettings && SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) unfocusAllHotbarInputs(); }
 
     private void handleScrollbarClicks(int mouseX, int mouseY) { if (showCommandSettings && useSidePanelForSelected && commandScroll.checkScrollbarClick(mouseX, mouseY)) return; if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0 && commandScroll.checkScrollbarClick(mouseX, mouseY)) return; if (mainScroll.checkScrollbarClick(mouseX, mouseY)) return; }
 
@@ -628,7 +722,7 @@ public class ModSettingsGui extends GuiScreen {
 
     private boolean hasSettings(ModuleInfo module) {
         if (module == null || module.name == null) return false;
-        switch (module.name) { case "Dungeon Terminals": case "Party Commands": case "No Debuff": case "Etherwarp Overlay": case "Fast Hotkey": case "Chest Open Notice": return true; default: return false; }
+        switch (module.name) { case "Dungeon Terminals": case "Party Commands": case "No Debuff": case "Etherwarp Overlay": case "Fast Hotkey": case "Chest Open Notice": case "Hotbar Swap": return true; default: return false; }
     }
 
     private void initializeCommandToggles() {
@@ -641,6 +735,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
             case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
+            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); rebuildHotbarRows(); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -707,11 +802,43 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
+    // New: Hotbar Swap sub-settings (index 8 in AllConfig.ALLCONFIGS)
+    private void Add_SubSetting_HotbarSwap(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 8);
+        }
+    }
+
     private void rebuildFastHotkeyRowsForDetail() {
         fastRows.clear(); if (!("Fast Hotkey".equals(SelectedModule != null ? SelectedModule.name : null))) return;
         int detailBaseX = useSidePanelForSelected ? (guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH + 6 + 5) : (getInlineDetailX() + 5);
         int detailInputW = 170 - 10;
         for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
+    }
+
+    // New: rebuild Hotbar Swap rows from current presets
+    private void rebuildHotbarRows() {
+        hotbarRows.clear();
+        java.util.List<com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.Hotbar> view = com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE != null ? com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.getPresetsView() : java.util.Collections.<com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.Hotbar>emptyList();
+        for (int i = 0; i < view.size(); i++) {
+            com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.Hotbar p = view.get(i);
+            HotbarPresetRow row = new HotbarPresetRow(i, p.name == null ? "" : p.name, p.message == null ? "" : p.message);
+            hotbarRows.add(row);
+        }
+    }
+
+    // New: add/remove helpers for Hotbar Swap
+    private void addCurrentHotbarAsPreset() {
+        if (com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE == null) return;
+        com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.addPresetFromCurrentHotbar();
+        rebuildHotbarRows();
+        buildModuleButtons();
+    }
+    private void removeHotbarPresetAtIndex(int rowIndex) {
+        if (com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE == null) return;
+        com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.removePreset(rowIndex);
+        rebuildHotbarRows();
+        buildModuleButtons();
     }
 
     private class ScrollManager {
@@ -738,6 +865,15 @@ public class ModSettingsGui extends GuiScreen {
         void beginEditing(int mx) { isEditing = true; cursorBlinkMs = 0; cursorVisible = true; int rel = Math.max(0, mx - x); int pos = 0; String s = text; while (pos < s.length()) { int cw = Minecraft.getMinecraft().fontRendererObj.getCharWidth(s.charAt(pos)); if (rel < cw / 2) break; rel -= cw; pos++; } cursorPos = pos; }
         void handleKeyTyped(char c, int key) { if (!isEditing) return; if (key == org.lwjgl.input.Keyboard.KEY_RETURN) { isEditing = false; return; } if (key == org.lwjgl.input.Keyboard.KEY_BACK) { if (cursorPos > 0 && !text.isEmpty()) { text = text.substring(0, cursorPos - 1) + text.substring(cursorPos); cursorPos--; } } else if (key == org.lwjgl.input.Keyboard.KEY_LEFT) { cursorPos = Math.max(0, cursorPos - 1); } else if (key == org.lwjgl.input.Keyboard.KEY_RIGHT) { cursorPos = Math.min(text.length(), cursorPos + 1); } else { if (c >= 32 && c != 127) { if (text.length() >= maxLen) return; text = text.substring(0, cursorPos) + c + text.substring(cursorPos); cursorPos++; } } cursorBlinkMs = 0; cursorVisible = true; }
     }
+
+    // New: per-row state for Hotbar Swap presets
+    private static class HotbarPresetRow {
+        final int index; SimpleTextField labelInput; SimpleTextField triggerInput; int removeBtnX, removeBtnY, removeBtnW, removeBtnH;
+        HotbarPresetRow(int idx, String label, String trigger) { this.index = idx; this.labelInput = new SimpleTextField(label, 0,0,0,0); this.triggerInput = new SimpleTextField(trigger, 0,0,0,0); }
+    }
+
+    // Last Add button bounds for Hotbar Swap inline area
+    private int lastHotbarAddBtnX = -1, lastHotbarAddBtnY = -1, lastHotbarAddBtnW = 0, lastHotbarAddBtnH = 0;
 
     @Override
     public void handleMouseInput() throws IOException {
