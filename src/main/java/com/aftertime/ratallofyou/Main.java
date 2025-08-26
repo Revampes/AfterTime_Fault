@@ -30,6 +30,7 @@ import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHitbox;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHP;
 import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
 import com.aftertime.ratallofyou.modules.Performance.HideUselessMessage;
+import com.aftertime.ratallofyou.modules.Performance.HideLightning;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -85,9 +86,14 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new KuudraHP());
         MinecraftForge.EVENT_BUS.register(new FixedPearlLineUp());
         MinecraftForge.EVENT_BUS.register(new KeybindHandler());
+        // New: Kuudra chest open & notice port from JS
         MinecraftForge.EVENT_BUS.register(new ChestOpenNotice());
+        // New: Hotbar swapper port from JS
         MinecraftForge.EVENT_BUS.register(new HotbarSwap());
+        // New: Performance - hide useless chat messages
         MinecraftForge.EVENT_BUS.register(new HideUselessMessage());
+        // New: Performance - hide lightning bolt entities
+        MinecraftForge.EVENT_BUS.register(new HideLightning());
         KeybindHandler.registerKeybinds();
     }
 }

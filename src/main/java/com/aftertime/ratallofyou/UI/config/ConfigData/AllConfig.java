@@ -134,6 +134,7 @@ public class AllConfig {
 
             //Performance
             put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));
+            put("performance_hidelightning", new ModuleInfo("Hide Lightning", "Hide lightning bolt renders", "Performance", false));
 
             // GUI
             put("gui_moveguiposition",new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false));
