@@ -13,6 +13,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.Gui;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.input.Keyboard; // Added for key code names and capture
 
 import java.awt.*;
 import java.io.IOException;
@@ -53,6 +54,8 @@ public class ModSettingsGui extends GuiScreen {
     // Fast Hotkey state (left panel preset list + input)
     private SimpleTextField fhkPresetNameInput = null;
     private int fhkSelectedPreset = -1; // if >=0, detail panel open
+    // Fast Hotkey inline key-capture index
+    private int fhkKeyCaptureIndex = -1;
 
     @Override
     public void initGui() {
@@ -294,7 +297,7 @@ public class ModSettingsGui extends GuiScreen {
         drawCenteredString(fontRendererObj, SelectedModule.name + " Settings", ia.boxX + ia.boxW / 2, ia.boxY + 6, Colors.COMMAND_TEXT);
         int y = ia.contentY;
         if ("Fast Hotkey".equals(SelectedModule.name)) {
-            // Inline fast hotkey: presets list + appearance (rows were moved to right panel when in side-panel mode)
+            // Inline fast hotkey: presets list + appearance
             fontRendererObj.drawStringWithShadow("Create settings:", ia.contentX, y, Colors.COMMAND_TEXT); y += 12;
             if (fhkPresetNameInput != null) {
                 fhkPresetNameInput.setBounds(ia.contentX, y, Math.max(60, ia.contentW - 65), 16);
@@ -305,13 +308,32 @@ public class ModSettingsGui extends GuiScreen {
                 y += 22;
             }
             fontRendererObj.drawStringWithShadow("Saved settings:", ia.contentX, y, Colors.COMMAND_TEXT); y += 12;
-            int presetBtnH = 16;
+            int rowH = 16; int gap = 4;
             for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-                int openW = Math.max(60, ia.contentW - 70);
-                drawRect(ia.contentX, y, ia.contentX + openW, y + presetBtnH, Colors.BUTTON_GREEN);
-                drawCenteredString(fontRendererObj, AllConfig.INSTANCE.FHK_PRESETS.get(i).name + (i == AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? "  (Active)" : ""), ia.contentX + openW / 2, y + 4, Colors.BUTTON_TEXT);
-                int rmX = ia.contentX + ia.contentW - 60; drawRect(rmX, y, rmX + 60, y + presetBtnH, Colors.BUTTON_RED); drawCenteredString(fontRendererObj, "Remove", rmX + 30, y + 4, Colors.BUTTON_TEXT);
-                y += presetBtnH + 4;
+                FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(i);
+                int x = ia.contentX; int w = ia.contentW; int h = rowH; int rowY = y;
+                // Toggle 14x14
+                int tSize = 14; int toggleX = x; int toggleY = rowY + (h - tSize) / 2;
+                int toggleColor = p.enabled ? Colors.BUTTON_GREEN : Colors.BUTTON_RED;
+                drawRect(toggleX, toggleY, toggleX + tSize, toggleY + tSize, toggleColor);
+                // Name area clickable to select preset
+                int nameX = toggleX + tSize + 6; int nameW = Math.max(40, w - 6 - tSize - 60 - 80 - 6); // leave space for remove(60) + key(80) + gaps
+                int nameCenterY = rowY + 4;
+                String nm = p.name + (i == AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? "  (Active)" : "");
+                fontRendererObj.drawStringWithShadow(nm, nameX, nameCenterY, Colors.COMMAND_TEXT);
+                // Keybind box 80px
+                int keyW = 80; int keyX = x + w - 60 - 6 - keyW; int keyY = rowY;
+                drawRect(keyX, keyY, keyX + keyW, keyY + h, Colors.INPUT_BG);
+                String keyLabel;
+                if (fhkKeyCaptureIndex == i) keyLabel = "Press a key...";
+                else keyLabel = p.keyCode <= 0 ? "Unbound" : Keyboard.getKeyName(p.keyCode);
+                if (keyLabel == null || keyLabel.trim().isEmpty()) keyLabel = "Unknown";
+                fontRendererObj.drawStringWithShadow(keyLabel, keyX + 4, keyY + 4, Colors.INPUT_FG);
+                // Remove button 60px
+                int rmW = 60; int rmX = x + w - rmW; int rmY = rowY;
+                drawRect(rmX, rmY, rmX + rmW, rmY + h, Colors.BUTTON_RED);
+                drawCenteredString(fontRendererObj, "Remove", rmX + rmW / 2, rmY + 4, Colors.BUTTON_TEXT);
+                y += h + gap;
             }
             drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x33000000); y += 6;
         }
@@ -354,9 +376,9 @@ public class ModSettingsGui extends GuiScreen {
     private int computeInlineContentHeight() {
         if (SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
             int h = 12 + 22; // create
-            int presetBtnH = 16; h += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (presetBtnH + 4));
+            int rowH = 16; int gap = 4; h += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (rowH + gap));
             h += 6; // separator
-            h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; return h + 6;
+            h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
         }
         // New: Hotbar Swap rows height
         if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
@@ -374,6 +396,7 @@ public class ModSettingsGui extends GuiScreen {
         // Focus inputs and toggle clicks (inline)
         int y = ia.contentY;
         if (SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
+            int rowH = 16; int gap = 4;
             y += 12; // after label
             if (fhkPresetNameInput != null) {
                 fhkPresetNameInput.setBounds(ia.contentX, y, Math.max(60, ia.contentW - 65), 16);
@@ -388,14 +411,36 @@ public class ModSettingsGui extends GuiScreen {
                 y += 22;
             }
             y += 12; // saved header
-            int presetBtnH = 16;
             for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-                int openW = Math.max(60, ia.contentW - 70);
-                if (mouseX >= ia.contentX && mouseX <= ia.contentX + openW && mouseY >= y && mouseY <= y + presetBtnH) {
-                    AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail(); buildModuleButtons(); return;
+                FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(i);
+                int x = ia.contentX; int w = ia.contentW; int rowY = y; // capture for this row
+                // Toggle box
+                int tSize = 14; int toggleX = x; int toggleY = rowY + (rowH - tSize) / 2;
+                boolean overToggle = mouseX >= toggleX && mouseX <= toggleX + tSize && mouseY >= toggleY && mouseY <= toggleY + tSize;
+                // Key box
+                int keyW = 80; int keyX = x + w - 60 - 6 - keyW; int keyY = rowY;
+                boolean overKey = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= keyY && mouseY <= keyY + rowH;
+                // Remove
+                int rmW = 60; int rmX = x + w - rmW; int rmY = rowY; boolean overRemove = mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + rowH;
+                // Name/select area
+                int nameX = toggleX + tSize + 6; int nameW = Math.max(40, w - 6 - tSize - 60 - 80 - 6);
+                boolean overName = mouseX >= nameX && mouseX <= nameX + nameW && mouseY >= rowY && mouseY <= rowY + rowH;
+
+                if (overToggle) {
+                    // Enforce: must have a valid, non-duplicate key to enable
+                    if (!p.enabled) {
+                        if (p.keyCode <= 0) { fhkKeyCaptureIndex = i; return; }
+                        if (isFhkKeyDuplicate(p.keyCode, i)) { return; }
+                        p.enabled = true; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                    } else {
+                        p.enabled = false; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                    }
+                    // Also select this preset for editing
+                    AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail();
+                    return;
                 }
-                int rmX = ia.contentX + ia.contentW - 60;
-                if (mouseX >= rmX && mouseX <= rmX + 60 && mouseY >= y && mouseY <= y + presetBtnH) {
+                if (overKey) { fhkKeyCaptureIndex = i; return; }
+                if (overRemove) {
                     if (AllConfig.INSTANCE.FHK_PRESETS.size() > 1) {
                         AllConfig.INSTANCE.FHK_PRESETS.remove(i);
                         int newActive = Math.max(0, Math.min(AllConfig.INSTANCE.FHK_ACTIVE_PRESET - (i <= AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? 1 : 0), AllConfig.INSTANCE.FHK_PRESETS.size() - 1));
@@ -405,7 +450,8 @@ public class ModSettingsGui extends GuiScreen {
                     }
                     return;
                 }
-                y += presetBtnH + 4;
+                if (overName) { AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail(); return; }
+                y += rowH + gap; // advance to next row baseline
             }
             y += 6; // separator gap
         }
@@ -605,11 +651,50 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private void handleFastHotKeyTyping(char typedChar, int keyCode) {
+        // Handle key capture first
+        if (fhkKeyCaptureIndex >= 0) {
+            if (keyCode == Keyboard.KEY_ESCAPE) { fhkKeyCaptureIndex = -1; return; }
+            if (keyCode > 0) {
+                // Validate: no duplicates, valid name, not NONE
+                String name = Keyboard.getKeyName(keyCode);
+                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
+                    if (!isFhkKeyDuplicate(keyCode, fhkKeyCaptureIndex)) {
+                        FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(fhkKeyCaptureIndex);
+                        p.keyCode = keyCode;
+                        // Auto-enable now that key is valid and unique
+                        p.enabled = true;
+                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                        // Auto-select this preset as active
+                        AllConfig.INSTANCE.setActiveFhkPreset(fhkKeyCaptureIndex); fhkSelectedPreset = fhkKeyCaptureIndex; rebuildFastHotkeyRowsForDetail();
+                        fhkKeyCaptureIndex = -1; return;
+                    } else {
+                        // Duplicate: keep capturing until a unique key is pressed
+                        return;
+                    }
+                } else {
+                    // invalid key, keep capturing
+                    return;
+                }
+            }
+            return;
+        }
+        // Existing text inputs
         handleAllInputTyping(typedChar, keyCode);
         for (FastRow row : fastRows) {
             if (row.labelInput.isEditing) { row.labelInput.handleKeyTyped(typedChar, keyCode); return; }
             if (row.commandInput.isEditing) { row.commandInput.handleKeyTyped(typedChar, keyCode); return; }
         }
+    }
+
+    private boolean isFhkKeyDuplicate(int keyCode, int exceptIndex) {
+        if (keyCode <= 0) return false;
+        List<FastHotkeyPreset> list = AllConfig.INSTANCE.FHK_PRESETS;
+        for (int i = 0; i < list.size(); i++) {
+            if (i == exceptIndex) continue;
+            FastHotkeyPreset p = list.get(i);
+            if (p.keyCode == keyCode) return true;
+        }
+        return false;
     }
 
     // New: Hotbar Swap typing handler

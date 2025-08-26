@@ -199,6 +199,10 @@ public class ConfigIO {
             for (int p = 0; p < pCount; p++) {
                 String name = FastHotKeyProperties.getProperty("fhk_preset_" + p + "_name", "Preset " + (p + 1));
                 FastHotkeyPreset preset = new FastHotkeyPreset(name);
+                // New: enabled + keyCode
+                boolean enabled = Boolean.parseBoolean(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_enabled", "false"));
+                int keyCode = 0; try { keyCode = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_keycode", "0")); } catch (Exception ignored) {}
+                preset.enabled = enabled; preset.keyCode = keyCode;
                 int len = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_length", "0"));
                 for (int i = 0; i < len; i++) {
                     String label = FastHotKeyProperties.getProperty("fhk_preset_" + p + "_" + i + "_label", "");
@@ -222,6 +226,8 @@ public class ConfigIO {
         for (int p = 0; p < presets.size(); p++) {
             FastHotkeyPreset preset = presets.get(p);
             FastHotKeyProperties.setProperty("fhk_preset_" + p + "_name", preset.name);
+            FastHotKeyProperties.setProperty("fhk_preset_" + p + "_enabled", Boolean.toString(preset.enabled));
+            FastHotKeyProperties.setProperty("fhk_preset_" + p + "_keycode", Integer.toString(preset.keyCode));
             FastHotKeyProperties.setProperty("fhk_preset_" + p + "_length", String.valueOf(preset.entries.size()));
             for (int i = 0; i < preset.entries.size(); i++) {
                 FastHotkeyEntry e = preset.entries.get(i);
