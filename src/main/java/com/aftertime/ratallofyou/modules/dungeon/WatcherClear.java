@@ -18,13 +18,14 @@ public class WatcherClear {
     private final Minecraft mc = Minecraft.getMinecraft();
 
     private boolean bloodOpen = false;
+    private boolean done = false; // ensure sequence runs once per world
     private long countdownStartAt = -1L; // timestamp when to start 3..2..1
     private int countdownLeft = -1; // seconds left in countdown, -1 = inactive
     private long nextTickAt = -1L; // next timestamp to update countdown
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isModuleEnabled() || bloodOpen || event == null || event.message == null) return;
+        if (!isModuleEnabled() || done || bloodOpen || event == null || event.message == null) return;
 
         String msg = event.message.getUnformattedText();
         if (msg == null) return;
@@ -57,13 +58,13 @@ public class WatcherClear {
 
         // Handle countdown display at 1Hz
         if (countdownLeft >= 0 && now >= nextTickAt) {
-            showTitle(EnumChatFormatting.GREEN.toString() + countdownLeft, 0, 20, 0);
+            showTitle(EnumChatFormatting.GREEN + String.valueOf(countdownLeft), 0, 20, 0);
             countdownLeft--;
             nextTickAt = now + 1000L;
 
             // When we hit below 0, show 0 then the final message
             if (countdownLeft < 0) {
-                showTitle(EnumChatFormatting.GREEN.toString() + "0", 0, 20, 0);
+                showTitle(EnumChatFormatting.GREEN + "0", 0, 20, 0);
                 showKillMobsMessage();
                 // End state; don't re-trigger until world unload
                 resetTitlesSoon();
@@ -74,6 +75,7 @@ public class WatcherClear {
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload e) {
         bloodOpen = false;
+        done = false;
         countdownStartAt = -1L;
         countdownLeft = -1;
         nextTickAt = -1L;
@@ -87,6 +89,9 @@ public class WatcherClear {
         showTitle(EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "Kill Blood Mobs", 0, 30, 0);
         // Play a twinkle sound as cue
         mc.thePlayer.playSound("fireworks.twinkle", 1.0f, 1.0f);
+        // Mark sequence done and prevent retrigger
+        done = true;
+        bloodOpen = false;
     }
 
     private void showTitle(String title, int fadeIn, int stay, int fadeOut) {
