@@ -6,6 +6,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -65,16 +66,16 @@ public class InvincibleTimer {
     public void onRender(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.TEXT || !isModuleEnabled()) return;
 
-        // Get positions from UIDraggers
+        float scale = 1.0f;
+        Object sc = AllConfig.INSTANCE.Pos_CONFIGS.get("invincible_scale").Data;
+        if (sc instanceof Float) scale = (Float) sc; else if (sc instanceof Double) scale = ((Double) sc).floatValue();
 
-
-        // Draw using draggable positions
-        drawText("§9Bonzo: " + getStatusText(bonzoTime), bonzoPos.x, bonzoPos.y, 2);
-        drawText("§fSpirit: " + getStatusText(spiritTime), spiritPos.x, spiritPos.y, 2);
-        drawText("§cPhoenix: " + getStatusText(phoenixTime), phoenixPos.x, phoenixPos.y, 2);
+        drawScaledText("§9Bonzo: " + getStatusText(bonzoTime), bonzoPos.x, bonzoPos.y, scale);
+        drawScaledText("§fSpirit: " + getStatusText(spiritTime), spiritPos.x, spiritPos.y, scale);
+        drawScaledText("§cPhoenix: " + getStatusText(phoenixTime), phoenixPos.x, phoenixPos.y, scale);
 
         if (!procText.equals(" ")) {
-            drawText(procText, procPos.x, procPos.y, 4);
+            drawScaledText(procText, procPos.x, procPos.y, scale);
         }
     }
 
@@ -82,14 +83,16 @@ public class InvincibleTimer {
         return time <= 0 ? "§aREADY" : "§6" + String.format("%.1f", time / 20f);
     }
 
-    private void drawText(String text, int x, int y, float scale) {
-        // Scale implementation if needed
+    private void drawScaledText(String text, int x, int y, float scale) {
+        GlStateManager.pushMatrix();
+        GlStateManager.scale(scale, scale, 1.0f);
         Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(
                 text,
-                x,
-                y,
+                (int)(x / scale),
+                (int)(y / scale),
                 0xFFFFFF
         );
+        GlStateManager.popMatrix();
     }
 
     private boolean isModuleEnabled() {

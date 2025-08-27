@@ -78,6 +78,15 @@ public class AllConfig {
         put("phoenix_pos",new BaseConfig<>("Phoenix Display Position","Position Of Phoenix Invincibility Timer Display",new UIPosition(200,200)));
         put("proc_pos",new BaseConfig<>("Insta Death Display Position","Position Of Insta Death (Proc) Timer Display",new UIPosition(200,200)));
         put("p3ticktimer_pos",new BaseConfig<>("P3 Tick Timer","P3 Tick Timer",new UIPosition(200,200)));
+        // SearchBar: moveable position
+        put("searchbar_pos", new BaseConfig<>("Search Bar Position", "Position of the inventory search bar", new UIPosition(200, 200)));
+        // New: SearchBar adjustable size
+        put("searchbar_width", new BaseConfig<>("Search Bar Width", "Width of the inventory search bar", 192));
+        put("searchbar_height", new BaseConfig<>("Search Bar Height", "Height of the inventory search bar", 16));
+        // New: P3 timer adjustable scale
+        put("p3ticktimer_scale", new BaseConfig<>("P3 Timer Scale", "Scale factor for P3 Tick Timer", 1.0f));
+        // New: Invincibility timers text scale
+        put("invincible_scale", new BaseConfig<>("Invincible Timers Scale", "Scale for Bonzo/Spirit/Phoenix/Proc text", 1.0f));
 
     }};
 
@@ -127,6 +136,8 @@ public class AllConfig {
             put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
             // New: Hotbar Swap module (keybind/preset based)
             put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
+            // SearchBar module
+            put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
 
             // Render
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));

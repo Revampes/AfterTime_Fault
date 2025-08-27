@@ -31,6 +31,7 @@ import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHP;
 import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
 import com.aftertime.ratallofyou.modules.Performance.HideUselessMessage;
 import com.aftertime.ratallofyou.modules.Performance.HideLightning;
+import com.aftertime.ratallofyou.modules.SkyBlock.SearchBar;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -90,8 +91,8 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new HotbarSwap());
         MinecraftForge.EVENT_BUS.register(new HideUselessMessage());
         MinecraftForge.EVENT_BUS.register(new HideLightning());
-        // Register: Block Useless Perks in Kuudra Perk Menu
         MinecraftForge.EVENT_BUS.register(new BlockUselessPerk());
+        MinecraftForge.EVENT_BUS.register(new SearchBar());
         KeybindHandler.registerKeybinds();
     }
 }

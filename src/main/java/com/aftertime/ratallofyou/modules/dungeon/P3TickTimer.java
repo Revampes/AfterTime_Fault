@@ -10,6 +10,7 @@ import com.aftertime.ratallofyou.UI.config.PropertyRef;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -32,7 +33,7 @@ public class P3TickTimer {
         // Trigger messages
         if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
                 message.equals("[BOSS] Goldor: What do you think you are doing there!") ||
-                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[ቾ⚒]?: (Bonzo|Phoenix) Procced!?(?: \\(3s\\))?")) {
+                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[ቾ⚒]?: (Bonzo|Phoenix) Procced!?(?: \\(.+\\))?")) {
             startTimer();
         } else if (message.equals("The Core entrance is opening!")) {
             resetTimer();
@@ -63,20 +64,26 @@ public class P3TickTimer {
             pos = new UIPosition(res.getScaledWidth() / 2, res.getScaledHeight() / 2);
         }
 
+        float scale = 1.0f;
+        Object sc = AllConfig.INSTANCE.Pos_CONFIGS.get("p3ticktimer_scale").Data;
+        if (sc instanceof Float) scale = (Float) sc; else if (sc instanceof Double) scale = ((Double) sc).floatValue();
         int textWidth = mc.fontRendererObj.getStringWidth(formattedTime);
-        int renderX = pos.x - textWidth / 2;
+        int renderX = pos.x - Math.round((textWidth * scale) / 2f);
         int renderY = pos.y;
 
-        // Check if mouse is over
-        isMouseOver = isMouseOver(renderX, renderY, textWidth, mc.fontRendererObj.FONT_HEIGHT);
+        // Check if mouse is over (unscaled hitbox in move mode is handled by UIHighlighter)
+        isMouseOver = isMouseOver(renderX, renderY, Math.round(textWidth * scale), Math.round(mc.fontRendererObj.FONT_HEIGHT * scale));
 
-        // Draw the timer
-        mc.fontRendererObj.drawStringWithShadow(formattedTime, renderX, renderY, 0xFFFFFF);
+        // Draw the timer with scaling
+        GlStateManager.pushMatrix();
+        GlStateManager.scale(scale, scale, 1.0f);
+        mc.fontRendererObj.drawStringWithShadow(formattedTime, (int) (renderX / scale), (int) (renderY / scale), 0xFFFFFF);
+        GlStateManager.popMatrix();
 
         // Show drag handle when in move mode
         if (UIHighlighter.isInMoveMode()) {
-            mc.fontRendererObj.drawStringWithShadow("≡", renderX + textWidth + 2, renderY, 0xAAAAAA);
-            drawRect(renderX - 2, renderY - 2, renderX + textWidth + 2, renderY + 10, 0x60FFFF00);
+            mc.fontRendererObj.drawStringWithShadow("≡", renderX + Math.round(textWidth * scale) + 2, renderY, 0xAAAAAA);
+            drawRect(renderX - 2, renderY - 2, renderX + Math.round(textWidth * scale) + 2, renderY + Math.round(10 * scale), 0x60FFFF00);
         }
     }
 
@@ -157,3 +164,4 @@ public class P3TickTimer {
         return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }
+
