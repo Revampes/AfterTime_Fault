@@ -1,0 +1,107 @@
+package com.aftertime.ratallofyou.modules.dungeon;
+
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+
+public class WatcherClear {
+
+    private static final long TARGET_DELAY_MS = 22_000L; // 22 seconds
+    private static final int COUNTDOWN_SECONDS = 3;
+
+    private final Minecraft mc = Minecraft.getMinecraft();
+
+    private boolean bloodOpen = false;
+    private long countdownStartAt = -1L; // timestamp when to start 3..2..1
+    private int countdownLeft = -1; // seconds left in countdown, -1 = inactive
+    private long nextTickAt = -1L; // next timestamp to update countdown
+
+    @SubscribeEvent
+    public void onChat(ClientChatReceivedEvent event) {
+        if (!isModuleEnabled() || bloodOpen || event == null || event.message == null) return;
+
+        String msg = event.message.getUnformattedText();
+        if (msg == null) return;
+
+        // Match any Watcher line
+        if (msg.contains("[BOSS] The Watcher:")) {
+            bloodOpen = true;
+            if (mc.thePlayer != null) {
+                mc.thePlayer.addChatMessage(new ChatComponentText(
+                        EnumChatFormatting.GOLD + "[RatAllOfYou] " + EnumChatFormatting.RED + "Blood Opened."));
+            }
+            long now = System.currentTimeMillis();
+            countdownStartAt = now + TARGET_DELAY_MS;
+            countdownLeft = -1;
+            nextTickAt = -1;
+        }
+    }
+
+    @SubscribeEvent
+    public void onTick(TickEvent.ClientTickEvent event) {
+        if (!isModuleEnabled() || event.phase != TickEvent.Phase.START) return;
+
+        long now = System.currentTimeMillis();
+
+        // Waiting phase -> start countdown when delay passes
+        if (bloodOpen && countdownLeft < 0 && countdownStartAt > 0 && now >= countdownStartAt) {
+            countdownLeft = COUNTDOWN_SECONDS;
+            nextTickAt = now; // show immediately on next line
+        }
+
+        // Handle countdown display at 1Hz
+        if (countdownLeft >= 0 && now >= nextTickAt) {
+            showTitle(EnumChatFormatting.GREEN.toString() + countdownLeft, 0, 20, 0);
+            countdownLeft--;
+            nextTickAt = now + 1000L;
+
+            // When we hit below 0, show 0 then the final message
+            if (countdownLeft < 0) {
+                showTitle(EnumChatFormatting.GREEN.toString() + "0", 0, 20, 0);
+                showKillMobsMessage();
+                // End state; don't re-trigger until world unload
+                resetTitlesSoon();
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onWorldUnload(WorldEvent.Unload e) {
+        bloodOpen = false;
+        countdownStartAt = -1L;
+        countdownLeft = -1;
+        nextTickAt = -1L;
+        // Clear any lingering title
+        showTitle("", 0, 0, 0);
+    }
+
+    private void showKillMobsMessage() {
+        if (mc.thePlayer == null) return;
+        mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "Kill Mobs"));
+        showTitle(EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "Kill Blood Mobs", 0, 30, 0);
+        // Play a twinkle sound as cue
+        mc.thePlayer.playSound("fireworks.twinkle", 1.0f, 1.0f);
+    }
+
+    private void showTitle(String title, int fadeIn, int stay, int fadeOut) {
+        if (mc.ingameGUI != null) {
+            mc.ingameGUI.displayTitle(title, "", fadeIn, stay, fadeOut);
+        }
+    }
+
+    private void resetTitlesSoon() {
+        // Let the final title linger for its stay time; clearing will happen naturally on next screens
+        // No-op; callers clear on world unload or next titles
+    }
+
+    private boolean isModuleEnabled() {
+        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_watcherclear");
+        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+    }
+}
