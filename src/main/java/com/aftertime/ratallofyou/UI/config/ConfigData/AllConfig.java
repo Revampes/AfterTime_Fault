@@ -107,6 +107,7 @@ public class AllConfig {
             put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
             put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
             put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
+            put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
 
             // Dungeons
             put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
