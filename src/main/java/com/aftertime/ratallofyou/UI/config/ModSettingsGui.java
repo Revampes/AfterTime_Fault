@@ -263,7 +263,22 @@ public class ModSettingsGui extends GuiScreen {
             if (fhkSelectedPreset >= 0) drawFastHotkeyDetailPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
             return;
         }
-        drawCommandPanelContent(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
+        // Inject module-specific sub-settings
+        int y = panelY + 30 - commandScroll.getOffset();
+        switch (SelectedModule.name) {
+            case "Party Commands": Add_SubSetting_Command(y); break;
+            case "No Debuff": Add_SubSetting_NoDebuff(y); break;
+            case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
+            case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
+            case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
+            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
+        }
+        int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
+        contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
+        int panelViewHeight = Dimensions.GUI_HEIGHT - 60 - 25;
+        if (useSidePanelForSelected) {
+            commandScroll.update(contentHeight, panelViewHeight); commandScroll.updateScrollbarPosition(guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH - Dimensions.SCROLLBAR_WIDTH - 2, guiTop + Dimensions.COMMAND_PANEL_Y + 25, panelViewHeight);
+        }
     }
 
     // Inline settings helpers
@@ -750,7 +765,18 @@ public class ModSettingsGui extends GuiScreen {
 
     private boolean hasSettings(ModuleInfo module) {
         if (module == null || module.name == null) return false;
-        switch (module.name) { case "Dungeon Terminals": case "Party Commands": case "No Debuff": case "Etherwarp Overlay": case "Fast Hotkey": case "Chest Open Notice": case "Hotbar Swap": return true; default: return false; }
+        switch (module.name) {
+            case "Dungeon Terminals":
+            case "Party Commands":
+            case "No Debuff":
+            case "Etherwarp Overlay":
+            case "Fast Hotkey":
+            case "Chest Open Notice":
+            case "Hotbar Swap":
+                return true;
+            default:
+                return false;
+        }
     }
 
     private void initializeCommandToggles() {

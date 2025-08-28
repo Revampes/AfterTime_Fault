@@ -238,12 +238,12 @@ public class CalcPearlLineUp {
         RenderUtils.renderBoxFromCorners(x0, y0, z0, x1, y1, z1,
                 r / 255f, g / 255f, b / 255f, 0.9f, true, 2.0f, true);
 
-        String timeInfo = String.format("Y%.1f P%.1f  %dms", plan.yaw, plan.pitch, plan.flightTimeMs);
-        String countdownInfo;
-        if (throwInMs <= 0) countdownInfo = "  THROW NOW";
-        else countdownInfo = String.format("  %sThrow in %dms", approximate ? "~" : "", throwInMs);
-        String text = String.format("%s  %s%s", label, timeInfo, countdownInfo);
-        RenderUtils.renderFloatingTextConstant(text, pos.xCoord, pos.yCoord + size + 0.2, pos.zCoord, 0.03f, 0xFFFFFFFF, false);
+        // Show only a concise percentage depending on throw type
+        String pctText;
+        if (label != null && label.toLowerCase(Locale.ROOT).contains("sky")) pctText = "~38%";
+        else if (label != null && label.toLowerCase(Locale.ROOT).contains("flat")) pctText = "~72%";
+        else pctText = "~%"; // fallback
+        RenderUtils.renderFloatingTextConstant(pctText, pos.xCoord, pos.yCoord + size + 1, pos.zCoord, 0.03f, 0xFFFFFFFF, false);
     }
 
     @SubscribeEvent
@@ -362,3 +362,4 @@ public class CalcPearlLineUp {
         return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }
+

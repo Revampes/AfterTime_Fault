@@ -42,6 +42,13 @@ public class Main {
     public static final String VERSION = "1.0";
     public static Minecraft mc = Minecraft.getMinecraft();
 
+    // Small helper to reduce repetitive register calls
+    private static void registerAll(Object... listeners) {
+        for (Object listener : listeners) {
+            MinecraftForge.EVENT_BUS.register(listener);
+        }
+    }
+
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         // Initialize and load all configs using the new config system
@@ -52,54 +59,36 @@ public class Main {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        // Register modules
-        MinecraftForge.EVENT_BUS.register(new RefillPearls());
-        MinecraftForge.EVENT_BUS.register(new InvincibleTimer());
-        MinecraftForge.EVENT_BUS.register(new PearlCancel());
-        MinecraftForge.EVENT_BUS.register(new AutoSprint());
-        MinecraftForge.EVENT_BUS.register(new GoldorStartTimer());
-        MinecraftForge.EVENT_BUS.register(new P3TickTimer());
-        MinecraftForge.EVENT_BUS.register(new UIHighlighter());
-        MinecraftForge.EVENT_BUS.register(new F7GhostBlocks());
-        MinecraftForge.EVENT_BUS.register(new DungeonUtils());
-        MinecraftForge.EVENT_BUS.register(new LeapAnnounce());
-        MinecraftForge.EVENT_BUS.register(new KeyHighlighter());
-        MinecraftForge.EVENT_BUS.register(new StarMobHighlighter());
-        MinecraftForge.EVENT_BUS.register(new CrateHighlighter());
-        MinecraftForge.EVENT_BUS.register(new CrateAura());
-        MinecraftForge.EVENT_BUS.register(new PartyUtils());
-        MinecraftForge.EVENT_BUS.register(new ChatCommands());
-        MinecraftForge.EVENT_BUS.register(new Fullbright());
-        MinecraftForge.EVENT_BUS.register(new SecretClicks());
-        MinecraftForge.EVENT_BUS.register(new NoDebuff());
-        MinecraftForge.EVENT_BUS.register(new CalcPearlLineUp());
-        MinecraftForge.EVENT_BUS.register(new KuudraUtils());
-        MinecraftForge.EVENT_BUS.register(new EtherwarpOverlay());
-        MinecraftForge.EVENT_BUS.register(new FastHotKey());
-        MinecraftForge.EVENT_BUS.register(new FastHotKeyGui());
-        MinecraftForge.EVENT_BUS.register(new startswith());
-        MinecraftForge.EVENT_BUS.register(new CrateBeaconBeam());
-        MinecraftForge.EVENT_BUS.register(new CheckNoPre());
-        MinecraftForge.EVENT_BUS.register(new WaypointGrab());
-        MinecraftForge.EVENT_BUS.register(new BuildPilesRenderer());
-        MinecraftForge.EVENT_BUS.register(new FreshMessageHandler());
-        MinecraftForge.EVENT_BUS.register(new BuildBuildersRenderer());
-        MinecraftForge.EVENT_BUS.register(new BuildStandsTracker());
-        MinecraftForge.EVENT_BUS.register(new Direction());
-        MinecraftForge.EVENT_BUS.register(new KuudraHitbox());
-        MinecraftForge.EVENT_BUS.register(new KuudraHP());
-        MinecraftForge.EVENT_BUS.register(new FixedPearlLineUp());
-        MinecraftForge.EVENT_BUS.register(new KeybindHandler());
-        MinecraftForge.EVENT_BUS.register(new ChestOpenNotice());
-        MinecraftForge.EVENT_BUS.register(new HotbarSwap());
-        MinecraftForge.EVENT_BUS.register(new HideUselessMessage());
-        MinecraftForge.EVENT_BUS.register(new HideLightning());
-        MinecraftForge.EVENT_BUS.register(new BlockUselessPerk());
-        MinecraftForge.EVENT_BUS.register(new SearchBar());
-        MinecraftForge.EVENT_BUS.register(new PosionArrow());
-        MinecraftForge.EVENT_BUS.register(new WatcherClear());
-        MinecraftForge.EVENT_BUS.register(new FluxFlareTimer());
-        MinecraftForge.EVENT_BUS.register(new CratePriority());
+        // Register modules (grouped roughly by feature)
+        registerAll(
+                // Kuudra utilities and phases
+                new RefillPearls(), new InvincibleTimer(), new PearlCancel(), new CalcPearlLineUp(), new KuudraUtils(),
+                new Direction(), new KuudraHitbox(), new KuudraHP(), new FixedPearlLineUp(), new CheckNoPre(),
+
+                // Dungeon helpers
+                new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
+                new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(), new startswith(),
+                new ChestOpenNotice(), new PosionArrow(), new WatcherClear(),
+
+                // Crate/building related
+                new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),
+                new FreshMessageHandler(), new BuildBuildersRenderer(), new BuildStandsTracker(), new CratePriority(),
+
+                // SkyBlock QoL
+                new AutoSprint(), new PartyUtils(), new ChatCommands(), new Fullbright(), new EtherwarpOverlay(),
+                new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
+                new FluxFlareTimer(),
+
+                // Performance tweaks
+                new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(),
+
+                // Input/keybind listeners
+                new KeybindHandler(),
+
+                // UI
+                new UIHighlighter()
+        );
+
         KeybindHandler.registerKeybinds();
         ClientCommandHandler.instance.registerCommand(new OpenConfigGuiCommand());
     }
