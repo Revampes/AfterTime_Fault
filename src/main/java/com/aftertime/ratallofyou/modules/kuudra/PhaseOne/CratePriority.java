@@ -92,23 +92,12 @@ public class CratePriority {
     }
 
     private boolean isEnabledPhase1() {
-        return isModuleEnabled() && KuudraUtils.isPhase(1) && isInKuudraHollow();
+        return isModuleEnabled() && KuudraUtils.isPhase(1) && KuudraUtils.isInKuudraHollow();
     }
 
     private boolean isModuleEnabled() {
         ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_cratepriority");
         return cfg != null && Boolean.TRUE.equals(cfg.Data);
-    }
-
-    private boolean isInKuudraHollow() {
-        List<String> lines = Utils.getSidebarLines();
-        if (lines == null || lines.isEmpty()) return false;
-        for (String line : lines) {
-            String l = line.toLowerCase(Locale.ROOT);
-            if (l.contains("kuudra") && (l.contains("hollow") || l.contains("kuudra's"))) return true;
-            if (Utils.containedByCharSequence(l, "kuudra hollow")) return true;
-        }
-        return false;
     }
 
     private void showTitle(String title) {
@@ -188,8 +177,8 @@ public class CratePriority {
         }
         if (raw == null) return "";
         if (raw.endsWith("!")) raw = raw.substring(0, raw.length() - 1);
-        String norm = normalizeMissing(raw);
-        return norm == null ? "" : norm;
+        String norm = KuudraUtils.normalizeSupplyName(raw);
+        return isHandledMissing(norm) ? norm : "";
     }
 
     private String extractMissingFromSynonyms(String msg) {
@@ -229,19 +218,6 @@ public class CratePriority {
         // allow trailing punctuation '!' or '.'
         if (trimmed.endsWith("!") || trimmed.endsWith(".")) trimmed = trimmed.substring(0, trimmed.length() - 1);
         return trimmed.equals(token);
-    }
-
-    private String normalizeMissing(String in) {
-        if (in == null) return "";
-        String s = in.trim();
-        if (s.isEmpty()) return "";
-        s = s.replaceAll("\\s+", " ");
-        if (s.equalsIgnoreCase("shop")) return "Shop";
-        if (s.equalsIgnoreCase("equals") || s.equalsIgnoreCase("equal") || s.equals("=")) return "Equals";
-        if (s.equalsIgnoreCase("x") || s.equalsIgnoreCase("cross")) return "X";
-        if (s.equalsIgnoreCase("triangle") || s.equalsIgnoreCase("tri")) return "Triangle";
-        if (s.equalsIgnoreCase("slash") || s.equals("/")) return "Slash";
-        return "";
     }
 
     private boolean isHandledMissing(String name) {

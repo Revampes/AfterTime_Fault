@@ -3,18 +3,12 @@ package com.aftertime.ratallofyou.modules.kuudra.PhaseOne;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
-import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntityGiantZombie;
-import net.minecraft.item.ItemSkull;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-
-import java.util.List;
-import java.util.Locale;
 
 /**
  * CheckNoPre: detects player's pre spot and verifies crates appear at pre and the expected second spot.
@@ -123,20 +117,19 @@ public class CheckNoPre {
         for (Entity e : mc.theWorld.loadedEntityList) {
             if (!(e instanceof EntityGiantZombie)) continue;
             EntityGiantZombie g = (EntityGiantZombie) e;
-            if (!isKuudraCrateGiant(g)) continue;
-            double yaw = g.rotationYaw;
-            double x = g.posX + (3.7 * Math.cos(Math.toRadians(yaw + 130)));
-            double z = g.posZ + (3.7 * Math.sin(Math.toRadians(yaw + 130)));
-            double[] crate = new double[]{x, 75, z};
+            if (!KuudraUtils.isKuudraCrateGiant(g)) continue;
+            // compute crate position
+            net.minecraft.util.Vec3 crate = KuudraUtils.cratePos(g);
+            double[] c = new double[]{crate.xCoord, crate.yCoord, crate.zCoord};
 
-            if (distance2D(preLoc, crate) < 18) pre = true;
+            if (distance2D(preLoc, c) < 18) pre = true;
             if ("Triangle".equals(preSpot)) {
-                if (distance2D(SHOP, crate) < 18) second = true;
+                if (distance2D(SHOP, c) < 18) second = true;
             } else if ("X".equals(preSpot)) {
-                double d = distance2D(XCANNON, crate);
+                double d = distance2D(XCANNON, c);
                 if (d < 16) second = true; // 2D threshold
             } else if ("Slash".equals(preSpot)) {
-                if (distance2D(SQUARE, crate) < 20) second = true;
+                if (distance2D(SQUARE, c) < 20) second = true;
             }
         }
 
@@ -168,17 +161,15 @@ public class CheckNoPre {
         for (Entity e : mc.theWorld.loadedEntityList) {
             if (!(e instanceof EntityGiantZombie)) continue;
             EntityGiantZombie g = (EntityGiantZombie) e;
-            if (!isKuudraCrateGiant(g)) continue;
-            double yaw = g.rotationYaw;
-            double x = g.posX + (3.7 * Math.cos(Math.toRadians(yaw + 130)));
-            double z = g.posZ + (3.7 * Math.sin(Math.toRadians(yaw + 130)));
-            double[] crate = new double[]{x, 75, z};
+            if (!KuudraUtils.isKuudraCrateGiant(g)) continue;
+            net.minecraft.util.Vec3 crate = KuudraUtils.cratePos(g);
+            double[] c = new double[]{crate.xCoord, crate.yCoord, crate.zCoord};
             if ("Triangle".equals(preSpot)) {
-                if (distance2D(SHOP, crate) < 18) { second = true; break; }
+                if (distance2D(SHOP, c) < 18) { second = true; break; }
             } else if ("X".equals(preSpot)) {
-                if (distance2D(XCANNON, crate) < 16) { second = true; break; }
+                if (distance2D(XCANNON, c) < 16) { second = true; break; }
             } else if ("Slash".equals(preSpot)) {
-                if (distance2D(SQUARE, crate) < 20) { second = true; break; }
+                if (distance2D(SQUARE, c) < 20) { second = true; break; }
             }
         }
         return second;
@@ -190,28 +181,14 @@ public class CheckNoPre {
         for (Entity e : mc.theWorld.loadedEntityList) {
             if (!(e instanceof EntityGiantZombie)) continue;
             EntityGiantZombie g = (EntityGiantZombie) e;
-            if (!isKuudraCrateGiant(g)) continue;
-            double yaw = g.rotationYaw;
-            double x = g.posX + (3.7 * Math.cos(Math.toRadians(yaw + 130)));
-            double z = g.posZ + (3.7 * Math.sin(Math.toRadians(yaw + 130)));
-            double dx = target[0] - x;
-            double dz = target[2] - z;
+            if (!KuudraUtils.isKuudraCrateGiant(g)) continue;
+            net.minecraft.util.Vec3 crate = KuudraUtils.cratePos(g);
+            double dx = target[0] - crate.xCoord;
+            double dz = target[2] - crate.zCoord;
             double d = Math.sqrt(dx*dx + dz*dz);
             if (d < best) best = d;
         }
         return (best == Double.MAX_VALUE) ? -1 : best;
-    }
-
-    private static boolean isKuudraCrateGiant(EntityGiantZombie giant) {
-        try {
-            ItemStack held = giant.getHeldItem();
-            if (held == null) return false;
-            net.minecraft.item.Item item = held.getItem();
-            if (item == null) return false;
-            return (item instanceof ItemSkull) || (item.getUnlocalizedName() != null && item.getUnlocalizedName().toLowerCase(Locale.ROOT).contains("skull"));
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     private double distanceToPlayer(double[] loc) {
@@ -244,20 +221,7 @@ public class CheckNoPre {
     }
 
     private boolean isPhase1InKuudra() {
-        return KuudraUtils.isPhase(1) && isInKuudraHollow();
-    }
-
-    private boolean isInKuudraHollow() {
-        List<String> lines = Utils.getSidebarLines();
-        if (lines == null || lines.isEmpty()) return false;
-        for (String line : lines) {
-            String l = line.toLowerCase(Locale.ROOT);
-            if (l.contains("kuudra") && (l.contains("hollow") || l.contains("kuudra's"))) {
-                return true;
-            }
-            if (Utils.containedByCharSequence(l, "kuudra hollow")) return true;
-        }
-        return false;
+        return KuudraUtils.isPhase(1) && KuudraUtils.isInKuudraHollow();
     }
 
     private boolean isModuleEnabled() {

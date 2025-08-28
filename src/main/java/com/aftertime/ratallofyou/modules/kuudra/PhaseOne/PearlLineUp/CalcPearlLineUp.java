@@ -8,7 +8,6 @@ import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -195,28 +194,11 @@ public class CalcPearlLineUp {
 
     private void scanReceivedCache() {
         Arrays.fill(receivedCache, false);
-        if (mc.theWorld == null) return;
-        // Collect all armor stands with name containing "SUPPLIES RECEIVED"
-        List<EntityArmorStand> stands = new ArrayList<>();
-        for (Entity e : mc.theWorld.loadedEntityList) {
-            if (!(e instanceof EntityArmorStand)) continue;
-            EntityArmorStand as = (EntityArmorStand) e;
-            String name = as.getDisplayName() != null ? as.getDisplayName().getUnformattedText() : null;
-            if (name == null) continue;
-            if (name.toUpperCase(Locale.ROOT).contains("SUPPLIES RECEIVED")) {
-                stands.add(as);
-            }
-        }
-        // For each supply spot, mark received if a matching stand is nearby
+        // For each supply spot, mark received if a matching stand is nearby using centralized helper
         KuudraSupplySpot[] spots = KuudraSupplySpot.values();
         for (int i = 0; i < spots.length; i++) {
             Vec3 loc = spots[i].getLocation();
-            double cx = loc.xCoord; double cz = loc.zCoord;
-            double r2 = 3.0 * 3.0;
-            for (EntityArmorStand as : stands) {
-                double dx = as.posX - cx; double dz = as.posZ - cz;
-                if (dx*dx + dz*dz <= r2) { receivedCache[i] = true; break; }
-            }
+            receivedCache[i] = KuudraUtils.suppliesReceivedNear(loc, 3.0);
         }
     }
 
@@ -273,8 +255,7 @@ public class CalcPearlLineUp {
         boolean foundProgress = false;
         int parsedPercent = -1;
         for (Entity e : mc.theWorld.loadedEntityList) {
-            if (!(e instanceof EntityArmorStand)) continue;
-            String name = ((EntityArmorStand) e).getDisplayName().getUnformattedText();
+            String name = KuudraUtils.getArmorStandName(e);
             if (name == null) continue;
             Matcher m = PROGRESS_PATTERN.matcher(name);
             if (m.find()) {

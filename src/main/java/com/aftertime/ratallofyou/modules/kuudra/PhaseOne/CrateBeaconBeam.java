@@ -5,14 +5,8 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils.Color;
-import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.monster.EntityGiantZombie;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSkull;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -66,7 +60,7 @@ public class CrateBeaconBeam {
                     String extract = msg.substring(idx + 5).trim(); // after ": no "
                     if (extract.endsWith("!")) extract = extract.substring(0, extract.length() - 1);
                     // Normalize common names to our canonical set
-                    String norm = normalizeSupplyName(extract);
+                    String norm = KuudraUtils.normalizeSupplyName(extract);
                     if (!norm.isEmpty()) missingSupplyName = norm;
                 }
             }
@@ -96,7 +90,7 @@ public class CrateBeaconBeam {
         for (int i = 0; i < SUPPLY_COORDS.length; i++) {
             int x = SUPPLY_COORDS[i][0];
             int z = SUPPLY_COORDS[i][1];
-            if (!isSupplyReceivedAt(x, z)) {
+            if (!KuudraUtils.suppliesReceivedNear(x + 0.5, z + 0.5, 3.0)) {
                 Color color = getSupplyColorForIndex(i);
                 RenderUtils.renderBeaconBeam(new Vec3(x + 0.5, SUPPLY_BEAM_Y, z + 0.5), color, true, SUPPLY_BEAM_HEIGHT, event.partialTicks);
             }
@@ -113,62 +107,18 @@ public class CrateBeaconBeam {
         cratePositions.clear();
         if (mc.theWorld == null) return;
 
-        for (Entity e : mc.theWorld.loadedEntityList) {
-            if (!(e instanceof EntityGiantZombie)) continue;
-            if (!isKuudraCrateGiant((EntityGiantZombie) e)) continue;
-
-            EntityGiantZombie giant = (EntityGiantZombie) e;
-            // Interpolate render position
-            double gx = giant.prevPosX + (giant.posX - giant.prevPosX) * partialTicks;
-            double gz = giant.prevPosZ + (giant.posZ - giant.prevPosZ) * partialTicks;
-            float yaw = giant.rotationYaw;
-            // Crate position is offset from giant by radius 3.7 at yaw+130 degrees
-            double rad = Math.toRadians(yaw + 130.0);
-            double x = gx + 3.7 * Math.cos(rad);
-            double z = gz + 3.7 * Math.sin(rad);
-            cratePositions.add(new Vec3(x, 75.0, z));
+        for (Object o : mc.theWorld.loadedEntityList) {
+            if (!(o instanceof EntityGiantZombie)) continue;
+            EntityGiantZombie giant = (EntityGiantZombie) o;
+            if (!KuudraUtils.isKuudraCrateGiant(giant)) continue;
+            Vec3 pos = KuudraUtils.cratePosInterpolated(giant, partialTicks);
+            cratePositions.add(pos);
         }
-    }
-
-    private boolean isKuudraCrateGiant(EntityGiantZombie giant) {
-        try {
-            ItemStack held = giant.getHeldItem();
-            if (held == null) return false;
-            Item item = held.getItem();
-            if (item == null) return false;
-            // 1.8.9: player head is ItemSkull with damage 3; tolerate any skull
-            if (item instanceof ItemSkull) return true;
-            String name = item.getUnlocalizedName();
-            return name != null && name.toLowerCase(Locale.ROOT).contains("skull");
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean isSupplyReceivedAt(int x, int z) {
-        // Detect an armor stand with name containing "SUPPLIES RECEIVED" near the expected X/Z tile
-        if (mc.theWorld == null) return false;
-        double cx = x + 0.5; // center of tile
-        double cz = z + 0.5;
-        double radius = 3.0; // allow slight placement offsets
-        double r2 = radius * radius;
-        for (Entity e : mc.theWorld.loadedEntityList) {
-            if (!(e instanceof EntityArmorStand)) continue;
-            EntityArmorStand stand = (EntityArmorStand) e;
-            String name = stand.getDisplayName() != null ? stand.getDisplayName().getUnformattedText() : null;
-            if (name == null) continue;
-            String upper = name.toUpperCase(Locale.ROOT);
-            if (!upper.contains("SUPPLIES RECEIVED")) continue;
-            double dx = stand.posX - cx;
-            double dz = stand.posZ - cz;
-            if (dx * dx + dz * dz <= r2) return true;
-        }
-        return false;
     }
 
     private Color getSupplyColorForIndex(int index) {
         String name = nameForSupplyIndex(index);
-        boolean highlightRed = !missingSupplyName.isEmpty() && normalizeSupplyName(missingSupplyName).equals(normalizeSupplyName(name));
+        boolean highlightRed = !missingSupplyName.isEmpty() && KuudraUtils.normalizeSupplyName(missingSupplyName).equals(KuudraUtils.normalizeSupplyName(name));
         return highlightRed ? new Color(255, 0, 0, 255) : new Color(255, 255, 255, 204);
     }
 
@@ -184,38 +134,8 @@ public class CrateBeaconBeam {
         }
     }
 
-    private static String normalizeSupplyName(String in) {
-        if (in == null) return "";
-        String s = in.trim();
-        // unify spacing and case for matching
-        s = s.replaceAll("\\s+", " ").trim();
-        // canonical names in JS module
-        if (s.equalsIgnoreCase("shop")) return "Shop";
-        if (s.equalsIgnoreCase("equals")) return "Equals";
-        if (s.equalsIgnoreCase("x cannon") || s.equalsIgnoreCase("xcannon")) return "X Cannon";
-        if (s.equalsIgnoreCase("x")) return "X";
-        if (s.equalsIgnoreCase("triangle")) return "Triangle";
-        if (s.equalsIgnoreCase("slash")) return "Slash";
-        return s;
-    }
-
     private boolean isPhase1InKuudra() {
-        return KuudraUtils.isPhase(1) && isInKuudraHollow();
-    }
-
-    // Mimic DungeonUtils scoreboard approach to detect area name
-    private boolean isInKuudraHollow() {
-        List<String> lines = Utils.getSidebarLines();
-        if (lines == null || lines.isEmpty()) return false;
-        for (String line : lines) {
-            String l = line.toLowerCase(Locale.ROOT);
-            if (l.contains("kuudra") && (l.contains("hollow") || l.contains("kuudra's"))) {
-                return true;
-            }
-            // lenient subsequence match
-            if (Utils.containedByCharSequence(l, "kuudra hollow")) return true;
-        }
-        return false;
+        return KuudraUtils.isPhase(1) && KuudraUtils.isInKuudraHollow();
     }
 
     private boolean isModuleEnabled() {

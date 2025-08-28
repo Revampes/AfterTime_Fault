@@ -3,7 +3,6 @@ package com.aftertime.ratallofyou.modules.kuudra.PhaseTwo;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -25,9 +24,7 @@ public class BuildStandsTracker {
         boolean foundProgress = false;
 
         for (Entity e : mc.theWorld.loadedEntityList) {
-            if (!(e instanceof EntityArmorStand)) continue;
-            EntityArmorStand as = (EntityArmorStand) e;
-            String name = as.getDisplayName() != null ? as.getDisplayName().getUnformattedText() : null;
+            String name = KuudraUtils.getArmorStandName(e);
             if (name == null) continue;
 
             String lower = name.toLowerCase();
