@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
+import com.aftertime.ratallofyou.UI.config.panels.HotbarSwapPanel;
 
 public class ModSettingsGui extends GuiScreen {
     // Fields
@@ -39,8 +40,8 @@ public class ModSettingsGui extends GuiScreen {
     // Fast Hotkey editor rows (right-side detail panel)
     private final List<FastRow> fastRows = new ArrayList<>();
 
-    // New: Hotbar Swap inline rows
-    private final List<HotbarPresetRow> hotbarRows = new ArrayList<>();
+    // New: Hotbar Swap UI extracted to its own panel
+    private final HotbarSwapPanel hotbarPanel = new HotbarSwapPanel();
 
     private String selectedCategory = "Kuudra";
     private ModuleInfo SelectedModule = null;
@@ -76,7 +77,6 @@ public class ModSettingsGui extends GuiScreen {
         this.fhkPresetNameInput = new SimpleTextField("", 0, 0, 100, 16);
         this.useSidePanelForSelected = false;
         this.optionsInline = false;
-        this.hotbarRows.clear();
 
         buildCategoryButtons();
         buildModuleButtons();
@@ -337,39 +337,9 @@ public class ModSettingsGui extends GuiScreen {
             }
             drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x33000000); y += 6;
         }
-        // New: Hotbar Swap inline drawing
+        // New: Hotbar Swap inline drawing delegated to panel
         if ("Hotbar Swap".equals(SelectedModule.name)) {
-            // Render each preset row
-            for (int i = 0; i < hotbarRows.size(); i++) {
-                HotbarPresetRow row = hotbarRows.get(i);
-                fontRendererObj.drawStringWithShadow("Preset Label:", ia.contentX, y, Colors.COMMAND_TEXT);
-                row.labelInput.setBounds(ia.contentX, y + 12, ia.contentW, 16);
-                row.labelInput.draw(mouseX, mouseY);
-                y += 12 + 16 + 6;
-                fontRendererObj.drawStringWithShadow("Trigger message:", ia.contentX, y, Colors.COMMAND_TEXT);
-                row.triggerInput.setBounds(ia.contentX, y + 12, ia.contentW, 16);
-                row.triggerInput.draw(mouseX, mouseY);
-                y += 12 + 16 + 6;
-                fontRendererObj.drawStringWithShadow("Trigger command:", ia.contentX, y, Colors.COMMAND_TEXT);
-                row.commandInput.setBounds(ia.contentX, y + 12, ia.contentW, 16);
-                row.commandInput.draw(mouseX, mouseY);
-                y += 12 + 16 + 6;
-                int rmW = 70; int rmH = 16; int rmX = ia.contentX; int rmY = y;
-                drawRect(rmX, rmY, rmX + rmW, rmY + rmH, Colors.BUTTON_RED);
-                drawCenteredString(fontRendererObj, "Remove", rmX + rmW / 2, rmY + 4, Colors.BUTTON_TEXT);
-                row.removeBtnX = rmX; row.removeBtnY = rmY; row.removeBtnW = rmW; row.removeBtnH = rmH;
-                y += rmH + 8;
-                drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x22000000); y += 6;
-            }
-            // Add button at bottom
-            int addW = 90; int addH = 16; int addX = ia.contentX; int addY = y;
-            drawRect(addX, addY, addX + addW, addY + addH, Colors.BUTTON_GREEN);
-            drawCenteredString(fontRendererObj, hotbarRows.isEmpty() ? "Add Preset" : "Add Another", addX + addW / 2, addY + 4, Colors.BUTTON_TEXT);
-            // store last add button bounds for click handling
-            lastHotbarAddBtnX = addX; lastHotbarAddBtnY = addY; lastHotbarAddBtnW = addW; lastHotbarAddBtnH = addH;
-            y += addH + 6;
-            // small separator before generic options
-            drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x33000000); y += 6;
+            y = hotbarPanel.drawInline(mouseX, mouseY, ia.contentX, y, ia.contentW, fontRendererObj);
         }
         for (Toggle t : Toggles) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
         for (LabelledInput t : labelledInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += t.getVerticalSpace(); }
@@ -384,11 +354,11 @@ public class ModSettingsGui extends GuiScreen {
             h += 6; // separator
             h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
         }
-        // New: Hotbar Swap rows height
+        // New: Hotbar Swap rows height delegated to panel
         if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
-            int perRow = (12 + 16 + 6) + (12 + 16 + 6) + (12 + 16 + 6) + (16 + 8) + 6; // label+input, trigger msg+input, trigger cmd+input, remove, separator
-            int h = perRow * hotbarRows.size();
-            h += 16 + 6; // add button and gap
+            // compute inline content width (same as AddEntryAsOption inline branch)
+            int listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH; int contentW = (listW - 8) - 6 * 2;
+            int h = hotbarPanel.computeSectionHeight(contentW);
             // plus generic options (toggles/inputs)
             h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22;
             return h + 6;
@@ -459,37 +429,11 @@ public class ModSettingsGui extends GuiScreen {
             }
             y += 6; // separator gap
         }
-        // New: Hotbar Swap inline clicks
+        // New: Hotbar Swap inline clicks delegated to panel
         if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
-            // Iterate rows for input focus and remove
-            for (int i = 0; i < hotbarRows.size(); i++) {
-                HotbarPresetRow row = hotbarRows.get(i);
-                // Label input
-                int labelY = y + 12; // after title
-                row.labelInput.setBounds(ia.contentX, labelY, ia.contentW, 16);
-                if (row.labelInput.isMouseOver(mouseX, mouseY)) { unfocusAllHotbarInputs(); row.labelInput.beginEditing(mouseX); return; }
-                y += 12 + 16 + 6;
-                // Trigger message input
-                int trigY = y + 12;
-                row.triggerInput.setBounds(ia.contentX, trigY, ia.contentW, 16);
-                if (row.triggerInput.isMouseOver(mouseX, mouseY)) { unfocusAllHotbarInputs(); row.triggerInput.beginEditing(mouseX); return; }
-                y += 12 + 16 + 6;
-                // Trigger command input
-                int cmdY = y + 12;
-                row.commandInput.setBounds(ia.contentX, cmdY, ia.contentW, 16);
-                if (row.commandInput.isMouseOver(mouseX, mouseY)) { unfocusAllHotbarInputs(); row.commandInput.beginEditing(mouseX); return; }
-                y += 12 + 16 + 6;
-                // Remove button
-                int rmX = ia.contentX; int rmY = y; int rmW = 70; int rmH = 16;
-                if (mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + rmH) { removeHotbarPresetAtIndex(i); return; }
-                y += rmH + 8;
-                y += 6; // separator gap
-            }
-            // Add button at bottom
-            int addX = ia.contentX; int addY = y; int addW = 90; int addH = 16;
-            if (mouseX >= addX && mouseX <= addX + addW && mouseY >= addY && mouseY <= addY + addH) { addCurrentHotbarAsPreset(); return; }
+            if (hotbarPanel.handleInlineClick(mouseX, mouseY, ia.contentX, y, ia.contentW)) return;
             // Continue to other inputs after a small gap
-            y += addH + 12;
+            y += hotbarPanel.computeSectionHeight(ia.contentW) + 12; // approximate advance for following controls
         }
         // Inputs and toggles
         int yToggle = y;
@@ -706,31 +650,11 @@ public class ModSettingsGui extends GuiScreen {
         return false;
     }
 
-    // New: Hotbar Swap typing handler
+    // New: Hotbar Swap typing handler delegates to panel
     private void handleHotbarSwapTyping(char typedChar, int keyCode) {
         // Update any focused hotbar preset input and propagate to HotbarSwap
         handleAllInputTyping(typedChar, keyCode);
-        for (int i = 0; i < hotbarRows.size(); i++) {
-            HotbarPresetRow row = hotbarRows.get(i);
-            boolean changed = false;
-            if (row.labelInput.isEditing) { row.labelInput.handleKeyTyped(typedChar, keyCode); changed = true; }
-            else if (row.triggerInput.isEditing) { row.triggerInput.handleKeyTyped(typedChar, keyCode); changed = true; }
-            else if (row.commandInput.isEditing) { row.commandInput.handleKeyTyped(typedChar, keyCode); changed = true; }
-            if (changed) {
-                // Persist without rebuilding rows to preserve input focus
-                String nameTrim = row.labelInput.text.trim();
-                String msgTrim = row.triggerInput.text.trim();
-                String cmdTrim = row.commandInput.text.trim();
-                com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.updatePresetMeta(
-                        i,
-                        nameTrim,
-                        msgTrim.isEmpty() ? null : msgTrim,
-                        cmdTrim.isEmpty() ? null : cmdTrim,
-                        null
-                );
-                return;
-            }
-        }
+        hotbarPanel.handleTyping(typedChar, keyCode);
     }
 
     private void unfocusAllFastInputs() {
@@ -738,8 +662,8 @@ public class ModSettingsGui extends GuiScreen {
         if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
     }
 
-    // New: unfocus Hotbar Swap inputs
-    private void unfocusAllHotbarInputs() { for (HotbarPresetRow r : hotbarRows) { r.labelInput.isEditing = false; r.triggerInput.isEditing = false; r.commandInput.isEditing = false; } }
+    // New: unfocus Hotbar Swap inputs -> delegate to panel
+    private void unfocusAllHotbarInputs() { hotbarPanel.unfocusAllInputs(); }
 
     // Input and scroll helpers
     private void handleInputFieldEditingState() { for (ColorInput c : ColorInputs) c.unfocus(); if (showCommandSettings && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) unfocusAllFastInputs(); if (showCommandSettings && SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) unfocusAllHotbarInputs(); }
@@ -839,7 +763,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
             case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
-            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); rebuildHotbarRows(); break;
+            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -920,31 +844,26 @@ public class ModSettingsGui extends GuiScreen {
         for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
     }
 
-    // New: rebuild Hotbar Swap rows from current presets
-    private void rebuildHotbarRows() {
-        hotbarRows.clear();
-        java.util.List<com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.Hotbar> view = com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE != null ? com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.getPresetsView() : java.util.Collections.<com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.Hotbar>emptyList();
-        for (int i = 0; i < view.size(); i++) {
-            com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.Hotbar p = view.get(i);
-            HotbarPresetRow row = new HotbarPresetRow(i, p.name == null ? "" : p.name, p.message == null ? "" : p.message, p.command == null ? "" : p.command);
-            hotbarRows.add(row);
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput(); int dWheel = Mouse.getEventDWheel(); if (dWheel == 0) return;
+        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth; int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+        int listX = guiLeft + 115, listY = guiTop + 25, listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH, listH = Dimensions.GUI_HEIGHT - 50;
+        if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) { mainScroll.handleWheelScroll(dWheel, this::buildModuleButtons); return; }
+        if (showCommandSettings && useSidePanelForSelected) {
+            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; int panelW = Dimensions.COMMAND_PANEL_WIDTH; int panelH = (Dimensions.GUI_HEIGHT - 60) - 25;
+            if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); return; }
+            int detailX = panelX + Dimensions.COMMAND_PANEL_WIDTH + 6; int detailW = 170;
+            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); return; }
+        }
+        // Inline Fast Hotkey: wheel on right detail panel
+        if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0) {
+            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; int panelH = (Dimensions.GUI_HEIGHT - 60) - 25; int detailX = getInlineDetailX(); int detailW = 170;
+            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); }
         }
     }
 
-    // New: add/remove helpers for Hotbar Swap
-    private void addCurrentHotbarAsPreset() {
-        if (com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE == null) return;
-        com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.addPresetFromCurrentHotbar();
-        rebuildHotbarRows();
-        buildModuleButtons();
-    }
-    private void removeHotbarPresetAtIndex(int rowIndex) {
-        if (com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE == null) return;
-        com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap.INSTANCE.removePreset(rowIndex);
-        rebuildHotbarRows();
-        buildModuleButtons();
-    }
-
+    // Restored inner classes
     private class ScrollManager {
         boolean isDragging = false; private int contentHeight, viewHeight, offset; private int barX, barY, barH; private int handleY, handleH; private int dragStartY, dragStartOffset;
         void reset() { contentHeight = 0; viewHeight = 0; offset = 0; isDragging = false; }
@@ -968,34 +887,6 @@ public class ModSettingsGui extends GuiScreen {
         boolean isMouseOver(int mx, int my) { return mx >= x && mx <= x + w && my >= y && my <= y + h; }
         void beginEditing(int mx) { isEditing = true; cursorBlinkMs = 0; cursorVisible = true; int rel = Math.max(0, mx - x); int pos = 0; String s = text; while (pos < s.length()) { int cw = Minecraft.getMinecraft().fontRendererObj.getCharWidth(s.charAt(pos)); if (rel < cw / 2) break; rel -= cw; pos++; } cursorPos = pos; }
         void handleKeyTyped(char c, int key) { if (!isEditing) return; if (key == org.lwjgl.input.Keyboard.KEY_RETURN) { isEditing = false; return; } if (key == org.lwjgl.input.Keyboard.KEY_BACK) { if (cursorPos > 0 && !text.isEmpty()) { text = text.substring(0, cursorPos - 1) + text.substring(cursorPos); cursorPos--; } } else if (key == org.lwjgl.input.Keyboard.KEY_LEFT) { cursorPos = Math.max(0, cursorPos - 1); } else if (key == org.lwjgl.input.Keyboard.KEY_RIGHT) { cursorPos = Math.min(text.length(), cursorPos + 1); } else { if (c >= 32 && c != 127) { if (text.length() >= maxLen) return; text = text.substring(0, cursorPos) + c + text.substring(cursorPos); cursorPos++; } } cursorBlinkMs = 0; cursorVisible = true; }
-    }
-
-    // New: per-row state for Hotbar Swap presets
-    private static class HotbarPresetRow {
-        final int index; SimpleTextField labelInput; SimpleTextField triggerInput; SimpleTextField commandInput; int removeBtnX, removeBtnY, removeBtnW, removeBtnH;
-        HotbarPresetRow(int idx, String label, String trigger, String command) { this.index = idx; this.labelInput = new SimpleTextField(label, 0,0,0,0); this.triggerInput = new SimpleTextField(trigger, 0,0,0,0); this.commandInput = new SimpleTextField(command, 0,0,0,0); }
-    }
-
-    // Last Add button bounds for Hotbar Swap inline area
-    private int lastHotbarAddBtnX = -1, lastHotbarAddBtnY = -1, lastHotbarAddBtnW = 0, lastHotbarAddBtnH = 0;
-
-    @Override
-    public void handleMouseInput() throws IOException {
-        super.handleMouseInput(); int dWheel = Mouse.getEventDWheel(); if (dWheel == 0) return;
-        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth; int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-        int listX = guiLeft + 115, listY = guiTop + 25, listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH, listH = Dimensions.GUI_HEIGHT - 50;
-        if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) { mainScroll.handleWheelScroll(dWheel, this::buildModuleButtons); return; }
-        if (showCommandSettings && useSidePanelForSelected) {
-            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; int panelW = Dimensions.COMMAND_PANEL_WIDTH; int panelH = (Dimensions.GUI_HEIGHT - 60) - 25;
-            if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); return; }
-            int detailX = panelX + Dimensions.COMMAND_PANEL_WIDTH + 6; int detailW = 170;
-            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); return; }
-        }
-        // Inline Fast Hotkey: wheel on right detail panel
-        if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0) {
-            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; int panelH = (Dimensions.GUI_HEIGHT - 60) - 25; int detailX = getInlineDetailX(); int detailW = 170;
-            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); }
-        }
     }
 }
 
