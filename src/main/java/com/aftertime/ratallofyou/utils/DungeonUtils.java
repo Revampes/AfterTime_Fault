@@ -28,6 +28,30 @@ public class DungeonUtils {
         return dungeonFloor;
     }
 
+    // Shared helper: check if a module is enabled in config
+    public static boolean isModuleEnabled(String moduleKey) {
+        try {
+            com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo cfg =
+                    (com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.MODULES.get(moduleKey);
+            return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    // Shared helper: send a title/subtitle safely
+    public static void sendTitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc != null && mc.ingameGUI != null) {
+            mc.ingameGUI.displayTitle(title, subtitle, fadeIn, stay, fadeOut);
+        }
+    }
+
+    // Shared helper: clear any current title
+    public static void clearTitle() {
+        sendTitle("", "", -1, -1, -1);
+    }
+
     private static boolean checkScoreboardForDungeon() {
         List<String> scoreBoardLines = Utils.getSidebarLines();
         if (scoreBoardLines == null || scoreBoardLines.isEmpty()) {

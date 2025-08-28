@@ -1,8 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -17,7 +16,7 @@ public class LeapAnnounce {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isModuleEnabled() || event.type != 0) return; // Only process regular chat messages
+        if (!DungeonUtils.isModuleEnabled("dungeons_leapannounce") || event.type != 0) return; // Only process regular chat messages
 
         String message = event.message.getUnformattedText();
 
@@ -28,16 +27,9 @@ public class LeapAnnounce {
             return;
         }
 
-        // Handle party leap messages
-        if (message.startsWith("Party > ")) {
-            String[] parts = message.split(" ");
-            if (parts.length < 5 || !message.contains("Leaped to")) return;
-
-            String from = parts[2].replaceAll("[ቾ⚒:]", "").trim();
-            String to = parts[parts.length - 1].replace("!", "").trim();
-
-            // Always show leap messages (no filtering)
-            // Previous config-based filtering removed
+        // Handle party leap messages (kept for future extension)
+        if (message.startsWith("Party > ") && message.contains("Leaped to")) {
+            // no-op
         }
     }
 
@@ -45,10 +37,5 @@ public class LeapAnnounce {
         if (mc.thePlayer != null) {
             mc.thePlayer.sendChatMessage("/pc " + message);
         }
-    }
-
-    private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_leapannounce");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

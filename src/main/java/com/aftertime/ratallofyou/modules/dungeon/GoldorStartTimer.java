@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -18,7 +17,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!isModuleEnabled()) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_phase3countdown")) return;
 
         String message = event.message.getUnformattedText();
 
@@ -33,29 +32,24 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!isModuleEnabled() || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_phase3countdown") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
         ticks--;
 
         String time = String.format("%.2f", ticks / 20.0f);
-        mc.ingameGUI.displayTitle(EnumChatFormatting.GREEN + time, "", -1, -1, -1);
+        DungeonUtils.sendTitle(EnumChatFormatting.GREEN + time, "", -1, -1, -1);
 
         if (ticks <= 0) {
-            mc.ingameGUI.displayTitle("", "", -1, -1, -1);
+            DungeonUtils.clearTitle();
         }
     }
 
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload event) {
         ticks = -1;
-        mc.ingameGUI.displayTitle("", "", -1, -1, -1);
+        DungeonUtils.clearTitle();
     }
 
     public static void register() {
         MinecraftForge.EVENT_BUS.register(new GoldorStartTimer());
-    }
-
-    private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_phase3countdown");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

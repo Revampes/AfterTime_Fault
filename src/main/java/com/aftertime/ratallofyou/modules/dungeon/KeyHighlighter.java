@@ -1,8 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
@@ -21,7 +19,7 @@ import java.util.Map;
 public class KeyHighlighter {
     private static boolean bloodOpened = false;
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private static final Map<String, Boolean> keyTracking = new HashMap<String, Boolean>();
+    private static final Map<String, Boolean> keyTracking = new HashMap<>();
 
     public static void register() {
         MinecraftForge.EVENT_BUS.register(new KeyHighlighter());
@@ -35,7 +33,7 @@ public class KeyHighlighter {
 
     @SubscribeEvent
     public void onEntitySpawn(EntityJoinWorldEvent event) {
-        if (!isModuleEnabled() || bloodOpened || !DungeonUtils.isInDungeon()) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_keyhighlighter") || bloodOpened || !DungeonUtils.isInDungeon()) return;
 
         if (event.entity instanceof EntityArmorStand) {
             EntityArmorStand armorStand = (EntityArmorStand) event.entity;
@@ -44,12 +42,12 @@ public class KeyHighlighter {
 
             if (name.contains("Wither Key") && !keyTracking.containsKey(keyId)) {
                 keyTracking.put(keyId, true);
-                showTitle(EnumChatFormatting.GOLD + "Wither Key Dropped!", "", 10, 40, 10);
+                DungeonUtils.sendTitle(EnumChatFormatting.GOLD + "Wither Key Dropped!", "", 10, 40, 10);
                 mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "Wither Key Dropped!"));
             }
             else if (name.contains("Blood Key") && !keyTracking.containsKey(keyId)) {
                 keyTracking.put(keyId, true);
-                showTitle(EnumChatFormatting.RED + "Blood Key Dropped!", "", 10, 40, 10);
+                DungeonUtils.sendTitle(EnumChatFormatting.RED + "Blood Key Dropped!", "", 10, 40, 10);
                 mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Blood Key Dropped!"));
             }
         }
@@ -57,7 +55,7 @@ public class KeyHighlighter {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!isModuleEnabled() || bloodOpened || !DungeonUtils.isInDungeon()) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_keyhighlighter") || bloodOpened || !DungeonUtils.isInDungeon()) return;
 
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {
@@ -81,17 +79,5 @@ public class KeyHighlighter {
                 }
             }
         }
-    }
-
-    private void showTitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
-        if (mc.thePlayer != null) {
-            // Clear any existing titles first
-            mc.ingameGUI.displayTitle(title, subtitle, fadeIn, stay, fadeOut);
-        }
-    }
-
-    private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_keyhighlighter");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

@@ -1,7 +1,5 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
@@ -45,8 +43,7 @@ public class F7GhostBlocks {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_sweatmode");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return DungeonUtils.isModuleEnabled("dungeons_sweatmode");
     }
 
     @SubscribeEvent

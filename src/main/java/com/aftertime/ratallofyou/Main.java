@@ -94,13 +94,9 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new HideLightning());
         MinecraftForge.EVENT_BUS.register(new BlockUselessPerk());
         MinecraftForge.EVENT_BUS.register(new SearchBar());
-        // New: Arrow Poison Tracker HUD
         MinecraftForge.EVENT_BUS.register(new PosionArrow());
-        // New: Watcher Clear notifier
         MinecraftForge.EVENT_BUS.register(new WatcherClear());
-        // New: Flare/Flux Timer HUD
         MinecraftForge.EVENT_BUS.register(new FluxFlareTimer());
-        // New: Crate Priority title helper
         MinecraftForge.EVENT_BUS.register(new CratePriority());
         KeybindHandler.registerKeybinds();
     }

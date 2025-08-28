@@ -1,10 +1,9 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -44,17 +43,17 @@ public class InvincibleTimer {
 
         if (message.contains("Bonzo's Mask saved your life")) {
             bonzoTime = 1800;
-            procText = "§9Bonzo Mask Procced";
+            procText = "\u00a79Bonzo Mask Procced";
             procTextEndTime = System.currentTimeMillis() + 1500;
         }
         else if (message.contains("Spirit Mask saved your life")) {
             spiritTime = 300;
-            procText = "§fSpirit Mask Procced";
+            procText = "\u00a7fSpirit Mask Procced";
             procTextEndTime = System.currentTimeMillis() + 1500;
         }
         else if (message.contains("Phoenix Pet saved you")) {
             phoenixTime = 600;
-            procText = "§cPhoenix Procced";
+            procText = "\u00a7cPhoenix Procced";
             procTextEndTime = System.currentTimeMillis() + 1500;
         }
     }
@@ -70,9 +69,9 @@ public class InvincibleTimer {
         Object sc = AllConfig.INSTANCE.Pos_CONFIGS.get("invincible_scale").Data;
         if (sc instanceof Float) scale = (Float) sc; else if (sc instanceof Double) scale = ((Double) sc).floatValue();
 
-        drawScaledText("§9Bonzo: " + getStatusText(bonzoTime), bonzoPos.x, bonzoPos.y, scale);
-        drawScaledText("§fSpirit: " + getStatusText(spiritTime), spiritPos.x, spiritPos.y, scale);
-        drawScaledText("§cPhoenix: " + getStatusText(phoenixTime), phoenixPos.x, phoenixPos.y, scale);
+        drawScaledText("\u00a79Bonzo: " + getStatusText(bonzoTime), bonzoPos.x, bonzoPos.y, scale);
+        drawScaledText("\u00a7fSpirit: " + getStatusText(spiritTime), spiritPos.x, spiritPos.y, scale);
+        drawScaledText("\u00a7cPhoenix: " + getStatusText(phoenixTime), phoenixPos.x, phoenixPos.y, scale);
 
         if (!procText.equals(" ")) {
             drawScaledText(procText, procPos.x, procPos.y, scale);
@@ -80,7 +79,7 @@ public class InvincibleTimer {
     }
 
     private String getStatusText(int time) {
-        return time <= 0 ? "§aREADY" : "§6" + String.format("%.1f", time / 20f);
+        return time <= 0 ? "\u00a7aREADY" : "\u00a76" + String.format("%.1f", time / 20f);
     }
 
     private void drawScaledText(String text, int x, int y, float scale) {
@@ -96,7 +95,6 @@ public class InvincibleTimer {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_invincibletimer");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return DungeonUtils.isModuleEnabled("dungeons_invincibletimer");
     }
 }

@@ -1,8 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.Utils;
@@ -17,7 +15,6 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -97,7 +94,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!isModuleEnabled() || !DungeonUtils.isInDungeon()) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_secretclicks") || !DungeonUtils.isInDungeon()) return;
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 
         BlockPos pos = event.pos;
@@ -124,7 +121,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!isModuleEnabled() || highlights.isEmpty() || event.isCanceled()) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_secretclicks") || highlights.isEmpty() || event.isCanceled()) return;
 
         float r = highlightColor.getRed() / 255f;
         float g = highlightColor.getGreen() / 255f;
@@ -144,7 +141,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
-        if (!isModuleEnabled() || highlights.isEmpty()) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_secretclicks") || highlights.isEmpty()) return;
 
         if (event.message.getUnformattedText().equals("That chest is locked!")) {
             for (HighlightedBlock highlighted : highlights.values()) {
@@ -208,10 +205,5 @@ public class SecretClicks {
         // Draw solid box first (lower alpha), then outline.
         RenderUtils.renderBlockHitbox(pos, r, g, b, a * 0.5f, true, 2f, true);
         RenderUtils.renderBlockHitbox(pos, r, g, b, a, true, 2f, false);
-    }
-
-    private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_secretclicks");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

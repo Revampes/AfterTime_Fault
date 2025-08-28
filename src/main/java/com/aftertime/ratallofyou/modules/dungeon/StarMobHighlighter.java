@@ -1,8 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -18,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class StarMobHighlighter {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private static final Pattern starredPattern = Pattern.compile(".*§6✯.*§c❤.*");
+    private static final Pattern starredPattern = Pattern.compile(".*\u00a76\u272f.*\u00a7c\u2764.*");
 
     // Colors for different mob types
     private static final float[] STAR_COLOR = {1f, 1f, 0f}; // YELLOW
@@ -35,7 +34,7 @@ public class StarMobHighlighter {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!isModuleEnabled() || mc.theWorld == null) return;
+        if (!DungeonUtils.isModuleEnabled("dungeons_starmobhighlighter") || mc.theWorld == null) return;
 
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {
@@ -86,10 +85,5 @@ public class StarMobHighlighter {
             }
         }
         return null;
-    }
-
-    private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_starmobhighlighter");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

@@ -4,9 +4,7 @@ import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
-import com.aftertime.ratallofyou.UI.config.PropertyRef;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -33,7 +31,7 @@ public class P3TickTimer {
         // Trigger messages
         if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
                 message.equals("[BOSS] Goldor: What do you think you are doing there!") ||
-                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[ቾ⚒]?: (Bonzo|Phoenix) Procced!?(?: \\(.+\\))?")) {
+                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[\u127e\u2692]?: (Bonzo|Phoenix) Procced!?(?: \\(.+\\))?")) {
             startTimer();
         } else if (message.equals("The Core entrance is opening!")) {
             resetTimer();
@@ -160,8 +158,7 @@ public class P3TickTimer {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("dungeons_phase3ticktimer");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return DungeonUtils.isModuleEnabled("dungeons_phase3ticktimer");
     }
 }
 
