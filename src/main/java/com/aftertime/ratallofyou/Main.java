@@ -33,6 +33,8 @@ import com.aftertime.ratallofyou.modules.Performance.HideUselessMessage;
 import com.aftertime.ratallofyou.modules.Performance.HideLightning;
 import com.aftertime.ratallofyou.modules.SkyBlock.SearchBar;
 import com.aftertime.ratallofyou.modules.SkyBlock.FluxFlareTimer;
+import net.minecraftforge.client.ClientCommandHandler;
+import com.aftertime.ratallofyou.Command.OpenConfigGuiCommand;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -99,5 +101,6 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new FluxFlareTimer());
         MinecraftForge.EVENT_BUS.register(new CratePriority());
         KeybindHandler.registerKeybinds();
+        ClientCommandHandler.instance.registerCommand(new OpenConfigGuiCommand());
     }
 }
