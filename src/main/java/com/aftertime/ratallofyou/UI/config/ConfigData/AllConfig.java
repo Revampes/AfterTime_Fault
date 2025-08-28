@@ -87,6 +87,9 @@ public class AllConfig {
         put("p3ticktimer_scale", new BaseConfig<>("P3 Timer Scale", "Scale factor for P3 Tick Timer", 1.0f));
         // New: Invincibility timers text scale
         put("invincible_scale", new BaseConfig<>("Invincible Timers Scale", "Scale for Bonzo/Spirit/Phoenix/Proc text", 1.0f));
+        // Arrow Poison HUD position and scale
+        put("arrowpoison_pos", new BaseConfig<>("Arrow Poison HUD Position", "Position of the Arrow Poison HUD", new UIPosition(200, 200)));
+        put("arrowpoison_scale", new BaseConfig<>("Arrow Poison HUD Scale", "Scale of the Arrow Poison HUD", 1.0f));
 
     }};
 
@@ -117,6 +120,8 @@ public class AllConfig {
             put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
             put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
             put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
+            // New: Arrow Poison Tracker
+            put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
 
             // Dungeons
             put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));

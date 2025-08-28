@@ -65,11 +65,19 @@ public class UIHighlighter {
             else if ("phoenix_pos".equals(key)) sample = "Phoenix: READY";
             else if ("proc_pos".equals(key)) sample = "Phoenix Procced";
             else if ("p3ticktimer_pos".equals(key)) sample = "00.00";
+            else if ("arrowpoison_pos".equals(key)) sample = "Twilight: 1356\nToxic: 134";
             if (sample != null) {
                 int color = 0xFFAAAAAA;
                 if ("p3ticktimer_pos".equals(key)) {
                     int w = mc.fontRendererObj.getStringWidth(sample);
                     mc.fontRendererObj.drawStringWithShadow(sample, pos.x - w / 2, top, color);
+                } else if ("arrowpoison_pos".equals(key)) {
+                    String[] lines = sample.split("\\n");
+                    int y = top;
+                    for (String s : lines) {
+                        mc.fontRendererObj.drawStringWithShadow(s, left, y, color);
+                        y += mc.fontRendererObj.FONT_HEIGHT + 1;
+                    }
                 } else {
                     mc.fontRendererObj.drawStringWithShadow(sample, left, top, color);
                 }
@@ -140,6 +148,15 @@ public class UIHighlighter {
             width = Math.max(30, Math.round(w * s));
             height = Math.max(fh, Math.round(fh * s));
             ax = width / 2;
+        } else if ("arrowpoison_pos".equals(key)) {
+            float s = 1.0f;
+            Object sc = AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale").Data;
+            if (sc instanceof Float) s = (Float) sc; else if (sc instanceof Double) s = ((Double) sc).floatValue();
+            // Approximate 2-row HUD with icon(16) + padding; rows are 18px apart -> ~34px total height
+            int baseW = 16 + 4 + mc.fontRendererObj.getStringWidth("0000");
+            int baseH = 34;
+            width = Math.max(24, Math.round(baseW * s));
+            height = Math.max(20, Math.round(baseH * s));
         }
         return new int[]{width, height, ax, ay};
     }
@@ -194,6 +211,11 @@ public class UIHighlighter {
                         if (sCfg != null) sCfg.Data = s;
                     } else if ("bonzo_pos".equals(hoveredKey) || "spirit_pos".equals(hoveredKey) || "phoenix_pos".equals(hoveredKey) || "proc_pos".equals(hoveredKey)) {
                         @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("invincible_scale");
+                        float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
+                        s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
+                        if (sCfg != null) sCfg.Data = s;
+                    } else if ("arrowpoison_pos".equals(hoveredKey)) {
+                        @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale");
                         float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
                         s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
                         if (sCfg != null) sCfg.Data = s;
@@ -261,6 +283,11 @@ public class UIHighlighter {
                 if (sCfg != null) sCfg.Data = s;
             } else if ("bonzo_pos".equals(hoveredKey) || "spirit_pos".equals(hoveredKey) || "phoenix_pos".equals(hoveredKey) || "proc_pos".equals(hoveredKey)) {
                 @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("invincible_scale");
+                float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
+                s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
+                if (sCfg != null) sCfg.Data = s;
+            } else if ("arrowpoison_pos".equals(hoveredKey)) {
+                @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale");
                 float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
                 s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
                 if (sCfg != null) sCfg.Data = s;

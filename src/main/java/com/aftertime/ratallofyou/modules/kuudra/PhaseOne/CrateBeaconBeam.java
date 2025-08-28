@@ -103,7 +103,7 @@ public class CrateBeaconBeam {
         }
 
         // 3) Render crate beams (cyan)
-        Color cyan = new Color(0, 255, 255, 204);
+        Color cyan = new Color(255, 255, 255, 204);
         for (Vec3 pos : cratePositions) {
             RenderUtils.renderBeaconBeam(new Vec3(pos.xCoord, CRATE_BEAM_Y, pos.zCoord), cyan, true, CRATE_BEAM_HEIGHT, event.partialTicks);
         }
