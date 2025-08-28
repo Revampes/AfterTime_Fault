@@ -35,6 +35,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.SearchBar;
 import com.aftertime.ratallofyou.modules.SkyBlock.FluxFlareTimer;
 import net.minecraftforge.client.ClientCommandHandler;
 import com.aftertime.ratallofyou.Command.OpenConfigGuiCommand;
+import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -77,7 +78,7 @@ public class Main {
                 // SkyBlock QoL
                 new AutoSprint(), new PartyUtils(), new ChatCommands(), new Fullbright(), new EtherwarpOverlay(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
-                new FluxFlareTimer(),
+                new FluxFlareTimer(), new StorageOverviewModule(),
 
                 // Performance tweaks
                 new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(),
@@ -88,6 +89,7 @@ public class Main {
                 // UI
                 new UIHighlighter()
         );
+
 
         KeybindHandler.registerKeybinds();
         ClientCommandHandler.instance.registerCommand(new OpenConfigGuiCommand());

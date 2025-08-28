@@ -152,6 +152,8 @@ public class AllConfig {
             put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
             // New: Flare/Flux Timer HUD
             put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
+            // New: Storage Overview overlay
+            put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
 
             // Render
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
@@ -194,6 +196,12 @@ public class AllConfig {
         put("hotbarswap_block_ticks", new BaseConfig<>("Block Movement Ticks", "Ticks to suppress movement after a swap", 10));
     }};
 
+    // New: Storage Overview settings
+    public final HashMap<String, BaseConfig<?>> STORAGEOVERVIEW_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("storageoverview_show_in_inventory", new BaseConfig<>("Show In Inventory", "Show overlay when player inventory is open", true));
+    }};
+
     // New: Fast Hotkey presets model and active pointer
     public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
     public int FHK_ACTIVE_PRESET = 0;
@@ -210,6 +218,7 @@ public class AllConfig {
         put(6, FASTHOTKEY_CONFIGS);
         put(7, KUUDRA_CHESTOPEN_CONFIGS);
         put(8, HOTBARSWAP_CONFIGS);
+        put(9, STORAGEOVERVIEW_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()
