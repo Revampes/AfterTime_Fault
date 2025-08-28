@@ -90,6 +90,9 @@ public class AllConfig {
         // Arrow Poison HUD position and scale
         put("arrowpoison_pos", new BaseConfig<>("Arrow Poison HUD Position", "Position of the Arrow Poison HUD", new UIPosition(200, 200)));
         put("arrowpoison_scale", new BaseConfig<>("Arrow Poison HUD Scale", "Scale of the Arrow Poison HUD", 1.0f));
+        // Flare/Flux HUD position and scale
+        put("flareflux_pos", new BaseConfig<>("Flare/Flux HUD Position", "Position of the Flare/Flux timer", new UIPosition(220, 220)));
+        put("flareflux_scale", new BaseConfig<>("Flare/Flux HUD Scale", "Scale of the Flare/Flux timer", 1.0f));
 
     }};
 
@@ -122,6 +125,8 @@ public class AllConfig {
             put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
             // New: Arrow Poison Tracker
             put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
+            // New: Crate Priority
+            put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
 
             // Dungeons
             put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
@@ -145,6 +150,8 @@ public class AllConfig {
             put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
             // SearchBar module
             put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
+            // New: Flare/Flux Timer HUD
+            put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
 
             // Render
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));

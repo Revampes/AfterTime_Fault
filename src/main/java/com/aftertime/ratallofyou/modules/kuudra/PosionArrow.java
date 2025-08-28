@@ -86,8 +86,8 @@ public class PosionArrow {
             int textY2 = iconY2 + textOffsetY;
 
             // Prepare dye icons (metadata 5 and 10)
-            ItemStack twilightIcon = new ItemStack(Items.dye, 1, 5);
-            ItemStack toxicIcon = new ItemStack(Items.dye, 1, 10);
+            ItemStack twilightIcon = new ItemStack(Items.dye, 1, 5);   // purple-ish for Twilight
+            ItemStack toxicIcon = new ItemStack(Items.dye, 1, 10);      // lime for Toxic
 
             GlStateManager.disableLighting();
             RenderHelper.enableGUIStandardItemLighting();
@@ -95,9 +95,11 @@ public class PosionArrow {
             mc.getRenderItem().renderItemAndEffectIntoGUI(toxicIcon, 0, iconY2);
             RenderHelper.disableStandardItemLighting();
 
-            int textColor = 0xFF5555; // red-ish
-            mc.fontRendererObj.drawString(Integer.toString(twilight), textX, textY1, textColor, false);
-            mc.fontRendererObj.drawString(Integer.toString(toxic), textX, textY2, textColor, false);
+            // Labeled counts so mapping is unambiguous
+            int twilightColor = 0xCC88FF; // soft purple
+            int toxicColor = 0x66FF66;    // lime green
+            mc.fontRendererObj.drawString("Twilight: " + twilight, textX, textY1, twilightColor, true);
+            mc.fontRendererObj.drawString("Toxic: " + toxic, textX, textY2, toxicColor, true);
         } finally {
             GlStateManager.popMatrix();
         }

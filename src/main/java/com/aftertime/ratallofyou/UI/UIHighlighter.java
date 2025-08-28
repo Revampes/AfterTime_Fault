@@ -66,6 +66,7 @@ public class UIHighlighter {
             else if ("proc_pos".equals(key)) sample = "Phoenix Procced";
             else if ("p3ticktimer_pos".equals(key)) sample = "00.00";
             else if ("arrowpoison_pos".equals(key)) sample = "Twilight: 1356\nToxic: 134";
+            else if ("flareflux_pos".equals(key)) sample = "Flux/Flare";
             if (sample != null) {
                 int color = 0xFFAAAAAA;
                 if ("p3ticktimer_pos".equals(key)) {
@@ -152,11 +153,22 @@ public class UIHighlighter {
             float s = 1.0f;
             Object sc = AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale").Data;
             if (sc instanceof Float) s = (Float) sc; else if (sc instanceof Double) s = ((Double) sc).floatValue();
-            // Approximate 2-row HUD with icon(16) + padding; rows are 18px apart -> ~34px total height
-            int baseW = 16 + 4 + mc.fontRendererObj.getStringWidth("0000");
-            int baseH = 34;
+            // Include label widths so the drag box matches drawn text
+            int w1 = mc.fontRendererObj.getStringWidth("Twilight: 000000");
+            int w2 = mc.fontRendererObj.getStringWidth("Toxic: 000000");
+            int textMax = Math.max(w1, w2);
+            int baseW = 16 + 4 + textMax; // icon + padding + text
+            int baseH = 34; // two rows with stride
             width = Math.max(24, Math.round(baseW * s));
             height = Math.max(20, Math.round(baseH * s));
+        } else if ("flareflux_pos".equals(key)) {
+            float s = 1.0f;
+            Object sc = AllConfig.INSTANCE.Pos_CONFIGS.get("flareflux_scale").Data;
+            if (sc instanceof Float) s = (Float) sc; else if (sc instanceof Double) s = ((Double) sc).floatValue();
+            int baseW = mc.fontRendererObj.getStringWidth("Flux/Flare") + 12;
+            int baseH = fh + 4;
+            width = Math.max(30, Math.round(baseW * s));
+            height = Math.max(fh, Math.round(baseH * s));
         }
         return new int[]{width, height, ax, ay};
     }
@@ -216,6 +228,11 @@ public class UIHighlighter {
                         if (sCfg != null) sCfg.Data = s;
                     } else if ("arrowpoison_pos".equals(hoveredKey)) {
                         @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale");
+                        float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
+                        s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
+                        if (sCfg != null) sCfg.Data = s;
+                    } else if ("flareflux_pos".equals(hoveredKey)) {
+                        @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("flareflux_scale");
                         float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
                         s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
                         if (sCfg != null) sCfg.Data = s;
@@ -288,6 +305,11 @@ public class UIHighlighter {
                 if (sCfg != null) sCfg.Data = s;
             } else if ("arrowpoison_pos".equals(hoveredKey)) {
                 @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale");
+                float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
+                s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
+                if (sCfg != null) sCfg.Data = s;
+            } else if ("flareflux_pos".equals(hoveredKey)) {
+                @SuppressWarnings("unchecked") BaseConfig<Float> sCfg = (BaseConfig<Float>) AllConfig.INSTANCE.Pos_CONFIGS.get("flareflux_scale");
                 float s = (sCfg != null && sCfg.Data != null) ? sCfg.Data : 1.0f;
                 s = Math.max(0.5f, Math.min(s + dir * 0.05f, 3.0f));
                 if (sCfg != null) sCfg.Data = s;

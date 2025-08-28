@@ -32,6 +32,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
 import com.aftertime.ratallofyou.modules.Performance.HideUselessMessage;
 import com.aftertime.ratallofyou.modules.Performance.HideLightning;
 import com.aftertime.ratallofyou.modules.SkyBlock.SearchBar;
+import com.aftertime.ratallofyou.modules.SkyBlock.FluxFlareTimer;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -97,6 +98,10 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new PosionArrow());
         // New: Watcher Clear notifier
         MinecraftForge.EVENT_BUS.register(new WatcherClear());
+        // New: Flare/Flux Timer HUD
+        MinecraftForge.EVENT_BUS.register(new FluxFlareTimer());
+        // New: Crate Priority title helper
+        MinecraftForge.EVENT_BUS.register(new CratePriority());
         KeybindHandler.registerKeybinds();
     }
 }
