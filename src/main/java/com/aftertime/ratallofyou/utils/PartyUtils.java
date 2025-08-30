@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class PartyUtils {
     // Regex patterns for party messages
@@ -46,6 +48,9 @@ public class PartyUtils {
     private static boolean isInParty = false;
     private static final Minecraft mc = Minecraft.getMinecraft();
 
+    // New: track class for each member (H/M/T/A/B)
+    private static final HashMap<String, String> memberClass = new HashMap<String, String>();
+
     public static List<String> getPartyMembers() {
         return new ArrayList<String>(members);
     }
@@ -56,6 +61,23 @@ public class PartyUtils {
 
     public static boolean isInParty() {
         return isInParty;
+    }
+
+    // Map class name like "Mage" to letter
+    private static String classToLetter(String cls) {
+        if (cls == null) return null;
+        String c = cls.toLowerCase(Locale.ENGLISH);
+        if (c.startsWith("healer")) return "H";
+        if (c.startsWith("mage")) return "M";
+        if (c.startsWith("tank")) return "T";
+        if (c.startsWith("archer")) return "A";
+        if (c.startsWith("bers")) return "B"; // berserk
+        return null;
+    }
+
+    public static String getClassLetter(String player) {
+        if (player == null) return null;
+        return memberClass.get(player);
     }
 
     @SubscribeEvent
@@ -174,6 +196,9 @@ public class PartyUtils {
 
         if ((matcher = dungeonJoin.matcher(message)).find()) {
             addMember(matcher.group(1));
+            String letter = classToLetter(matcher.group(2));
+            if (letter != null) memberClass.put(matcher.group(1), letter);
+            return;
         }
     }
 
@@ -188,6 +213,7 @@ public class PartyUtils {
         if (!members.contains(playerName)) return;
 
         members.remove(playerName);
+        memberClass.remove(playerName);
 
         if (members.isEmpty()) {
             disband();
@@ -196,6 +222,7 @@ public class PartyUtils {
 
     private static void disband() {
         members.clear();
+        memberClass.clear();
         partyLeader = null;
         isInParty = false;
     }

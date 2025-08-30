@@ -316,9 +316,13 @@ public final class TerminalGuiCommon {
      * Validate a queued series of clicks against the current solution. If all queued clicks are still valid,
      * applies predictRemove for each queued entry (in order) and returns the first queued click to send now.
      * If any queued click is invalid, clears the queue and returns null.
+     * Additionally, will not process the queue while a previous click is still marked as in-flight
+     * (tracker.clicked == true), matching the JS behavior of waiting for an inventory update.
      */
-    public static int[] processQueueIfReady(Deque<int[]> queue, List<Integer> solution) {
+    public static int[] processQueueIfReady(Deque<int[]> queue, List<Integer> solution, ClickTracker tracker) {
         if (queue == null || queue.isEmpty()) return null;
+        // Wait for server confirmation/unlock before sending the next queued click
+        if (tracker != null && tracker.clicked) return null;
         if (solution == null) {
             queue.clear();
             return null;

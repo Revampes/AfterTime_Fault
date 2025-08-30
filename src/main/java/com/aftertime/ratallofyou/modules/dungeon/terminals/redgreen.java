@@ -239,7 +239,7 @@ public class redgreen {
     }
 
     private static void processQueueIfReady() {
-        int[] first = TerminalGuiCommon.processQueueIfReady(queue, solution);
+        int[] first = TerminalGuiCommon.processQueueIfReady(queue, solution, CLICK);
         if (first != null) TerminalGuiCommon.doClickAndMark(first[0], first[1], CLICK);
     }
 }

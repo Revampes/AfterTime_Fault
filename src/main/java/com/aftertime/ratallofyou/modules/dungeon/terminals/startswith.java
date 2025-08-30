@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -21,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,9 +47,11 @@ public class startswith {
     private static String startsWithLetter = null; // single letter to match
 
     private static final List<Integer> solution = new ArrayList<>();
-    // Removed local allowedSlots; use TerminalGuiCommon.ALLOWED_SLOTS instead
-
     private static final Deque<int[]> queue = new ArrayDeque<>(); // entries: {slot, button}
+
+    // Track inventory changes to promptly unlock after successful click
+    private static int invHash = 0;
+    private static int hashAtClick = 0;
 
     private static final Pattern TITLE_PATTERN = Pattern.compile("^What starts with: '([A-Za-z])'\\?$");
 
@@ -78,6 +80,7 @@ public class startswith {
         startsWithLetter = null;
         solution.clear();
         queue.clear();
+        invHash = 0; hashAtClick = 0;
     }
 
     // ==========================================
@@ -99,7 +102,6 @@ public class startswith {
                     CLICK.reset();
                     openedAt = System.currentTimeMillis();
                     queue.clear();
-                    // compute window size via common helper
                     windowSize = TerminalGuiCommon.getChestWindowSize(chest);
                     return;
                 }
@@ -120,6 +122,8 @@ public class startswith {
 
         // Re-solve every frame from current inventory
         solveFromInventory();
+        // Unlock click when inventory changed
+        if (CLICK.clicked && invHash != hashAtClick) CLICK.clicked = false;
         // If we queued clicks (high ping mode) and they are still valid, send the next one
         processQueueIfReady();
 
@@ -157,6 +161,8 @@ public class startswith {
             if (TerminalGuiCommon.Defaults.highPingMode && CLICK.clicked) {
                 queue.addLast(new int[]{slot, 0});
             } else {
+                // Record hash to detect the next update
+                hashAtClick = invHash;
                 TerminalGuiCommon.doClickAndMark(slot, 0, CLICK);
             }
         }
@@ -180,7 +186,6 @@ public class startswith {
     private static void drawOverlay() {
         Minecraft mc = Minecraft.getMinecraft();
         FontRenderer fr = mc.fontRendererObj;
-        // Use common grid computation
         int[] grid = TerminalGuiCommon.computeGrid(windowSize, TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.offsetX, TerminalGuiCommon.Defaults.offsetY);
         int width = grid[1], height = grid[2], offX = grid[3], offY = grid[4];
 
@@ -188,12 +193,9 @@ public class startswith {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.scale, 1f);
-        // Rounded background panel
         TerminalGuiCommon.drawRoundedRect(offX - 2, offY - 2, offX + width + 2, offY + height + 2, TerminalGuiCommon.Defaults.cornerRadiusBg, TerminalGuiCommon.Defaults.backgroundColor);
-        // title
         fr.drawStringWithShadow(title, offX, offY, 0xFFFFFFFF);
 
-        // draw solution highlights directly from solution list
         for (int slot : solution) {
             int curX = (slot % 9) * 18 + offX;
             int curY = (slot / 9) * 18 + offY;
@@ -204,26 +206,33 @@ public class startswith {
 
     private static void solveFromInventory() {
         solution.clear();
-        if (startsWithLetter == null) return;
+        if (startsWithLetter == null) { invHash = 0; return; }
         Container container = Minecraft.getMinecraft().thePlayer != null ? Minecraft.getMinecraft().thePlayer.openContainer : null;
-        if (!(container instanceof ContainerChest)) return;
+        if (!(container instanceof ContainerChest)) { invHash = 0; return; }
         int rows = Math.max(1, windowSize / 9);
+
+        // Use a mutable holder for hash accumulation inside lambda
+        final int[] hash = new int[]{1};
         Arrays.stream(TerminalGuiCommon.ALLOWED_SLOTS)
                 .filter(s -> s < rows * 9)
-                .mapToObj(s -> {
+                .forEach(s -> {
                     Slot slot = container.getSlot(s);
                     ItemStack stack = slot == null ? null : slot.getStack();
-                    if (stack == null || stack.hasEffect()) return null;
+                    int id = (stack == null) ? 0 : Item.getIdFromItem(stack.getItem());
+                    int meta = (stack == null) ? -1 : stack.getItemDamage();
+                    // hash
+                    hash[0] = 31 * hash[0] + id;
+                    hash[0] = 31 * hash[0] + meta;
+                    if (stack == null || stack.hasEffect()) return;
                     String name = EnumChatFormatting.getTextWithoutFormattingCodes(stack.getDisplayName());
-                    if (name == null) return null;
-                    return name.toLowerCase().startsWith(startsWithLetter) ? s : null;
-                })
-                .filter(Objects::nonNull)
-                .forEach(solution::add);
+                    if (name == null) return;
+                    if (name.toLowerCase().startsWith(startsWithLetter)) solution.add(s);
+                });
+        invHash = hash[0];
     }
 
     private static void processQueueIfReady() {
-        int[] first = TerminalGuiCommon.processQueueIfReady(queue, solution);
+        int[] first = TerminalGuiCommon.processQueueIfReady(queue, solution, CLICK);
         if (first != null) TerminalGuiCommon.doClickAndMark(first[0], first[1], CLICK);
     }
 }

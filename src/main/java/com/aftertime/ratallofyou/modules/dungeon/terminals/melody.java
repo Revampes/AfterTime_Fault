@@ -45,6 +45,10 @@ public class melody {
     private static int button = -1;
     private static int current = -1;
 
+    // Track inventory changes to promptly unlock after successful click
+    private static int invHash = 0;
+    private static int hashAtClick = 0;
+
     private static final Pattern TITLE_PATTERN = Pattern.compile("^Click the button on time!$");
 
     private static final int[] BUTTON_SLOTS = new int[]{16, 25, 34, 43};
@@ -73,6 +77,7 @@ public class melody {
         openedAt = 0L;
         windowSize = 0;
         correct = -1; button = -1; current = -1;
+        invHash = 0; hashAtClick = 0;
     }
 
     // ===================== Events =====================
@@ -114,7 +119,11 @@ public class melody {
         }
 
         event.setCanceled(true);
+        // Recompute from inventory and detect update to clear click lock promptly
         solveFromInventory();
+        if (CLICK.clicked && invHash != hashAtClick) {
+            CLICK.clicked = false;
+        }
         drawOverlay();
     }
 
@@ -153,8 +162,10 @@ public class melody {
         if (slot < 0) return;
 
         if (isButtonSlot(slot)) {
-            // Optional gating similar to other terminals
-            if (CLICK.clicked && !TerminalGuiCommon.Defaults.highPingMode && !TerminalGuiCommon.Defaults.phoenixClientCompat) return;
+            // Avoid overlapping sends: if a click is in-flight, let the inventory update unlock it
+            if (CLICK.clicked) return;
+            // Capture current inventory hash to detect the next server update
+            hashAtClick = invHash;
             TerminalGuiCommon.doClickAndMark(slot, 0, CLICK);
         }
     }
@@ -221,23 +232,28 @@ public class melody {
     private static void solveFromInventory() {
         correct = -1; button = -1; current = -1;
         Container container = Minecraft.getMinecraft().thePlayer != null ? Minecraft.getMinecraft().thePlayer.openContainer : null;
-        if (!(container instanceof ContainerChest)) return;
+        if (!(container instanceof ContainerChest)) { invHash = 0; return; }
 
-        // Find the active lime pane (meta 5) and the correct column marker (meta 2). Break early when both found.
+        // Compute a simple hash of the inventory state relevant to Melody to detect server updates quickly
+        int h = 1;
+        int size = Math.max(0, windowSize);
         int activeSlot = -1;
         int correctSlot = -1;
-        int size = Math.max(0, windowSize);
         for (int i = 0; i < size; i++) {
             Slot s = container.getSlot(i);
             ItemStack stack = s == null ? null : s.getStack();
-            if (stack == null || stack.hasEffect()) continue;
-            int id = Item.getIdFromItem(stack.getItem());
-            if (id != 160) continue; // stained glass pane only
-            int meta = stack.getItemDamage();
+            int id = (stack == null) ? 0 : Item.getIdFromItem(stack.getItem());
+            int meta = (stack == null) ? -1 : stack.getItemDamage();
+            // Hash every slot's id/meta lightly to reflect changes
+            h = 31 * h + id;
+            h = 31 * h + meta;
+            // Find the active lime pane (meta 5) and the correct column marker (meta 2)
+            if (stack == null || stack.hasEffect() || id != 160) continue;
             if (meta == 5) activeSlot = i;      // lime pane indicates moving note
             else if (meta == 2) correctSlot = i; // green pane indicates correct column marker (top row)
-            if (activeSlot != -1 && correctSlot != -1) break; // early exit
         }
+        invHash = h;
+
         if (activeSlot != -1) {
             int row = activeSlot / 9;
             int col = activeSlot % 9;

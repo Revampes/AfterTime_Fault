@@ -70,6 +70,8 @@ public class Main {
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
                 new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(), new startswith(),
                 new ChestOpenNotice(), new PosionArrow(), new WatcherClear(),
+                // Custom Leap Menu
+                new com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu(),
 
                 // Crate/building related
                 new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),

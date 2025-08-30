@@ -140,6 +140,8 @@ public class AllConfig {
             put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false));
             // New: Watcher Clear notification
             put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
+            // New: Custom Leap Menu
+            put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
 
             // SkyBlock
             put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
