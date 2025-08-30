@@ -276,6 +276,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
+            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -819,6 +820,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice":
             case "Hotbar Swap":
             case "Auto Fish":
+            case "Auto Experiment":
                 return true;
             default:
                 return false;
@@ -837,6 +839,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Fish": Add_SubSetting_AutoFish(y); break;
+            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -851,6 +854,13 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_AutoFish(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOFISH_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 10);
+        }
+    }
+
+    // New: Auto Experiment sub-settings (index 11 in AllConfig.ALLCONFIGS)
+    private void Add_SubSetting_AutoExperiment(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 11);
         }
     }
 

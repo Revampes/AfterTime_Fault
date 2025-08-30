@@ -4,7 +4,6 @@ import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
-import com.aftertime.ratallofyou.modules.dungeon.terminals.startswith;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLineUp;
@@ -37,6 +36,7 @@ import net.minecraftforge.client.ClientCommandHandler;
 import com.aftertime.ratallofyou.Command.OpenConfigGuiCommand;
 import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
 import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
+import com.aftertime.ratallofyou.modules.SkyBlock.AutoExperiment; // Register Auto Experiment
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -84,6 +84,8 @@ public class Main {
                 new FluxFlareTimer(), new StorageOverviewModule(),
                 // Register Auto Fish
                 new AutoFish(),
+                // Register Auto Experiment
+                new AutoExperiment(),
 
                 // Performance tweaks
                 new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(),

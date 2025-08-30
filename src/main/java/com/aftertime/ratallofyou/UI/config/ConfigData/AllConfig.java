@@ -124,6 +124,14 @@ public class AllConfig {
         put("autofish_hotkey", new BaseConfig<>("Toggle Hotkey", "Press a key to bind a toggle for Auto Fish (ESC to clear)", 0));
     }};
 
+    // New: Auto Experiment sub-settings
+    public final HashMap<String, BaseConfig<?>> AUTOEXPERIMENT_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("autoexperiment_delay_ms", new BaseConfig<>("Click Delay (ms)", "Delay between automated clicks", 120));
+        put("autoexperiment_auto_exit", new BaseConfig<>("Auto Exit", "Close GUI after enough rounds memorized", false));
+        put("autoexperiment_debug", new BaseConfig<>("Debug", "Print debug info in chat while solving", false));
+    }};
+
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
     {{
             // Kuudra
@@ -176,6 +184,8 @@ public class AllConfig {
             put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
             // New: Storage Overview overlay
             put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
+            // New: Auto Experiment
+            put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
 
             //Fishing
             // New: Auto Fish module
@@ -246,6 +256,7 @@ public class AllConfig {
         put(8, HOTBARSWAP_CONFIGS);
         put(9, STORAGEOVERVIEW_CONFIGS);
         put(10, AUTOFISH_CONFIGS);
+        put(11, AUTOEXPERIMENT_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

@@ -55,13 +55,16 @@ public abstract class Option<T> extends GuiElement {
         java.lang.reflect.Type targetType = cfgBase.type;
 
         Object newVal = Data;
-        // Coerce text inputs into the target primitive types
+        // Sanitize and coerce text inputs into the target primitive types
         try {
             if (targetType == Integer.class && !(Data instanceof Integer)) {
                 String s = String.valueOf(Data).trim();
+                // strip commas and spaces
+                s = s.replace(",", "").replace(" ", "");
                 if (!s.isEmpty()) newVal = Integer.parseInt(s);
             } else if (targetType == Float.class && !(Data instanceof Float)) {
                 String s = String.valueOf(Data).trim();
+                s = s.replace(",", "").replace(" ", "");
                 if (!s.isEmpty()) newVal = Float.parseFloat(s);
             } else if (targetType == Boolean.class && !(Data instanceof Boolean)) {
                 String s = String.valueOf(Data).trim();
@@ -77,6 +80,9 @@ public abstract class Option<T> extends GuiElement {
                 (com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<Object>) cfgBase;
         cfg.Data = newVal;
 
+        // Persist immediately to properties so other systems and restarts see the change
+        String compositeKey = ref.ConfigType + "," + ref.Key;
+        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SetConfig(compositeKey, newVal);
     }
 
 }
