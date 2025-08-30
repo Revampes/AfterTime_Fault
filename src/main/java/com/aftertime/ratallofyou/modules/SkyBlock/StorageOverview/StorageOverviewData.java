@@ -32,6 +32,9 @@ public class StorageOverviewData {
         public boolean IsEnderChest;
         public int StorageNum;
         public Slot[] contents;
+        // Added: favorite state and timestamp for sorting (newest first)
+        public boolean IsFavorite = false;
+        public long FavoriteTime = 0L;
         public Storage(boolean isEnderChest, int storageNum, Slot[] contents) {
             IsEnderChest = isEnderChest;
             StorageNum = storageNum;
@@ -77,6 +80,22 @@ public class StorageOverviewData {
 
         storages.get(storageIndex).contents = storageContents;
         saveStorages();
+    }
+
+    // Toggle or set favorite for a storage and persist
+    public void setFavorite(boolean isEnderChest, int storageNum, boolean favorite) {
+        int idx = findStorage(storageNum, isEnderChest);
+        if (idx >= 0) {
+            Storage s = storages.get(idx);
+            if (favorite && !s.IsFavorite) {
+                s.IsFavorite = true;
+                s.FavoriteTime = System.currentTimeMillis();
+            } else if (!favorite && s.IsFavorite) {
+                s.IsFavorite = false;
+                s.FavoriteTime = 0L;
+            }
+            saveStorages();
+        }
     }
 
     private boolean currentIsEnderChest;
@@ -126,6 +145,9 @@ public class StorageOverviewData {
                 NBTTagCompound storageTag = new NBTTagCompound();
                 storageTag.setBoolean("IsEnderChest", storage.IsEnderChest);
                 storageTag.setInteger("StorageNum", storage.StorageNum);
+                // Persist favorite state
+                storageTag.setBoolean("IsFavorite", storage.IsFavorite);
+                storageTag.setLong("FavoriteTime", storage.FavoriteTime);
 
                 NBTTagList itemsList = new NBTTagList();
                 for (int i = 9; i < storage.contents.length; i++) {
@@ -186,7 +208,11 @@ public class StorageOverviewData {
                                 contents[9 + j] = null;
                             }
                         }
-                        storages.add(new Storage(isEnderChest, storageNum, contents));
+                        Storage storage = new Storage(isEnderChest, storageNum, contents);
+                        // Restore favorites if present (backward compatible)
+                        if (storageTag.hasKey("IsFavorite")) storage.IsFavorite = storageTag.getBoolean("IsFavorite");
+                        if (storageTag.hasKey("FavoriteTime")) storage.FavoriteTime = storageTag.getLong("FavoriteTime");
+                        storages.add(storage);
                     }
                 }
             }
@@ -208,4 +234,3 @@ public class StorageOverviewData {
         @Override public boolean getHasStack() { return stack != null; }
     }
 }
-
