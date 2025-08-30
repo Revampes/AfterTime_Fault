@@ -104,6 +104,26 @@ public class AllConfig {
         put("kuudra_chest_tag", new BaseConfig<>("Chest Tag", "Text inside brackets for chest announcement", "IQ"));
     }};
 
+    // New: Auto Fish sub-settings
+    public final HashMap<String, BaseConfig<?>> AUTOFISH_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("autofish_sneak", new BaseConfig<>("Sneak while fishing", "Hold sneak while Auto Fish is enabled", false));
+        put("autofish_throw_hook", new BaseConfig<>("Throw if no hook", "Auto-throw rod when no hook is out", true));
+        put("autofish_throw_cooldown_s", new BaseConfig<>("Throw cooldown (s)", "Minimum seconds between auto throws", 2));
+        put("autofish_rethrow", new BaseConfig<>("Rethrow on timeout", "Reel and re-throw if hook is out too long", true));
+        put("autofish_rethrow_cooldown_s", new BaseConfig<>("Rethrow timeout (s)", "Seconds before rethrowing the hook", 25));
+        put("autofish_slug_mode", new BaseConfig<>("Slug mode", "Ignore splash sounds; rely on timeout only", false));
+        put("autofish_message", new BaseConfig<>("Messages", "Show status messages in chat", false));
+        put("autofish_timer", new BaseConfig<>("Show timer", "Show on-screen hook timer", true));
+        put("autofish_timer_x", new BaseConfig<>("Timer X", "X position for timer text", 5));
+        put("autofish_timer_y", new BaseConfig<>("Timer Y", "Y position for timer text", 5));
+        // New: AutoShift settings
+        put("autofish_autoshift", new BaseConfig<>("AutoShift", "Periodically tap shift while fishing", false));
+        put("autofish_autoshift_interval_s", new BaseConfig<>("AutoShift Interval (s)", "Average seconds between shift taps (±3s random)", 15));
+        // New: Toggle Hotkey
+        put("autofish_hotkey", new BaseConfig<>("Toggle Hotkey", "Press a key to bind a toggle for Auto Fish (ESC to clear)", 0));
+    }};
+
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
     {{
             // Kuudra
@@ -156,6 +176,10 @@ public class AllConfig {
             put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
             // New: Storage Overview overlay
             put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
+
+            //Fishing
+            // New: Auto Fish module
+            put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
 
             // Render
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
@@ -221,6 +245,7 @@ public class AllConfig {
         put(7, KUUDRA_CHESTOPEN_CONFIGS);
         put(8, HOTBARSWAP_CONFIGS);
         put(9, STORAGEOVERVIEW_CONFIGS);
+        put(10, AUTOFISH_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()
@@ -230,6 +255,7 @@ public class AllConfig {
         add("SkyBlock");
         add("Render");
         add("Performance");
+        add("Fishing");
         add("GUI");
     }};
 

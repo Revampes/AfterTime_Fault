@@ -36,6 +36,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.FluxFlareTimer;
 import net.minecraftforge.client.ClientCommandHandler;
 import com.aftertime.ratallofyou.Command.OpenConfigGuiCommand;
 import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
+import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -68,7 +69,7 @@ public class Main {
 
                 // Dungeon helpers
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
-                new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(), new startswith(),
+                new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(),
                 new ChestOpenNotice(), new PosionArrow(), new WatcherClear(),
                 // Custom Leap Menu
                 new com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu(),
@@ -81,6 +82,8 @@ public class Main {
                 new AutoSprint(), new PartyUtils(), new ChatCommands(), new Fullbright(), new EtherwarpOverlay(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
                 new FluxFlareTimer(), new StorageOverviewModule(),
+                // Register Auto Fish
+                new AutoFish(),
 
                 // Performance tweaks
                 new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(),

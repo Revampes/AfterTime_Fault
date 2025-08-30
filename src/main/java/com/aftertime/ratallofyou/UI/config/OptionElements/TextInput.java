@@ -22,6 +22,12 @@ public class TextInput extends Option<String> {
         this.allowSpaces = allowSpaces;
     }
 
+    // New: allow external code to update the visible text without triggering parsing or persistence
+    public void setDisplayText(String text) {
+        this.Data = text == null ? "" : text;
+        // do not call OnValueChange() here; this is for UI display only
+    }
+
     @Override
     public void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
         Gui.drawRect(x, yPos, x + width, yPos + height, Colors.INPUT_BG);

@@ -190,6 +190,10 @@ public class ModSettingsGui extends GuiScreen {
         if (showCommandSettings && optionsInline && SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
             handleHotbarSwapTyping(typedChar, keyCode); return;
         }
+        // New: Auto Fish inline typing (capture hotkey value)
+        if (showCommandSettings && optionsInline && SelectedModule != null && "Auto Fish".equals(SelectedModule.name)) {
+            handleAutoFishTyping(typedChar, keyCode); return;
+        }
         handleAllInputTyping(typedChar, keyCode);
     }
 
@@ -279,6 +283,11 @@ public class ModSettingsGui extends GuiScreen {
         if (useSidePanelForSelected) {
             commandScroll.update(contentHeight, panelViewHeight); commandScroll.updateScrollbarPosition(guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH - Dimensions.SCROLLBAR_WIDTH - 2, guiTop + Dimensions.COMMAND_PANEL_Y + 25, panelViewHeight);
         }
+    }
+
+    // Helper: Title for command panel
+    private String getCommandPanelTitle() {
+        return SelectedModule == null ? "" : ("Settings - " + SelectedModule.name);
     }
 
     // Inline settings helpers
@@ -672,6 +681,42 @@ public class ModSettingsGui extends GuiScreen {
         hotbarPanel.handleTyping(typedChar, keyCode);
     }
 
+    // New: Auto Fish typing handler to capture Toggle Hotkey
+    private void handleAutoFishTyping(char typedChar, int keyCode) {
+        // Find the hotkey input
+        LabelledInput hotkeyInput = null;
+        for (LabelledInput li : labelledInputs) {
+            if (li.ref != null && li.ref.ConfigType == 10 && "autofish_hotkey".equals(li.ref.Key)) { hotkeyInput = li; break; }
+        }
+        if (hotkeyInput != null && hotkeyInput.isEditing) {
+            if (keyCode == Keyboard.KEY_ESCAPE) {
+                // Clear binding
+                hotkeyInput.setDisplayText("Unbound");
+                BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_hotkey");
+                if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = 0; }
+                ConfigIO.INSTANCE.SetConfig("10,autofish_hotkey", 0);
+                hotkeyInput.isEditing = false;
+                return;
+            }
+            if (keyCode > 0) {
+                String name = Keyboard.getKeyName(keyCode);
+                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
+                    hotkeyInput.setDisplayText(name);
+                    BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_hotkey");
+                    if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = keyCode; }
+                    ConfigIO.INSTANCE.SetConfig("10,autofish_hotkey", keyCode);
+                    hotkeyInput.isEditing = false;
+                    return;
+                }
+                // invalid key -> ignore until a valid one pressed
+                return;
+            }
+            return;
+        }
+        // Not editing hotkey -> route to default input handling
+        handleAllInputTyping(typedChar, keyCode);
+    }
+
     private void unfocusAllFastInputs() {
         for (FastRow r : fastRows) { r.labelInput.isEditing = false; r.commandInput.isEditing = false; }
         if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
@@ -773,6 +818,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Fast Hotkey":
             case "Chest Open Notice":
             case "Hotbar Swap":
+            case "Auto Fish":
                 return true;
             default:
                 return false;
@@ -790,6 +836,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
+            case "Auto Fish": Add_SubSetting_AutoFish(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -800,29 +847,31 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private String getCommandPanelTitle() { return SelectedModule == null ? "" : ("Settings - " + SelectedModule.name); }
-
-    private void drawCommandPanelContent(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
-        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(); glEnable(GL_SCISSOR_TEST);
-        glScissor(panelX * scale, (height - (panelY + panelHeight)) * scale, panelWidth * scale, (panelHeight - 25) * scale);
-        int y = panelY + 30 - commandScroll.getOffset();
-        for (Toggle t : Toggles) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
-        for (LabelledInput t : labelledInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += t.getVerticalSpace(); }
-        for (ColorInput t : ColorInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 50; }
-        for (MethodDropdown t : methodDropdowns) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
-        glDisable(GL_SCISSOR_TEST);
-        int contentHeight = Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
-        int viewH = panelHeight - 25; commandScroll.update(contentHeight, viewH); commandScroll.updateScrollbarPosition(panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, viewH);
+    // New: Auto Fish sub-settings (index 10 in AllConfig.ALLCONFIGS)
+    private void Add_SubSetting_AutoFish(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOFISH_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 10);
+        }
     }
 
-    // Builders for option elements
     private void AddEntryAsOption(Map.Entry<String, BaseConfig<?>> entry, Integer y, int ConfigType) {
         PropertyRef ref = new PropertyRef(ConfigType, entry.getKey()); Type type = entry.getValue().type; Object data = entry.getValue().Data;
         int xPos, width; if (optionsInline && !useSidePanelForSelected) { int listX = guiLeft + 120; int listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH; int boxX = listX + 4; int boxW = listW - 8; int padding = 6; xPos = boxX + padding; width = (listW - 8) - padding * 2; } else { xPos = guiLeft + Dimensions.COMMAND_PANEL_X + 5; width = Dimensions.COMMAND_PANEL_WIDTH - 10; }
-        boolean isVerticalAbove = (ConfigType == 4 || ConfigType == 6);
+        // Titles above inputs for Terminal, FastHotkey, and Auto Fish
+        boolean isVerticalAbove = (ConfigType == 4 || ConfigType == 6 || ConfigType == 10);
         if (type.equals(String.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
         else if (type.equals(Boolean.class)) Toggles.add(new Toggle(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16));
-        else if (type.equals(Integer.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
+        else if (type.equals(Integer.class)) {
+            String display = String.valueOf(data);
+            // Special-case: show key name for Auto Fish hotkey input
+            if (ConfigType == 10 && "autofish_hotkey".equals(entry.getKey())) {
+                int code = 0; try { code = (data instanceof Integer) ? (Integer) data : Integer.parseInt(String.valueOf(data)); } catch (Exception ignored) {}
+                String name = (code <= 0) ? "Unbound" : Keyboard.getKeyName(code);
+                if (name == null || name.trim().isEmpty() || "NONE".equalsIgnoreCase(name)) name = "Unbound";
+                display = name;
+            }
+            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, display, xPos, y, width, 16, isVerticalAbove));
+        }
         else if (type.equals(Float.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
         else if (type.equals(DataType_DropDown.class)) { DataType_DropDown dd = (DataType_DropDown) data; methodDropdowns.add(new MethodDropdown(ref, entry.getValue().name, dd.selectedIndex, xPos, y, width, 16, dd.options)); }
         else if (type.equals(Color.class)) ColorInputs.add(new ColorInput(ref, entry.getValue().name, (Color) data, xPos, y, width, 18));
