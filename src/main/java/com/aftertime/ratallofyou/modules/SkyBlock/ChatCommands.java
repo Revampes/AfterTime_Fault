@@ -120,77 +120,122 @@ public class ChatCommands {
                 if (disband && PartyUtils.isLeader()) availableCommands.add("disband");
                 if (ptandwarp) availableCommands.add("ptandwarp");
 
-                partyMessage("Available commands: " + join(availableCommands, ", "));
+                runWithSelfDelay(sender, new Runnable() {
+                    @Override
+                    public void run() {
+                        partyMessage("Available commands: " + join(availableCommands, ", "));
+                    }
+                });
                 break;
 
             case "coords":
             case "co":
                 if (coords) {
-                    partyMessage(getPositionString());
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            partyMessage(getPositionString());
+                        }
+                    });
                 }
                 break;
 
             case "boop":
                 if (boop && args != null) {
-                    sendCommand("boop " + args);
+                    final String finalArgsBoop = args;
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("boop " + finalArgsBoop);
+                        }
+                    });
                 }
                 break;
 
             case "cf":
                 if (cf) {
-                    partyMessage(Math.random() < 0.5 ? "heads" : "tails");
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            partyMessage(Math.random() < 0.5 ? "heads" : "tails");
+                        }
+                    });
                 }
                 break;
 
             case "8ball":
                 if (eightball) {
-                    partyMessage(getRandomResponse());
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            partyMessage(getRandomResponse());
+                        }
+                    });
                 }
                 break;
 
             case "dice":
                 if (dice) {
-                    partyMessage(String.valueOf(new Random().nextInt(6) + 1));
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            partyMessage(String.valueOf(new Random().nextInt(6) + 1));
+                        }
+                    });
                 }
                 break;
 
             case "tps":
                 if (tps) {
-                    partyMessage("TPS: " + String.format("%.1f", getAverageTps()));
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            partyMessage("TPS: " + String.format("%.1f", getAverageTps()));
+                        }
+                    });
                 }
                 break;
 
             case "warp":
             case "w":
                 if (warp && PartyUtils.isLeader()) {
-                    new Timer().schedule(new TimerTask() {
+                    runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
-                            if (mc != null && mc.thePlayer != null) {
-                                sendCommand("p warp");
-                            }
+                            sendCommand("p warp");
                         }
-                    }, 1000); // 1s delay before warp
+                    });
                 }
+                break; // prevent fall-through into warptransfer
 
             case "warptransfer":
             case "wt":
                 if (warptransfer && PartyUtils.isLeader()) {
-                    sendCommand("p warp");
-                    final String finalSender = sender;
-                    new Timer().schedule(new TimerTask() {
+                    final String finalSenderWT = sender;
+                    runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
-                            sendCommand("p transfer " + finalSender);
+                            sendCommand("p warp");
+                            new Timer().schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    sendCommand("p transfer " + finalSenderWT);
+                                }
+                            }, 12000);
                         }
-                    }, 12000);
+                    });
                 }
                 break;
 
             case "allinvite":
             case "allinv":
                 if (allinvite && PartyUtils.isLeader()) {
-                    sendCommand("p settings allinvite");
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("p settings allinvite");
+                        }
+                    });
                 }
                 break;
 
@@ -200,42 +245,59 @@ public class ChatCommands {
                 if (pt && PartyUtils.isLeader()) {
                     String target = args != null ? findPartyMember(args) : sender;
                     if (target == null) target = sender;
-                    sendCommand("p transfer " + target);
+                    final String finalTargetPt = target;
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("p transfer " + finalTargetPt);
+                        }
+                    });
                 }
                 break;
 
             case "downtime":
             case "dt":
                 if (dt) {
-                    String reason = args != null ? args : "No reason given";
-                    for (Pair pair : dtReason) {
-                        if (pair.getFirst().equals(sender)) {
-                            modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " already has a reminder!");
-                            return;
+                    final String finalArgsDt = args;
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            String reason = finalArgsDt != null ? finalArgsDt : "No reason given";
+                            for (Pair pair : dtReason) {
+                                if (pair.getFirst().equals(sender)) {
+                                    modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " already has a reminder!");
+                                    return;
+                                }
+                            }
+                            modMessage(EnumChatFormatting.GREEN + "Reminder set for the end of the run!");
+                            dtReason.add(new Pair(sender, reason));
                         }
-                    }
-                    modMessage(EnumChatFormatting.GREEN + "Reminder set for the end of the run!");
-                    dtReason.add(new Pair(sender, reason));
+                    });
                 }
                 break;
 
             case "undowntime":
             case "undt":
                 if (dt) {
-                    boolean removed = false;
-                    Iterator<Pair> iterator = dtReason.iterator();
-                    while (iterator.hasNext()) {
-                        Pair pair = iterator.next();
-                        if (pair.getFirst().equals(sender)) {
-                            iterator.remove();
-                            removed = true;
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            boolean removed = false;
+                            Iterator<Pair> iterator = dtReason.iterator();
+                            while (iterator.hasNext()) {
+                                Pair pair = iterator.next();
+                                if (pair.getFirst().equals(sender)) {
+                                    iterator.remove();
+                                    removed = true;
+                                }
+                            }
+                            if (removed) {
+                                modMessage(EnumChatFormatting.GREEN + "Reminder removed!");
+                            } else {
+                                modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " has no reminder set!");
+                            }
                         }
-                    }
-                    if (removed) {
-                        modMessage(EnumChatFormatting.GREEN + "Reminder removed!");
-                    } else {
-                        modMessage(EnumChatFormatting.GOLD + sender + EnumChatFormatting.RED + " has no reminder set!");
-                    }
+                    });
                 }
                 break;
 
@@ -243,7 +305,13 @@ public class ChatCommands {
                 if (demote && PartyUtils.isLeader() && args != null) {
                     String target = findPartyMember(args);
                     if (target != null) {
-                        sendCommand("p demote " + target);
+                        final String finalTargetDemote = target;
+                        runWithSelfDelay(sender, new Runnable() {
+                            @Override
+                            public void run() {
+                                sendCommand("p demote " + finalTargetDemote);
+                            }
+                        });
                     }
                 }
                 break;
@@ -252,14 +320,25 @@ public class ChatCommands {
                 if (promote && PartyUtils.isLeader() && args != null) {
                     String target = findPartyMember(args);
                     if (target != null) {
-                        sendCommand("p promote " + target);
+                        final String finalTargetPromote = target;
+                        runWithSelfDelay(sender, new Runnable() {
+                            @Override
+                            public void run() {
+                                sendCommand("p promote " + finalTargetPromote);
+                            }
+                        });
                     }
                 }
                 break;
 
             case "disband":
                 if (disband && PartyUtils.isLeader()) {
-                    sendCommand("p disband");
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("p disband");
+                        }
+                    });
                 }
                 break;
 
@@ -275,20 +354,15 @@ public class ChatCommands {
                     return;
                 }
 
-                // Create final copy of args for use in inner class
-                final String finalArgs = args;
-
-                // 1-second cooldown before processing
-                new Timer().schedule(new TimerTask() {
+                final String finalArgsPtw = args;
+                Runnable processPtw = new Runnable() {
                     @Override
                     public void run() {
-                        if (finalArgs != null) {
-                            // Case with args - convert everything to lowercase
-                            String targetInput = finalArgs.toLowerCase();
+                        if (finalArgsPtw != null) {
+                            String targetInput = finalArgsPtw.toLowerCase();
                             String myName = mc.thePlayer.getName().toLowerCase();
 
                             if (targetInput.equals(myName)) {
-                                // If args matches my username
                                 partyMessage("!ptme");
 
                                 new Timer().schedule(new TimerTask() {
@@ -298,9 +372,8 @@ public class ChatCommands {
                                             sendCommand("p warp");
                                         }
                                     }
-                                }, 2000); // Additional 2s delay for warp
+                                }, 2000);
                             } else {
-                                // Check if target exists in party (null-safe)
                                 List<String> partyMembers = PartyUtils.getPartyMembers();
                                 String foundMember = null;
 
@@ -315,7 +388,6 @@ public class ChatCommands {
                                 }
 
                                 if (foundMember != null && PartyUtils.isLeader()) {
-                                    // Transfer to target and request warp
                                     sendCommand("p transfer " + foundMember);
 
                                     new Timer().schedule(new TimerTask() {
@@ -325,19 +397,20 @@ public class ChatCommands {
                                                 partyMessage("!warp");
                                             }
                                         }
-                                    }, 2000); // Additional 2s delay for warp request
+                                    }, 2000);
                                 } else if (foundMember == null) {
-                                    partyMessage("Player not found in party: " + finalArgs);
+                                    partyMessage("Player not found in party: " + finalArgsPtw);
                                 }
                             }
                         } else {
-                            // Case without args - just warp if I'm leader
                             if (PartyUtils.isLeader()) {
                                 sendCommand("p warp");
                             }
                         }
                     }
-                }, 1000); // Initial 1-second cooldown
+                };
+
+                runWithSelfDelay(sender, processPtw);
                 break;
 
             default:
@@ -358,7 +431,13 @@ public class ChatCommands {
                             dungeonCommand = "joindungeon catacombs_floor_" + floorWord;
                         }
 
-                        sendCommand(dungeonCommand);
+                        final String finalDungeonCommand = dungeonCommand;
+                        runWithSelfDelay(sender, new Runnable() {
+                            @Override
+                            public void run() {
+                                sendCommand(finalDungeonCommand);
+                            }
+                        });
                     }
                 } else if (command.matches("^t[1-5]$")) {
                     if (queInstance && PartyUtils.isLeader()) {
@@ -371,7 +450,13 @@ public class ChatCommands {
                         };
 
                         int tierIndex = Integer.parseInt(command.substring(1)) - 1;
-                        sendCommand("joininstance " + kuudraTiers[tierIndex]);
+                        final String finalJoinInstance = "joininstance " + kuudraTiers[tierIndex];
+                        runWithSelfDelay(sender, new Runnable() {
+                            @Override
+                            public void run() {
+                                sendCommand(finalJoinInstance);
+                            }
+                        });
                     }
                 }
                 break;
@@ -493,6 +578,24 @@ public class ChatCommands {
             return false;
         } else {
             return true;
+        }
+    }
+
+    // Add helpers to conditionally delay when the sender is the local player
+    private boolean isSelf(String sender) {
+        return mc != null && mc.thePlayer != null && sender != null && sender.equalsIgnoreCase(mc.thePlayer.getName());
+    }
+
+    private void runWithSelfDelay(String sender, Runnable action) {
+        if (isSelf(sender)) {
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    action.run();
+                }
+            }, 1000);
+        } else {
+            action.run();
         }
     }
 }
