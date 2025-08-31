@@ -158,7 +158,7 @@ public class AllConfig {
             put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
             put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
             put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
-            put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
+            put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks (not working)", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
             put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
             put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
 
@@ -173,7 +173,7 @@ public class AllConfig {
             put("dungeons_secretclicks",new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false));
             put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false));
             put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
-            put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
+            put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
 
             // SkyBlock
             put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
@@ -184,7 +184,7 @@ public class AllConfig {
             put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
             put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
             put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
-            put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
+            put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment (not working)", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
 
             //Fishing
             put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));

@@ -12,7 +12,9 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
@@ -107,7 +109,10 @@ public class SearchBar {
     }
 
     private boolean isInventoryGui(GuiScreen gui) {
-        return gui instanceof GuiContainer;
+        // Restrict search bar to chest-type containers only
+        if (!(gui instanceof GuiContainer)) return false;
+        if (gui instanceof GuiChest) return true;
+        return mc != null && mc.thePlayer != null && (mc.thePlayer.openContainer instanceof ContainerChest);
     }
 
     private void recalcHighlights() {
@@ -115,6 +120,8 @@ public class SearchBar {
         darken.clear();
         if (mc.thePlayer == null) return;
         if (!(mc.currentScreen instanceof GuiContainer)) return;
+        // Only operate on chest containers
+        if (!(mc.thePlayer.openContainer instanceof ContainerChest)) return;
         String text = textField != null ? textField.getText() : "";
         if (text == null || text.isEmpty()) return;
 

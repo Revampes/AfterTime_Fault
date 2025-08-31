@@ -42,6 +42,7 @@ public class LeapMenu {
     private int innerRadius = 70;
     private int outerRadius = 180;
     private static final float GAP_PX = 6f;
+    private static final double ANGLE_OFFSET = Math.PI / 4; // rotate so X lines are the separators
 
     private static final Pattern MC_USERNAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
 
@@ -80,24 +81,24 @@ public class LeapMenu {
 
         int w = e.gui.width, h = e.gui.height;
         centerX = w / 2; centerY = h / 2;
-        // Make UI bigger for fewer targets (expand radii a bit)
-        int count = Math.max(orderedNames.size(), 1);
+        // Fixed 4-slot layout
+        int count = 4;
         innerRadius = 70;
-        outerRadius = (count <= 4 ? 200 : 180);
+        outerRadius = 200;
 
         // Dim background
         Gui.drawRect(0, 0, w, h, 0xB0000000);
 
-        // Draw ring sectors
-        drawRingSectors(e.mouseX, e.mouseY, orderedNames.size());
+        // Draw ring sectors (always 4 slots)
+        drawRingSectors(e.mouseX, e.mouseY, count);
 
         // Header
         FontRenderer fr = mc.fontRendererObj;
         String header = "Spirit Leap";
         fr.drawString(header, centerX - fr.getStringWidth(header) / 2, centerY - outerRadius - 18, 0xFFFFFF, false);
 
-        // Footer hint
-        String hint = orderedNames.isEmpty() ? "No targets" : ("Left click or press 1-" + Math.min(9, orderedNames.size()));
+        // Footer hint (limit to 1-4)
+        String hint = orderedNames.isEmpty() ? "No targets" : ("Left click or press 1-" + Math.min(4, orderedNames.size()));
         fr.drawString(hint, centerX - fr.getStringWidth(hint) / 2, centerY + outerRadius + 6, 0xAAAAAA, false);
     }
 
@@ -109,7 +110,7 @@ public class LeapMenu {
         if (btn != 0 && btn != 1) return;
         int mx = Mouse.getEventX() * e.gui.width / mc.displayWidth;
         int my = e.gui.height - Mouse.getEventY() * e.gui.height / mc.displayHeight - 1;
-        int idx = getHoveredRegion(mx, my, orderedNames.size());
+        int idx = getHoveredRegion(mx, my, 4); // fixed 4 regions
         if (idx >= 0 && idx < orderedNames.size()) {
             String name = orderedNames.get(idx);
             Integer slot = nameToSlot.get(name);
@@ -123,7 +124,8 @@ public class LeapMenu {
         if (!isActive()) return;
         if (!Keyboard.getEventKeyState()) return;
         int key = Keyboard.getEventKey();
-        if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_9) {
+        // Limit to keys 1..4 only
+        if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_4) {
             int idx = key - Keyboard.KEY_1;
             if (idx < orderedNames.size()) {
                 String name = orderedNames.get(idx);
@@ -149,8 +151,8 @@ public class LeapMenu {
         GlStateManager.disableCull();
 
         for (int i = 0; i < count; i++) {
-            double start = i * sector;
-            double end = (i + 1) * sector;
+            double start = ANGLE_OFFSET + i * sector;
+            double end = ANGLE_OFFSET + (i + 1) * sector;
             double iStart = start + gapAngleInner * 0.5;
             double iEnd = end - gapAngleInner * 0.5;
             double oStart = start + gapAngleOuter * 0.5;
@@ -185,13 +187,28 @@ public class LeapMenu {
             double mid = (start + end) * 0.5;
             int rx = (int) (centerX + Math.cos(mid) * (innerRadius + (outerRadius - innerRadius) * 0.65));
             int ry = (int) (centerY + Math.sin(mid) * (innerRadius + (outerRadius - innerRadius) * 0.65));
-            String label = formatLabel(orderedNames.get(i));
+            String label = (i < orderedNames.size()) ? formatLabel(orderedNames.get(i)) : "";
             FontRenderer fr = mc.fontRendererObj;
             GlStateManager.enableTexture2D();
             GL11.glColor4f(1f, 1f, 1f, 1f);
-            fr.drawString((i + 1) + ". " + label, rx - fr.getStringWidth((i + 1) + ". " + label) / 2, ry - fr.FONT_HEIGHT / 2, 0xFFFFFF, false);
+            if (!label.isEmpty()) {
+                fr.drawString((i + 1) + ". " + label, rx - fr.getStringWidth((i + 1) + ". " + label) / 2, ry - fr.FONT_HEIGHT / 2, 0xFFFFFF, false);
+            } else {
+                String idxStr = String.valueOf(i + 1);
+                fr.drawString(idxStr, rx - fr.getStringWidth(idxStr) / 2, ry - fr.FONT_HEIGHT / 2, 0x666666, false);
+            }
             GlStateManager.disableTexture2D();
         }
+
+        // Draw X separator lines across the ring (at 45° and 135°)
+        GL11.glLineWidth(2.5f);
+        GL11.glColor4f(1f, 1f, 1f, 0.5f);
+        GL11.glBegin(GL11.GL_LINES);
+        drawRadialLine(Math.PI / 4);           // 45°
+        drawRadialLine(Math.PI / 4 + Math.PI); // 225°
+        drawRadialLine(3 * Math.PI / 4);       // 135°
+        drawRadialLine(3 * Math.PI / 4 + Math.PI); // 315°
+        GL11.glEnd();
 
         // Outlines
         GL11.glLineWidth(2f);
@@ -218,6 +235,15 @@ public class LeapMenu {
         GlStateManager.popMatrix();
     }
 
+    private void drawRadialLine(double angle) {
+        float ix = (float) (centerX + Math.cos(angle) * innerRadius);
+        float iy = (float) (centerY + Math.sin(angle) * innerRadius);
+        float ox = (float) (centerX + Math.cos(angle) * outerRadius);
+        float oy = (float) (centerY + Math.sin(angle) * outerRadius);
+        GL11.glVertex2f(ix, iy);
+        GL11.glVertex2f(ox, oy);
+    }
+
     private int getHoveredRegion(int mouseX, int mouseY, int count) {
         if (count <= 0) return -1;
         double dx = mouseX - centerX;
@@ -225,6 +251,9 @@ public class LeapMenu {
         double dist = Math.hypot(dx, dy);
         if (dist < innerRadius || dist > outerRadius) return -1;
         double ang = Math.atan2(dy, dx);
+        if (ang < 0) ang += Math.PI * 2.0;
+        // rotate so separators align with X lines
+        ang -= ANGLE_OFFSET;
         if (ang < 0) ang += Math.PI * 2.0;
         double sector = (Math.PI * 2.0) / count;
         int idx = (int) Math.floor(ang / sector);
@@ -301,7 +330,7 @@ public class LeapMenu {
             if (mapped != null && !nameToSlot.containsKey(mapped)) {
                 nameToSlot.put(mapped, i);
                 // Prefer sidebar class, then PartyUtils, then lore
-                String cls = classesFromSidebar.get(mapped);
+                String cls = classesFromSidebar.get(mapped.toLowerCase(Locale.ENGLISH));
                 if (cls == null) cls = PartyUtils.getClassLetter(mapped);
                 if (cls == null) cls = extractClassFromItem(st);
                 if (cls != null) nameToClass.put(mapped, cls);
@@ -333,16 +362,19 @@ public class LeapMenu {
             if (lines == null) return;
             for (String raw : lines) {
                 String line = net.minecraft.util.StringUtils.stripControlCodes(raw).trim();
-                // Expect like: [A] PlayerName
+                // Expect like: [A] PlayerName 21,189 ❤ — take the first token after ']'
                 if (line.length() < 4 || line.charAt(0) != '[') continue;
                 int rb = line.indexOf(']');
                 if (rb <= 1 || rb + 1 >= line.length()) continue;
                 char clsChar = Character.toUpperCase(line.charAt(1));
                 if ("HMTAB".indexOf(clsChar) == -1) continue;
-                String name = line.substring(rb + 1).trim();
-                // Only accept valid usernames
+                String after = line.substring(rb + 1).trim();
+                if (after.isEmpty()) continue;
+                String[] parts = after.split("\\s+");
+                if (parts.length == 0) continue;
+                String name = parts[0].trim();
                 if (MC_USERNAME.matcher(name).matches()) {
-                    classesFromSidebar.put(name, String.valueOf(clsChar));
+                    classesFromSidebar.put(name.toLowerCase(Locale.ENGLISH), String.valueOf(clsChar));
                 }
             }
         } catch (Throwable ignored) {}
