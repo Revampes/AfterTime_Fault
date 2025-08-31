@@ -278,6 +278,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
+            case "Player ESP": Add_SubSetting_PlayerESP(y); break; // New
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -823,6 +824,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Auto Fish":
             case "Auto Experiment":
             case "NameTag": // New: expose NameTag settings
+            case "Player ESP": // New: expose Player ESP settings
                 return true;
             default:
                 return false;
@@ -843,6 +845,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Auto Fish": Add_SubSetting_AutoFish(y); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
+            case "Player ESP": Add_SubSetting_PlayerESP(y); break; // New
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -857,6 +860,13 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_NameTag(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.NAMETAG_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 13);
+        }
+    }
+
+    // New: Player ESP sub-settings (index 12 in AllConfig.ALLCONFIGS)
+    private void Add_SubSetting_PlayerESP(Integer y) {
+        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.PLAYERESP_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 12);
         }
     }
 

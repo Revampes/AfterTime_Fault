@@ -28,20 +28,32 @@ public class Utils {
     public static List<String> getSidebarLines() {
         List<String> lines = new ArrayList<String>();
         try {
-            Scoreboard scoreboard = Minecraft.getMinecraft().theWorld.getScoreboard();
+            // Guard against menu screen or no world loaded
+            Minecraft mc = Minecraft.getMinecraft();
+            if (mc == null) return lines;
+            World world = mc.theWorld;
+            if (world == null) return lines;
+
+            Scoreboard scoreboard = world.getScoreboard();
             if (scoreboard == null) return lines;
 
             ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1); // 1 is sidebar slot
             if (objective == null) return lines;
 
             Collection<Score> scores = scoreboard.getSortedScores(objective);
+            if (scores == null || scores.isEmpty()) return lines;
+
             for (Score score : scores) {
-                ScorePlayerTeam team = scoreboard.getPlayersTeam(score.getPlayerName());
-                String line = ScorePlayerTeam.formatPlayerName(team, score.getPlayerName());
-                lines.add(line);
+                if (score == null) continue;
+                String playerName = score.getPlayerName();
+                if (playerName == null) continue;
+                ScorePlayerTeam team = scoreboard.getPlayersTeam(playerName);
+                String line = ScorePlayerTeam.formatPlayerName(team, playerName);
+                if (line != null) lines.add(line);
             }
         } catch (Exception e) {
-            LOGGER.error("Error getting sidebar lines: {}", e.toString());
+            // Swallow occasional scoreboard issues quietly; return whatever we have
+            LOGGER.debug("Sidebar read skipped: {}", e.toString());
         }
         return lines;
     }

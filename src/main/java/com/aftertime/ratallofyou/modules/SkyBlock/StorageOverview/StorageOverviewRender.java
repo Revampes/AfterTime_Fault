@@ -363,21 +363,25 @@ public class StorageOverviewRender {
         }
     }
 
+    // Use a named static comparator to avoid anonymous inner class ($1) runtime issues
+    private static final Comparator<StorageOverviewData.Storage> STORAGE_COMPARATOR = new StorageComparator();
+    private static final class StorageComparator implements Comparator<StorageOverviewData.Storage> {
+        @Override
+        public int compare(StorageOverviewData.Storage a, StorageOverviewData.Storage b) {
+            boolean af = a.IsFavorite, bf = b.IsFavorite;
+            if (af != bf) return af ? -1 : 1; // favorites first
+            if (af) {
+                // Newest favorites first
+                if (a.FavoriteTime != b.FavoriteTime) return Long.compare(b.FavoriteTime, a.FavoriteTime);
+            }
+            // Non-favorites sorted by page number asc
+            return Integer.compare(a.StorageNum, b.StorageNum);
+        }
+    }
+
     private List<StorageOverviewData.Storage> sortForColumn(List<StorageOverviewData.Storage> list) {
         List<StorageOverviewData.Storage> copy = new ArrayList<StorageOverviewData.Storage>(list);
-        Collections.sort(copy, new Comparator<StorageOverviewData.Storage>() {
-            @Override
-            public int compare(StorageOverviewData.Storage a, StorageOverviewData.Storage b) {
-                boolean af = a.IsFavorite, bf = b.IsFavorite;
-                if (af != bf) return af ? -1 : 1; // favorites first
-                if (af) {
-                    // Newest favorites first
-                    if (a.FavoriteTime != b.FavoriteTime) return Long.compare(b.FavoriteTime, a.FavoriteTime);
-                }
-                // Non-favorites sorted by page number asc
-                return Integer.compare(a.StorageNum, b.StorageNum);
-            }
-        });
+        Collections.sort(copy, STORAGE_COMPARATOR);
         return copy;
     }
 

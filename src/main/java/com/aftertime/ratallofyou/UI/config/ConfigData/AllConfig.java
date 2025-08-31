@@ -128,12 +128,16 @@ public class AllConfig {
     {{
         put("playeresp_mode", new BaseConfig<>("Mode", "ESP render mode", new DataType_DropDown(0, new String[]{"Wireframe", "Filled"})));
         put("playeresp_color", new BaseConfig<>("Color", "ESP color (RGBA)", new Color(0, 255, 255, 200)));
+        // New toggle: only render ESP for party members
+        put("playeresp_only_party", new BaseConfig<>("Only Party Members", "Render ESP only for current party members", false));
     }};
 
     // New: NameTag sub-settings
     public final HashMap<String, BaseConfig<?>> NAMETAG_CONFIGS = new HashMap<String, BaseConfig<?>>()
     {{
         put("nametag_scale", new BaseConfig<>("NameTag Scale", "On-screen size scale for player name tags", 0.002f));
+        // New toggle: only render name tags for party members
+        put("nametag_only_party", new BaseConfig<>("Only Party Members", "Render name tag only for current party members", false));
     }};
 
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()

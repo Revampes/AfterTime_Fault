@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.modules.render;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
+import com.aftertime.ratallofyou.utils.PartyUtils; // New: party filter
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -45,6 +46,24 @@ public class NameTag {
         return 0.002f;
     }
 
+    // New: Only-party toggle
+    private boolean onlyParty() {
+        try {
+            Object v = AllConfig.INSTANCE.NAMETAG_CONFIGS.get("nametag_only_party").Data;
+            return v instanceof Boolean && (Boolean) v;
+        } catch (Throwable ignored) { return false; }
+    }
+
+    private boolean isPartyMember(EntityPlayer p) {
+        try {
+            String name = p.getName();
+            for (String s : PartyUtils.getPartyMembers()) {
+                if (s != null && name != null && s.equalsIgnoreCase(name)) return true;
+            }
+        } catch (Throwable ignored) { }
+        return false;
+    }
+
     // Heuristic NPC detection copied from PlayerESP
     private static boolean isNPC(Entity entity) {
         try {
@@ -60,6 +79,11 @@ public class NameTag {
         if (player == null || mc == null || mc.thePlayer == null) return false;
         if (player == mc.thePlayer) return false;
         if (isNPC(player)) return false; // do not render npc nametag
+
+        // Optional: only party members
+        if (onlyParty()) {
+            if (!PartyUtils.isInParty() || !isPartyMember(player)) return false;
+        }
 
         try {
             String disp = player.getDisplayName() != null ? player.getDisplayName().getUnformattedText() : "";

@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
+import com.aftertime.ratallofyou.utils.PartyUtils; // New: party check
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
@@ -14,6 +15,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.awt.Color;
+import java.util.List;
 
 public class PlayerESP {
     private static final Minecraft mc = Minecraft.getMinecraft();
@@ -53,6 +55,25 @@ public class PlayerESP {
         }
     }
 
+    // New: Only-party toggle
+    private boolean onlyParty() {
+        try {
+            Object v = AllConfig.INSTANCE.PLAYERESP_CONFIGS.get("playeresp_only_party").Data;
+            return v instanceof Boolean && (Boolean) v;
+        } catch (Throwable ignored) { return false; }
+    }
+
+    private boolean isPartyMember(EntityPlayer p) {
+        try {
+            String name = p.getName();
+            List<String> list = PartyUtils.getPartyMembers();
+            for (String s : list) {
+                if (s != null && name != null && s.equalsIgnoreCase(name)) return true;
+            }
+        } catch (Throwable ignored) { }
+        return false;
+    }
+
     // Provided heuristic: consider NPC if OtherPlayerMP with UUID version 2 and 20.0f health
     private static boolean isNPC(Entity entity) {
         try {
@@ -69,6 +90,11 @@ public class PlayerESP {
         if (player == null || mc == null) return false;
         if (player == mc.thePlayer) return false;
         if (isNPC(player)) return false; // explicit NPC filter
+
+        // Optional party-only filter
+        if (onlyParty()) {
+            if (!PartyUtils.isInParty() || !isPartyMember(player)) return false;
+        }
 
         // Skip common NPC/mob names by keyword in display or username
         try {
