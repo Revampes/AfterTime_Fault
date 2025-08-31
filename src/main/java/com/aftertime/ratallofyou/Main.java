@@ -37,6 +37,8 @@ import com.aftertime.ratallofyou.Command.OpenConfigGuiCommand;
 import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
 import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 import com.aftertime.ratallofyou.modules.SkyBlock.AutoExperiment; // Register Auto Experiment
+import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
+import com.aftertime.ratallofyou.modules.render.NameTag; // Register NameTag
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -80,6 +82,7 @@ public class Main {
 
                 // SkyBlock QoL
                 new AutoSprint(), new PartyUtils(), new ChatCommands(), new Fullbright(), new EtherwarpOverlay(),
+                new PlayerESP(), new NameTag(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
                 new FluxFlareTimer(), new StorageOverviewModule(),
                 // Register Auto Fish

@@ -54,7 +54,6 @@ public class AllConfig {
     public final HashMap<String, BaseConfig<?>> TERMINAL_CONFIGS = new HashMap<String, BaseConfig<?>>()
     {{
         put("terminal_high_ping_mode", new BaseConfig<>("Smooth Terminal", "Smooth Terminal GUI Especially for High Ping Users", false));
-//        put("terminal_phoenix_client_compat", new BaseConfig<>("Phoenix Client Compatibility", "Enable compatibility with Phoenix Client", false));
         put("terminal_scale", new BaseConfig<>("Terminal Scale", "Scale factor for terminal display", 1.0f));
         put("terminal_timeout_ms", new BaseConfig<>("Timeout (ms)", "Timeout in milliseconds for terminal operations", 500));
         put("terminal_first_click_ms", new BaseConfig<>("First Click Delay (ms)", "Delay in milliseconds for first click", 0));
@@ -78,19 +77,13 @@ public class AllConfig {
         put("phoenix_pos",new BaseConfig<>("Phoenix Display Position","Position Of Phoenix Invincibility Timer Display",new UIPosition(200,200)));
         put("proc_pos",new BaseConfig<>("Insta Death Display Position","Position Of Insta Death (Proc) Timer Display",new UIPosition(200,200)));
         put("p3ticktimer_pos",new BaseConfig<>("P3 Tick Timer","P3 Tick Timer",new UIPosition(200,200)));
-        // SearchBar: moveable position
         put("searchbar_pos", new BaseConfig<>("Search Bar Position", "Position of the inventory search bar", new UIPosition(200, 200)));
-        // New: SearchBar adjustable size
         put("searchbar_width", new BaseConfig<>("Search Bar Width", "Width of the inventory search bar", 192));
         put("searchbar_height", new BaseConfig<>("Search Bar Height", "Height of the inventory search bar", 16));
-        // New: P3 timer adjustable scale
         put("p3ticktimer_scale", new BaseConfig<>("P3 Timer Scale", "Scale factor for P3 Tick Timer", 1.0f));
-        // New: Invincibility timers text scale
         put("invincible_scale", new BaseConfig<>("Invincible Timers Scale", "Scale for Bonzo/Spirit/Phoenix/Proc text", 1.0f));
-        // Arrow Poison HUD position and scale
         put("arrowpoison_pos", new BaseConfig<>("Arrow Poison HUD Position", "Position of the Arrow Poison HUD", new UIPosition(200, 200)));
         put("arrowpoison_scale", new BaseConfig<>("Arrow Poison HUD Scale", "Scale of the Arrow Poison HUD", 1.0f));
-        // Flare/Flux HUD position and scale
         put("flareflux_pos", new BaseConfig<>("Flare/Flux HUD Position", "Position of the Flare/Flux timer", new UIPosition(220, 220)));
         put("flareflux_scale", new BaseConfig<>("Flare/Flux HUD Scale", "Scale of the Flare/Flux timer", 1.0f));
 
@@ -117,10 +110,8 @@ public class AllConfig {
         put("autofish_timer", new BaseConfig<>("Show timer", "Show on-screen hook timer", true));
         put("autofish_timer_x", new BaseConfig<>("Timer X", "X position for timer text", 5));
         put("autofish_timer_y", new BaseConfig<>("Timer Y", "Y position for timer text", 5));
-        // New: AutoShift settings
         put("autofish_autoshift", new BaseConfig<>("AutoShift", "Periodically tap shift while fishing", false));
         put("autofish_autoshift_interval_s", new BaseConfig<>("AutoShift Interval (s)", "Average seconds between shift taps (±3s random)", 15));
-        // New: Toggle Hotkey
         put("autofish_hotkey", new BaseConfig<>("Toggle Hotkey", "Press a key to bind a toggle for Auto Fish (ESC to clear)", 0));
     }};
 
@@ -130,6 +121,19 @@ public class AllConfig {
         put("autoexperiment_delay_ms", new BaseConfig<>("Click Delay (ms)", "Delay between automated clicks", 120));
         put("autoexperiment_auto_exit", new BaseConfig<>("Auto Exit", "Close GUI after enough rounds memorized", false));
         put("autoexperiment_debug", new BaseConfig<>("Debug", "Print debug info in chat while solving", false));
+    }};
+
+    // New: Player ESP sub-settings
+    public final HashMap<String, BaseConfig<?>> PLAYERESP_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("playeresp_mode", new BaseConfig<>("Mode", "ESP render mode", new DataType_DropDown(0, new String[]{"Wireframe", "Filled"})));
+        put("playeresp_color", new BaseConfig<>("Color", "ESP color (RGBA)", new Color(0, 255, 255, 200)));
+    }};
+
+    // New: NameTag sub-settings
+    public final HashMap<String, BaseConfig<?>> NAMETAG_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("nametag_scale", new BaseConfig<>("NameTag Scale", "On-screen size scale for player name tags", 0.002f));
     }};
 
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
@@ -151,9 +155,7 @@ public class AllConfig {
             put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
             put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
             put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
-            // New: Arrow Poison Tracker
             put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
-            // New: Crate Priority
             put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
 
             // Dungeons
@@ -166,9 +168,7 @@ public class AllConfig {
             put("dungeons_starmobhighlighter",new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false));
             put("dungeons_secretclicks",new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false));
             put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false));
-            // New: Watcher Clear notification
             put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
-            // New: Custom Leap Menu
             put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
 
             // SkyBlock
@@ -176,25 +176,21 @@ public class AllConfig {
             put("skyblock_waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
             put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
             put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
-            // New: Hotbar Swap module (keybind/preset based)
             put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
-            // SearchBar module
             put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
-            // New: Flare/Flux Timer HUD
             put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
-            // New: Storage Overview overlay
             put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
-            // New: Auto Experiment
             put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
 
             //Fishing
-            // New: Auto Fish module
             put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
 
             // Render
             put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
             put("render_nodebuff",new ModuleInfo("No Debuff", "Removes negative effects", "Render", false));
             put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false));
+            put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false));
+            put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false));
 
             //Performance
             put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));
@@ -209,18 +205,15 @@ public class AllConfig {
     {{
         put("fhk_inner_radius", new BaseConfig<>("Inner Radius", "Inner cancel circle radius (px)", 40));
         put("fhk_outer_radius", new BaseConfig<>("Outer Radius", "Outer ring radius (px)", 150));
-        // Animation colors and proximity (outline)
         put("fhk_inner_near_color", new BaseConfig<>("Inner Near Color", "Color nearest to cursor on inner ring (RGBA)", new Color(255, 255, 255, 255)));
         put("fhk_inner_far_color", new BaseConfig<>("Inner Far Color", "Color farthest from cursor on inner ring (RGBA)", new Color(0, 0, 0, 255)));
         put("fhk_outer_near_color", new BaseConfig<>("Outer Near Color", "Color nearest to cursor on outer ring (RGBA)", new Color(255, 255, 255, 255)));
         put("fhk_outer_far_color", new BaseConfig<>("Outer Far Color", "Color farthest from cursor on outer ring (RGBA)", new Color(0, 0, 0, 255)));
         put("fhk_outline_prox_range", new BaseConfig<>("Outline Proximity Range", "How far from ring counts as close (px)", 120));
-        // Background hover animation
         put("fhk_bg_near_color", new BaseConfig<>("BG Near Color", "Background color near cursor (RGBA, alpha drives intensity)", new Color(96, 96, 96, 128)));
         put("fhk_bg_far_color", new BaseConfig<>("BG Far Color", "Background color far from cursor on outer ring (RGBA, light grey)", new Color(160, 160, 160, 128)));
         put("fhk_bg_influence_radius", new BaseConfig<>("BG Influence Radius", "Distance where background hover fades out (px)", 60));
         put("fhk_bg_max_extend", new BaseConfig<>("BG Max Extend", "Max outward extension of background near cursor (px)", 14.0f));
-        // UI toggles
         put("fhk_show_arrow", new BaseConfig<>("Show Arrow", "Show direction arrow near inner ring", true));
     }};
 
@@ -257,6 +250,8 @@ public class AllConfig {
         put(9, STORAGEOVERVIEW_CONFIGS);
         put(10, AUTOFISH_CONFIGS);
         put(11, AUTOEXPERIMENT_CONFIGS);
+        put(12, PLAYERESP_CONFIGS);
+        put(13, NAMETAG_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

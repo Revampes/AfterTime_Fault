@@ -277,6 +277,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
+            case "NameTag": Add_SubSetting_NameTag(y); break; // New
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -821,6 +822,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Hotbar Swap":
             case "Auto Fish":
             case "Auto Experiment":
+            case "NameTag": // New: expose NameTag settings
                 return true;
             default:
                 return false;
@@ -840,6 +842,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Fish": Add_SubSetting_AutoFish(y); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
+            case "NameTag": Add_SubSetting_NameTag(y); break; // New
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -850,17 +853,10 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    // New: Auto Fish sub-settings (index 10 in AllConfig.ALLCONFIGS)
-    private void Add_SubSetting_AutoFish(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOFISH_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 10);
-        }
-    }
-
-    // New: Auto Experiment sub-settings (index 11 in AllConfig.ALLCONFIGS)
-    private void Add_SubSetting_AutoExperiment(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 11);
+    // New: NameTag sub-settings (index 13 in AllConfig.ALLCONFIGS)
+    private void Add_SubSetting_NameTag(Integer y) {
+        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.NAMETAG_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 13);
         }
     }
 
@@ -919,6 +915,20 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_HotbarSwap(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 8);
+        }
+    }
+
+    // Restore: Auto Fish sub-settings (index 10)
+    private void Add_SubSetting_AutoFish(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOFISH_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 10);
+        }
+    }
+
+    // Restore: Auto Experiment sub-settings (index 11)
+    private void Add_SubSetting_AutoExperiment(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 11);
         }
     }
 
