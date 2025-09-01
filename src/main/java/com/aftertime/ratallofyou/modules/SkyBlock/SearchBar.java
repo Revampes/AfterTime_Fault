@@ -13,6 +13,9 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiChest;
+import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.client.gui.inventory.GuiContainerCreative;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
@@ -20,7 +23,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -45,6 +50,21 @@ public class SearchBar {
 
     // Latch to avoid double-processing the same key press
     private static final boolean[] keyLatch = new boolean[256];
+
+    private void clearKeyLatch() {
+        for (int i = 0; i < keyLatch.length; i++) keyLatch[i] = false;
+    }
+
+    // Keep track of temporarily remapped Inventory key while focused
+    private Integer savedInvKey = null;
+
+    // Returns the actual inventory key code to treat as the inventory toggle even if we temporarily remapped it to NONE
+    private int getEffectiveInventoryKey() {
+        if (savedInvKey != null) return savedInvKey;
+        if (mc != null && mc.gameSettings != null && mc.gameSettings.keyBindInventory != null)
+            return mc.gameSettings.keyBindInventory.getKeyCode();
+        return Keyboard.KEY_E;
+    }
 
     private boolean isEnabled() {
         ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_searchbar");
@@ -197,15 +217,183 @@ public class SearchBar {
         calc = null;
     }
 
+    private static boolean isPrintable(char c) {
+        return c >= 32 && c < 127; // basic ASCII printable
+    }
+
+    private void disableInventoryKeybind() {
+        if (mc == null || mc.gameSettings == null) return;
+        if (savedInvKey != null) return;
+        KeyBinding inv = mc.gameSettings.keyBindInventory;
+        if (inv == null) return;
+        try {
+            savedInvKey = inv.getKeyCode();
+            ReflectionHelper.setPrivateValue(KeyBinding.class, inv, Keyboard.KEY_NONE, "keyCode", "field_151474_i");
+            KeyBinding.resetKeyBindingArrayAndHash();
+            KeyBinding.setKeyBindState(savedInvKey, false);
+        } catch (Throwable ignored) {
+            // Fallback: at least clear pressed state
+            try { KeyBinding.setKeyBindState(inv.getKeyCode(), false); } catch (Throwable ignore2) {}
+        }
+    }
+
+    private void restoreInventoryKeybind() {
+        if (mc == null || mc.gameSettings == null) return;
+        if (savedInvKey == null) return;
+        KeyBinding inv = mc.gameSettings.keyBindInventory;
+        if (inv == null) { savedInvKey = null; return; }
+        try {
+            ReflectionHelper.setPrivateValue(KeyBinding.class, inv, savedInvKey, "keyCode", "field_151474_i");
+            KeyBinding.resetKeyBindingArrayAndHash();
+        } catch (Throwable ignored) { }
+        savedInvKey = null;
+    }
+
+    private boolean searchFocused = false;
+    // Suppress any GUI open/close events for a couple of ticks after handling the inventory key while focused
+    private int suppressGuiOpenTicks = 0;
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
+        if (!isEnabled()) return;
+        if (!isInventoryGui(event.gui)) return;
+        if (UIHighlighter.isInMoveMode()) return;
+        ensureField();
+
+        if (!Mouse.getEventButtonState()) return;
+        int button = Mouse.getEventButton();
+        if (button != 0) return; // only left click should focus / trigger clear
+
+        ScaledResolution res = new ScaledResolution(mc);
+        int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
+        int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
+
+        if (isOverClearButton(mouseX, mouseY)) {
+            if (textField != null && (textField.getText() != null && !textField.getText().isEmpty())) {
+                clearSearch();
+                event.setCanceled(true);
+                return;
+            }
+        }
+
+        boolean wasFocused = textField != null && textField.isFocused();
+        if (textField != null) textField.mouseClicked(mouseX, mouseY, button);
+        boolean nowFocused = textField != null && textField.isFocused();
+        searchFocused = nowFocused;
+        if (!wasFocused && nowFocused) {
+            disableInventoryKeybind();
+            try { Keyboard.enableRepeatEvents(true); } catch (Throwable ignored) {}
+        } else if (wasFocused && !nowFocused) {
+            restoreInventoryKeybind();
+            suppressGuiOpenTicks = 0; // clear any suppression so next E works normally
+            try { KeyBinding.setKeyBindState(getEffectiveInventoryKey(), false); } catch (Throwable ignored) {}
+            clearKeyLatch();
+            try { Keyboard.enableRepeatEvents(false); } catch (Throwable ignored) {}
+        }
+        if (nowFocused) {
+            recalcHighlights();
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onKeyInput(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+        if (!isEnabled()) return;
+        if (mc.currentScreen == null) return;
+        if (UIHighlighter.isInMoveMode()) return;
+        ensureField();
+
+        int key = Keyboard.getEventKey();
+        if (key == Keyboard.KEY_NONE || key < 0 || key >= keyLatch.length) return;
+        boolean down = Keyboard.getEventKeyState();
+        if (!down) { keyLatch[key] = false; return; }
+        if (keyLatch[key]) return;
+        keyLatch[key] = true;
+
+        char c = Keyboard.getEventCharacter();
+        int invKey = getEffectiveInventoryKey();
+
+        // If our field is focused (regardless of the container type), handle keys here and consume them
+        if (textField != null && textField.isFocused()) {
+            searchFocused = true;
+            if (savedInvKey == null) disableInventoryKeybind();
+
+            // ESC: unfocus and consume
+            if (key == Keyboard.KEY_ESCAPE) {
+                textField.setFocused(false);
+                searchFocused = false;
+                restoreInventoryKeybind();
+                suppressGuiOpenTicks = 0; // don't block next GUI transition
+                try { KeyBinding.setKeyBindState(getEffectiveInventoryKey(), false); } catch (Throwable ignored) {}
+                clearKeyLatch();
+                try { Keyboard.enableRepeatEvents(false); } catch (Throwable ignored) {}
+                event.setCanceled(true);
+                return;
+            }
+
+            // Always clear inventory key pressed state while focused to avoid vanilla toggle
+            try { KeyBinding.setKeyBindState(invKey, false); } catch (Throwable ignored) {}
+
+            if (key == invKey) {
+                // Type the character (if any) and block opening inventory
+                if (c != 0) {
+                    try { textField.writeText(Character.toString(c)); } catch (Throwable ignored) {}
+                    recalcHighlights();
+                    recalcCalc();
+                }
+                // Suppress any GUI transitions that might be triggered this and next tick
+                if (suppressGuiOpenTicks < 2) suppressGuiOpenTicks = 2;
+                event.setCanceled(true);
+                return;
+            }
+
+            try { textField.textboxKeyTyped(c, key); } catch (Throwable ignored) {}
+            recalcHighlights();
+            recalcCalc();
+            // Suppress any GUI transitions briefly on any key while focused
+            if (suppressGuiOpenTicks < 1) suppressGuiOpenTicks = 1;
+            event.setCanceled(true);
+            return;
+        }
+
+        // If not focused, only participate on supported inventory GUIs; otherwise, let vanilla handle
+        if (!isInventoryGui(mc.currentScreen)) return;
+
+        // Not focused on supported GUI: allow vanilla so inventory key closes UI
+    }
+
     @SubscribeEvent
+    public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
+        if (!isEnabled()) return;
+        if (!isInventoryGui(event.gui)) return;
+        ensureField();
+        // Recompute when a container GUI opens
+        recalcHighlights();
+        recalcCalc();
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onGuiOpen(GuiOpenEvent event) {
         if (!isEnabled()) return;
+        // Block any GUI opening/closing if we just handled the inventory key while focused
+        if (suppressGuiOpenTicks > 0) {
+            suppressGuiOpenTicks--;
+            event.setCanceled(true);
+            return;
+        }
+        // While search is focused, block any GUI transition entirely
+        if (searchFocused) {
+            event.setCanceled(true);
+            return;
+        }
         // Reset when changing GUI and ensure search text doesn't persist across UIs
         clearSearch();
-        // Create field lazily when first draw happens
+        restoreInventoryKeybind();
+        try { Keyboard.enableRepeatEvents(false); } catch (Throwable ignored) {}
         textField = null;
         lastWidth = -1;
         lastHeight = -1;
+        searchFocused = false;
+        suppressGuiOpenTicks = 0;
     }
 
     @SubscribeEvent
@@ -301,91 +489,26 @@ public class SearchBar {
     }
 
     @SubscribeEvent
-    public void onMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
-        if (!isEnabled()) return;
-        if (!isInventoryGui(event.gui)) return;
-        if (UIHighlighter.isInMoveMode()) return;
-        ensureField();
-
-        if (!Mouse.getEventButtonState()) return;
-        int button = Mouse.getEventButton();
-        if (button != 0) return; // only left click should focus / trigger clear
-
-        ScaledResolution res = new ScaledResolution(mc);
-        int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
-        int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
-
-        if (isOverClearButton(mouseX, mouseY)) {
-            if (textField != null && (textField.getText() != null && !textField.getText().isEmpty())) {
-                clearSearch();
-                event.setCanceled(true);
-                return;
-            }
-        }
-
-        if (textField != null) textField.mouseClicked(mouseX, mouseY, button);
-        if (textField != null && textField.isFocused()) {
-            recalcHighlights();
-        }
-    }
-
-    @SubscribeEvent
-    public void onKeyInput(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        if (!isEnabled()) return;
-        if (mc.currentScreen == null) return;
-        if (!isInventoryGui(mc.currentScreen)) return;
-        if (UIHighlighter.isInMoveMode()) return;
-        ensureField();
-
-        int key = Keyboard.getEventKey();
-        if (key == Keyboard.KEY_NONE || key < 0 || key >= keyLatch.length) return;
-        boolean down = Keyboard.getEventKeyState();
-        if (!down) { keyLatch[key] = false; return; }
-        if (keyLatch[key]) return;
-        keyLatch[key] = true;
-
-        char c = Keyboard.getEventCharacter();
-
-        // ESC: if focused, unfocus and consume; otherwise, let vanilla handle (may close GUI)
-        if (key == Keyboard.KEY_ESCAPE) {
-            if (textField != null && textField.isFocused()) {
-                textField.setFocused(false);
-                event.setCanceled(true);
-            }
-            return;
-        }
-
-        // Only handle keys when the search bar is focused (no auto-focus on typing)
-        if (textField == null || !textField.isFocused()) return;
-
-        try {
-            textField.textboxKeyTyped(c, key);
-        } catch (Throwable ignored) {}
-
-        recalcHighlights();
-        recalcCalc();
-
-        // Consume keys while focused so inventory key (e.g., 'E') doesn't close the GUI
-        event.setCanceled(true);
-    }
-
-
-    @SubscribeEvent
-    public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
-        if (!isEnabled()) return;
-        if (!isInventoryGui(event.gui)) return;
-        ensureField();
-        // Recompute when a container GUI opens
-        recalcHighlights();
-        recalcCalc();
-    }
-
-    @SubscribeEvent
     public void onGuiClosed(GuiOpenEvent event) {
         if (!isEnabled()) return;
         if (event.gui != null) return; // only when closing (next GUI is null)
         // Ensure text is cleared on close so it doesn't persist
         clearSearch();
+        restoreInventoryKeybind();
+        try { Keyboard.enableRepeatEvents(false); } catch (Throwable ignored) {}
         if (textField != null) textField.setFocused(false);
+        searchFocused = false;
+        suppressGuiOpenTicks = 0;
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        // Clear inventory key state in both phases while focused to avoid vanilla toggles
+        if (!isEnabled()) return;
+        if (textField == null || !textField.isFocused()) return;
+        try {
+            int invKey = getEffectiveInventoryKey();
+            KeyBinding.setKeyBindState(invKey, false);
+        } catch (Throwable ignored) {}
     }
 }

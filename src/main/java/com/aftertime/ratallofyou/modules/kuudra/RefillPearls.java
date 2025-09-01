@@ -10,7 +10,6 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.event.world.WorldEvent;
 
 public class RefillPearls {
     private boolean allowPearlRefill = true;
@@ -19,6 +18,8 @@ public class RefillPearls {
     private long lastTransferTime = 0;
     private int tickCounter = 0;
     private boolean hasShownNoPearlsWarning = false;
+    // Alternate between underscore and space command variants for broader compatibility
+    private boolean useUnderscoreCmd = true;
 
     // Track counts to differentiate Spirit Leap vs Ender Pearl consumption
     private int prevPearlCount = -1;       // counts only true Ender Pearls
@@ -29,7 +30,7 @@ public class RefillPearls {
         if (event.phase != TickEvent.Phase.END) return;
         tickCounter++;
 
-        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled() || !allowPearlRefill) {
+        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled()) {
             return;
         }
 
@@ -48,36 +49,37 @@ public class RefillPearls {
         boolean pearlConsumed = prevPearlCount > pearlCount;
 
         ItemStack pearlStack = findPearlStack();
+        // Don't early-return when there is no pearl stack; we'll try to pull from sacks
         if (pearlStack == null) {
             if (!hasShownNoPearlsWarning) {
                 hasShownNoPearlsWarning = true;
             }
-            prevPearlCount = pearlCount;
-            prevSpiritLeapCount = spiritLeapCount;
-            return;
         } else {
             hasShownNoPearlsWarning = false;
         }
 
-        int stackSize = pearlStack.stackSize;
+        int stackSize = pearlStack == null ? 0 : pearlStack.stackSize;
         long currentTime = System.currentTimeMillis();
 
-        // If only a Spirit Leap was used, skip
-        if (spiritLeapConsumed && !pearlConsumed) {
-            prevPearlCount = pearlCount;
-            prevSpiritLeapCount = spiritLeapCount;
-            return;
+        // Auto-unlock if inventory increased or after timeout (avoid getting stuck if chat pattern changes)
+        if (!allowPearlRefill) {
+            if (pearlCount > prevPearlCount || currentTime - lastRefillTime > 4000) {
+                allowPearlRefill = true;
+            }
         }
+
+        // If a Spirit Leap was used, we still want to top up Ender Pearls (models overlap in-game)
+        boolean anyTeleportConsumed = pearlConsumed || spiritLeapConsumed;
 
         boolean shouldRefill = false;
         int toGive = 0;
 
-        // Emergency refill when nearly out
+        // Emergency refill when nearly out or none in inventory
         if (stackSize < 2) {
             shouldRefill = true;
             toGive = Math.max(1, 16 - stackSize);
-        } else if (pearlConsumed) {
-            // Top off after actual pearl consumption (not after Spirit Leap)
+        } else if (anyTeleportConsumed) {
+            // Top off after any teleport-type consumption
             if (stackSize < 16 &&
                 currentTime - lastRefillTime > 5000 &&
                 currentTime - lastInteractTime > 5000 &&
@@ -87,13 +89,15 @@ public class RefillPearls {
             }
         }
 
-        if (shouldRefill && toGive > 0) {
+        if (shouldRefill && toGive > 0 && allowPearlRefill) {
             allowPearlRefill = false;
             if (toGive < 15) {
                 lastInteractTime = currentTime;
             }
             lastRefillTime = currentTime;
-            Minecraft.getMinecraft().thePlayer.sendChatMessage("/gfs ender_pearl " + toGive);
+            String itemArg = useUnderscoreCmd ? "ender_pearl" : "ender pearl";
+            useUnderscoreCmd = !useUnderscoreCmd; // alternate next time
+            Minecraft.getMinecraft().thePlayer.sendChatMessage("/gfs " + itemArg + " " + toGive);
         }
 
         // Update baselines after decision
@@ -105,27 +109,14 @@ public class RefillPearls {
     public void onChat(ClientChatReceivedEvent event) {
         if (event.message == null) return;
 
-        String message = event.message.getUnformattedText();
-        if (message.contains("Moved") && message.contains("Ender Pearl") && message.contains("from your Sacks")) {
+        String messageRaw = event.message.getUnformattedText();
+        if (messageRaw == null) return;
+        String message = EnumChatFormatting.getTextWithoutFormattingCodes(messageRaw).toLowerCase();
+        if (message.contains("moved") && message.contains("ender pearl") &&
+            (message.contains("from your sacks") || message.contains("from your sack"))) {
             lastTransferTime = System.currentTimeMillis();
             allowPearlRefill = true;
         }
-    }
-
-    // Re-enable pearl refill and reset state on world load (client-side)
-    @SubscribeEvent
-    public void onWorldLoad(WorldEvent.Load event) {
-        // Only act on client worlds
-        // event.world.isRemote is true on client; guard via Minecraft instance just in case
-        if (Minecraft.getMinecraft() == null) return;
-        allowPearlRefill = true;
-        hasShownNoPearlsWarning = false;
-        prevPearlCount = -1;
-        prevSpiritLeapCount = -1;
-        lastRefillTime = 0;
-        lastInteractTime = 0;
-        lastTransferTime = 0;
-        tickCounter = 0;
     }
 
     private boolean isSpiritLeap(ItemStack stack) {
