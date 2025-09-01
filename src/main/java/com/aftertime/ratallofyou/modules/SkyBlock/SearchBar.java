@@ -190,13 +190,18 @@ public class SearchBar {
         } catch (Throwable ignored) {}
     }
 
-    @SubscribeEvent
-    public void onGuiOpen(GuiOpenEvent event) {
-        if (!isEnabled()) return;
-        // Reset when changing GUI
+    private void clearSearch() {
+        if (textField != null) textField.setText("");
         highlight.clear();
         darken.clear();
         calc = null;
+    }
+
+    @SubscribeEvent
+    public void onGuiOpen(GuiOpenEvent event) {
+        if (!isEnabled()) return;
+        // Reset when changing GUI and ensure search text doesn't persist across UIs
+        clearSearch();
         // Create field lazily when first draw happens
         textField = null;
         lastWidth = -1;
@@ -209,7 +214,6 @@ public class SearchBar {
         if (!isInventoryGui(event.gui)) return;
 
         ensureField();
-        // Sync to config position each frame (so Move Mode changes reflect immediately)
         UIPosition pos = getPos();
         textField.xPosition = pos.x;
         textField.yPosition = pos.y;
@@ -249,6 +253,26 @@ public class SearchBar {
         // Draw search field
         textField.drawTextBox();
 
+        // Draw a small clear button inside the right side of the text box ONLY when there is text
+        String tfText = textField.getText();
+        boolean showClear = tfText != null && !tfText.isEmpty();
+        if (showClear) {
+            int cbSize = Math.max(10, HEIGHT - 4);
+            int cbX = pos.x + WIDTH - cbSize - 2;
+            int cbY = pos.y + (HEIGHT - cbSize) / 2;
+            Gui.drawRect(cbX, cbY, cbX + cbSize, cbY + cbSize, 0xAA222222);
+            Gui.drawRect(cbX, cbY, cbX + cbSize, cbY + 1, 0x55FFFFFF);
+            Gui.drawRect(cbX, cbY, cbX + 1, cbY + cbSize, 0x55FFFFFF);
+            Gui.drawRect(cbX + cbSize - 1, cbY, cbX + cbSize, cbY + cbSize, 0x55000000);
+            Gui.drawRect(cbX, cbY + cbSize - 1, cbX + cbSize, cbY + cbSize, 0x55000000);
+            // Draw an 'x' centered
+            String xMark = "x";
+            int xw = mc.fontRendererObj.getStringWidth(xMark);
+            int xt = cbX + (cbSize - xw) / 2;
+            int yt = cbY + (cbSize - mc.fontRendererObj.FONT_HEIGHT) / 2;
+            mc.fontRendererObj.drawStringWithShadow(xMark, xt, yt, 0xFFFFFFFF);
+        }
+
         // Draw calc preview to the right
         if (calc != null && !calc.isEmpty()) {
             String preview = "§8" + calc; // DARK_GRAY
@@ -263,27 +287,44 @@ public class SearchBar {
         }
     }
 
+    private boolean isOverClearButton(int mouseX, int mouseY) {
+        if (textField == null) return false;
+        String tfText = textField.getText();
+        if (tfText == null || tfText.isEmpty()) return false; // only active when visible
+        UIPosition pos = getPos();
+        int WIDTH = lastWidth;
+        int HEIGHT = lastHeight;
+        int cbSize = Math.max(10, HEIGHT - 4);
+        int cbX = pos.x + WIDTH - cbSize - 2;
+        int cbY = pos.y + (HEIGHT - cbSize) / 2;
+        return mouseX >= cbX && mouseX <= cbX + cbSize && mouseY >= cbY && mouseY <= cbY + cbSize;
+    }
+
     @SubscribeEvent
     public void onMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
         if (!isEnabled()) return;
         if (!isInventoryGui(event.gui)) return;
-        if (UIHighlighter.isInMoveMode()) return; // ignore interactions during move mode
+        if (UIHighlighter.isInMoveMode()) return;
         ensureField();
 
-        // Only respond on actual press events
         if (!Mouse.getEventButtonState()) return;
         int button = Mouse.getEventButton();
-        if (button < 0) return;
+        if (button != 0) return; // only left click should focus / trigger clear
 
-        // Compute scaled mouse coords
         ScaledResolution res = new ScaledResolution(mc);
         int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
         int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
 
-        textField.mouseClicked(mouseX, mouseY, button);
-        // If clicked inside, keep focus; otherwise, if click elsewhere in GUI, allow normal handling
-        if (textField.isFocused()) {
-            // Recompute highlights shortly after click
+        if (isOverClearButton(mouseX, mouseY)) {
+            if (textField != null && (textField.getText() != null && !textField.getText().isEmpty())) {
+                clearSearch();
+                event.setCanceled(true);
+                return;
+            }
+        }
+
+        if (textField != null) textField.mouseClicked(mouseX, mouseY, button);
+        if (textField != null && textField.isFocused()) {
             recalcHighlights();
         }
     }
@@ -293,38 +334,41 @@ public class SearchBar {
         if (!isEnabled()) return;
         if (mc.currentScreen == null) return;
         if (!isInventoryGui(mc.currentScreen)) return;
-        if (UIHighlighter.isInMoveMode()) return; // ignore while moving UI
+        if (UIHighlighter.isInMoveMode()) return;
         ensureField();
 
         int key = Keyboard.getEventKey();
         if (key == Keyboard.KEY_NONE || key < 0 || key >= keyLatch.length) return;
         boolean down = Keyboard.getEventKeyState();
-
-        // On key release, clear latch and exit
         if (!down) { keyLatch[key] = false; return; }
-
-        // Only handle the first press, ignore duplicates within the same physical press
         if (keyLatch[key]) return;
         keyLatch[key] = true;
 
-        if (!textField.isFocused()) return;
         char c = Keyboard.getEventCharacter();
+
+        // ESC: if focused, unfocus and consume; otherwise, let vanilla handle (may close GUI)
+        if (key == Keyboard.KEY_ESCAPE) {
+            if (textField != null && textField.isFocused()) {
+                textField.setFocused(false);
+                event.setCanceled(true);
+            }
+            return;
+        }
+
+        // Only handle keys when the search bar is focused (no auto-focus on typing)
+        if (textField == null || !textField.isFocused()) return;
 
         try {
             textField.textboxKeyTyped(c, key);
         } catch (Throwable ignored) {}
 
-        // Update highlights and calc whenever text changes or keys are typed while focused
         recalcHighlights();
         recalcCalc();
 
-        // Cancel further processing except ESC to allow unfocus
-        if (key != Keyboard.KEY_ESCAPE) {
-            event.setCanceled(true);
-        } else {
-            textField.setFocused(false);
-        }
+        // Consume keys while focused so inventory key (e.g., 'E') doesn't close the GUI
+        event.setCanceled(true);
     }
+
 
     @SubscribeEvent
     public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
@@ -340,9 +384,8 @@ public class SearchBar {
     public void onGuiClosed(GuiOpenEvent event) {
         if (!isEnabled()) return;
         if (event.gui != null) return; // only when closing (next GUI is null)
+        // Ensure text is cleared on close so it doesn't persist
+        clearSearch();
         if (textField != null) textField.setFocused(false);
-        highlight.clear();
-        darken.clear();
-        calc = null;
     }
 }
