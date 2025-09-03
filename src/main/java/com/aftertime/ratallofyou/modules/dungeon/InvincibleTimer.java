@@ -3,7 +3,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
-import com.aftertime.ratallofyou.utils.DungeonUtils;
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -95,6 +95,6 @@ public class InvincibleTimer {
     }
 
     private boolean isModuleEnabled() {
-        return DungeonUtils.isModuleEnabled("dungeons_invincibletimer");
+        return BooleanSettings.isEnabled("dungeons_invincibletimer");
     }
 }

@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
@@ -33,7 +34,7 @@ public class KeyHighlighter {
 
     @SubscribeEvent
     public void onEntitySpawn(EntityJoinWorldEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_keyhighlighter") || bloodOpened || !DungeonUtils.isInDungeon()) return;
+        if (!BooleanSettings.isEnabled("dungeons_keyhighlighter") || bloodOpened || !DungeonUtils.isInDungeon()) return;
 
         if (event.entity instanceof EntityArmorStand) {
             EntityArmorStand armorStand = (EntityArmorStand) event.entity;
@@ -55,7 +56,7 @@ public class KeyHighlighter {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_keyhighlighter") || bloodOpened || !DungeonUtils.isInDungeon()) return;
+        if (!BooleanSettings.isEnabled("dungeons_keyhighlighter") || bloodOpened || !DungeonUtils.isInDungeon()) return;
 
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {

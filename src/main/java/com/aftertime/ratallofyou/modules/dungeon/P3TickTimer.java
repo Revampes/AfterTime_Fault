@@ -5,6 +5,7 @@ import com.aftertime.ratallofyou.UI.UIHighlighter;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -158,7 +159,6 @@ public class P3TickTimer {
     }
 
     private boolean isModuleEnabled() {
-        return DungeonUtils.isModuleEnabled("dungeons_phase3ticktimer");
+        return BooleanSettings.isEnabled("dungeons_phase3ticktimer");
     }
 }
-

@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.modules.render;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
-import com.aftertime.ratallofyou.utils.DungeonUtils;
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils; // New: party check
 import net.minecraft.client.Minecraft;
@@ -35,7 +35,7 @@ public class PlayerESP {
 
     private boolean isEnabled() {
         // Toggle is under Modules map as "render_playeresp"
-        return DungeonUtils.isModuleEnabled("render_playeresp");
+        return BooleanSettings.isEnabled("render_playeresp");
     }
 
     private int getMode() {

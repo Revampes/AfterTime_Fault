@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.utils.DungeonUtils;
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -16,7 +16,7 @@ public class LeapAnnounce {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_leapannounce") || event.type != 0) return; // Only process regular chat messages
+        if (!BooleanSettings.isEnabled("dungeons_leapannounce") || event.type != 0) return; // Only process regular chat messages
 
         String message = event.message.getUnformattedText();
 

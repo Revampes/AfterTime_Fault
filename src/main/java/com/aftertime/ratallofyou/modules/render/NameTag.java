@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.render;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.utils.DungeonUtils;
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils; // New: party filter
 import net.minecraft.client.Minecraft;
@@ -30,7 +30,7 @@ public class NameTag {
 
     private boolean isEnabled() {
         // New toggle key under Render category
-        return DungeonUtils.isModuleEnabled("render_nametag");
+        return BooleanSettings.isEnabled("render_nametag");
     }
 
     private float getScale() {

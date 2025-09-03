@@ -98,8 +98,8 @@ public class PosionArrow {
             // Labeled counts so mapping is unambiguous
             int twilightColor = 0xCC88FF; // soft purple
             int toxicColor = 0x66FF66;    // lime green
-            mc.fontRendererObj.drawString("Twilight: " + twilight, textX, textY1, twilightColor, true);
-            mc.fontRendererObj.drawString("Toxic: " + toxic, textX, textY2, toxicColor, true);
+            mc.fontRendererObj.drawString("Twilight Arrow Posion: " + twilight, textX, textY1, twilightColor, true);
+            mc.fontRendererObj.drawString("Toxic Arrow Posion: " + toxic, textX, textY2, toxicColor, true);
         } finally {
             GlStateManager.popMatrix();
         }

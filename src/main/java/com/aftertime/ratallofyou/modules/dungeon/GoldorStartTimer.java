@@ -1,5 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
@@ -17,7 +18,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_phase3countdown")) return;
+        if (!BooleanSettings.isEnabled("dungeons_phase3countdown")) return;
 
         String message = event.message.getUnformattedText();
 
@@ -32,7 +33,7 @@ public class GoldorStartTimer {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_phase3countdown") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
+        if (!BooleanSettings.isEnabled("dungeons_phase3countdown") || ticks <= 0 || event.phase != TickEvent.Phase.START) return;
         ticks--;
 
         String time = String.format("%.2f", ticks / 20.0f);

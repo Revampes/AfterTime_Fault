@@ -1,5 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
@@ -24,7 +25,7 @@ public class WatcherClear {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_watcherclear") || done || bloodOpen || event == null || event.message == null) return;
+        if (!BooleanSettings.isEnabled("dungeons_watcherclear") || done || bloodOpen || event == null || event.message == null) return;
 
         String msg = event.message.getUnformattedText();
         if (msg == null) return;
@@ -45,7 +46,7 @@ public class WatcherClear {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_watcherclear") || event.phase != TickEvent.Phase.START) return;
+        if (!BooleanSettings.isEnabled("dungeons_watcherclear") || event.phase != TickEvent.Phase.START) return;
 
         long now = System.currentTimeMillis();
 

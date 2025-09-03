@@ -1,5 +1,7 @@
 package com.aftertime.ratallofyou.utils;
 
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -29,15 +31,15 @@ public class DungeonUtils {
     }
 
     // Shared helper: check if a module is enabled in config
-    public static boolean isModuleEnabled(String moduleKey) {
-        try {
-            com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo cfg =
-                    (com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.MODULES.get(moduleKey);
-            return cfg != null && Boolean.TRUE.equals(cfg.Data);
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
+//    public static boolean isModuleEnabled(String moduleKey) {
+//        try {
+//            com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo cfg =
+//                    (com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.MODULES.get(moduleKey);
+//            return cfg != null && Boolean.TRUE.equals(cfg.Data);
+//        } catch (Throwable ignored) {
+//            return false;
+//        }
+//    }
 
     // Shared helper: send a title/subtitle safely
     public static void sendTitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
@@ -45,6 +47,7 @@ public class DungeonUtils {
         if (mc != null && mc.ingameGUI != null) {
             mc.ingameGUI.displayTitle(title, subtitle, fadeIn, stay, fadeOut);
         }
+
     }
 
     // Shared helper: clear any current title

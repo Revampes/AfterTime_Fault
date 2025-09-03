@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.Utils;
@@ -94,7 +95,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_secretclicks") || !DungeonUtils.isInDungeon()) return;
+        if (!BooleanSettings.isEnabled("dungeons_secretclicks") || !DungeonUtils.isInDungeon()) return;
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 
         BlockPos pos = event.pos;
@@ -121,7 +122,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_secretclicks") || highlights.isEmpty() || event.isCanceled()) return;
+        if (!BooleanSettings.isEnabled("dungeons_secretclicks") || highlights.isEmpty() || event.isCanceled()) return;
 
         float r = highlightColor.getRed() / 255f;
         float g = highlightColor.getGreen() / 255f;
@@ -141,7 +142,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
-        if (!DungeonUtils.isModuleEnabled("dungeons_secretclicks") || highlights.isEmpty()) return;
+        if (!BooleanSettings.isEnabled("dungeons_secretclicks") || highlights.isEmpty()) return;
 
         if (event.message.getUnformattedText().equals("That chest is locked!")) {
             for (HighlightedBlock highlighted : highlights.values()) {
