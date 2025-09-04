@@ -43,7 +43,7 @@ import com.aftertime.ratallofyou.modules.render.NameTag; // Register NameTag
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
     public static final String MODID = "ratallofyou";
-    public static final String VERSION = "2.0";
+    public static final String VERSION = "2.1";
     public static Minecraft mc = Minecraft.getMinecraft();
 
     // Small helper to reduce repetitive register calls

@@ -15,7 +15,7 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "2.0"
+version = "2.1"
 group= "com.aftertime.ratallofyou" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "ratallofyou"
 
@@ -33,7 +33,7 @@ minecraft {
 
 // Rest of your build.gradle remains the same...
 task copyMod(type: Copy) {
-    from("$buildDir/libs/ratallofyou-2.0.jar")
+    from("$buildDir/libs/ratallofyou-2.1.jar")
     into "C:\\Users\\user\\AppData\\Roaming\\PrismLauncher\\instances\\1.8.9(1)\\minecraft\\mods"
 }
 
