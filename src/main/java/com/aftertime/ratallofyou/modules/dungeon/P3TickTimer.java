@@ -30,11 +30,9 @@ public class P3TickTimer {
         String message = event.message.getUnformattedText();
 
         // Trigger messages
-        if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
-                message.equals("[BOSS] Goldor: What do you think you are doing there!") ||
-                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[\u127e\u2692]?: (Bonzo|Phoenix) Procced!?(?: \\(.+\\))?")) {
+        if (DungeonUtils.isInP3()) {
             startTimer();
-        } else if (message.equals("The Core entrance is opening!")) {
+        } else if (!DungeonUtils.isInP3()) {
             resetTimer();
         }
     }

@@ -1,7 +1,5 @@
 package com.aftertime.ratallofyou.utils;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -15,6 +13,7 @@ public class DungeonUtils {
     private static int dungeonFloor = 0;
     private static Runnable onDungeonEndCallback;
     private static boolean wasInWorld = false;
+    private static boolean isInP3 = false;
 
     public static void init(Runnable callback) {
         MinecraftForge.EVENT_BUS.register(new DungeonUtils());
@@ -25,6 +24,18 @@ public class DungeonUtils {
         // Check both chat-based detection and scoreboard-based detection
         return inDungeon || checkScoreboardForDungeon();
     }
+
+    public static int isInDungeonFloor() {
+        // Prefer scoreboard detection; fallback to last known floor from chat
+        int floor = checkScoreboardForDungeonFloor();
+        if (floor != 0) {
+            return floor;
+        } else {
+            return dungeonFloor;
+        }
+    }
+
+
 
     public static int getDungeonFloor() {
         return dungeonFloor;
@@ -72,6 +83,48 @@ public class DungeonUtils {
         return false;
     }
 
+    public static boolean isInP3() {
+        return isInDungeon() && isInDungeonFloor() == 7 && isInP3;
+
+    }
+
+    private static int checkScoreboardForDungeonFloor() {
+        List<String> scoreBoardLines = Utils.getSidebarLines();
+        if (scoreBoardLines == null || scoreBoardLines.isEmpty()) {
+            return 0;
+        }
+
+        int size = scoreBoardLines.size() - 1;
+        for (int i = 0; i < scoreBoardLines.size(); i++) {
+            String line = scoreBoardLines.get(size - i).toLowerCase();
+            // Look for occurrences of 'f' followed by a digit 1-7 and use switch-case to map
+            for (int idx = line.indexOf('f'); idx != -1; idx = line.indexOf('f', idx + 1)) {
+                if (idx + 1 < line.length()) {
+                    char c = line.charAt(idx + 1);
+                    switch (c) {
+                        case '1':
+                            return 1;
+                        case '2':
+                            return 2;
+                        case '3':
+                            return 3;
+                        case '4':
+                            return 4;
+                        case '5':
+                            return 5;
+                        case '6':
+                            return 6;
+                        case '7':
+                            return 7;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
         String message = event.message.getUnformattedText();
@@ -81,8 +134,17 @@ public class DungeonUtils {
             dungeonFloor = parseFloor(message);
         }
         else if (message.contains("Dungeon failed") ||
-                message.contains("Dungeon completed")) {
+                message.contains("Dungeon completed") ||
+                Minecraft.getMinecraft() == null) {
             endDungeon();
+        }
+        else if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
+                message.equals("[BOSS] Goldor: What do you think you are doing there!") ||
+                message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[\u127e\u2692]?: (Bonzo|Phoenix) Procced!?(?: \\(.+\\))?")) {
+            isInP3 = true;
+        }
+        else if (message.equals("The Core entrance is opening!")) {
+            isInP3 = false;
         }
     }
 

@@ -59,7 +59,7 @@ public class F7GhostBlocks {
             return;
         }
 
-        if (DungeonUtils.isInDungeon()) {
+        if (DungeonUtils.isInDungeon() && DungeonUtils.isInDungeonFloor() == 7) {
             // Process in ascending phase order, based on loaded config
             Set<Integer> ecPhases = new TreeSet<Integer>(enderChests.keySet());
             Set<Integer> glassPhases = new TreeSet<Integer>(glass.keySet());

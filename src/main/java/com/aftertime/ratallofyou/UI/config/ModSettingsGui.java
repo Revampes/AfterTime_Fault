@@ -203,7 +203,7 @@ public class ModSettingsGui extends GuiScreen {
         fontRendererObj.drawStringWithShadow("§l§nRat All Of You", guiLeft + 15, guiTop + 10, Colors.TEXT);
         drawRect(guiLeft + 5, guiTop + 25, guiLeft + 115, guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
         drawRect(guiLeft + 115, guiTop + 25, guiLeft + Dimensions.GUI_WIDTH - 5, guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
-        drawCenteredString(fontRendererObj, "§7Version v1.0 §8| §7Created by AfterTime", width / 2, guiTop + Dimensions.GUI_HEIGHT - 20, Colors.VERSION);
+        drawCenteredString(fontRendererObj, "§7Version v2.2 §8| §7Created by AfterTime", width / 2, guiTop + Dimensions.GUI_HEIGHT - 20, Colors.VERSION);
     }
 
     private void drawCategories() {
