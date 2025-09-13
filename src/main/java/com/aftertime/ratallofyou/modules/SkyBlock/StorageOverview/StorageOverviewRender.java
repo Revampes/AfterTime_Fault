@@ -32,10 +32,12 @@ public class StorageOverviewRender {
     private final StorageOverviewData storageData;
     private final Minecraft mc;
 
-    // Unified scroll state for a single left-side panel that contains two subcolumns
-    private int scrollOffset = 0;
+    // Separate scroll state for EC and Backpacks columns
+    private int scrollOffsetEC = 0;
+    private int scrollOffsetBP = 0;
     private final int STORAGE_HEIGHT = 120;
-    private int maxScroll = 0;
+    private int maxScrollEC = 0;
+    private int maxScrollBP = 0;
     private ItemStack hoveredItem = null;
     private boolean isVisible = false;
     private boolean shouldClose = false;
@@ -44,11 +46,10 @@ public class StorageOverviewRender {
     private static final int PANEL_MARGIN = 2;         // distance from screen left/top
     private static final int PANEL_SIDE_PADDING = 6;   // inner horizontal padding
     private static final int COLUMN_GAP = 4;           // gap between EC and Backpack columns
-    private static final int V_GAP = 10;                // vertical gap between tiles
+    private static final int V_GAP = 10;               // vertical gap between tiles
     private static final int TILE_WIDTH = 180;         // width per storage tile (fits 9 slots width)
     private static final int MIN_TILE_WIDTH = 172;     // 9 slots * 18 + 10 padding
     private static final int TITLE_HEIGHT = 26;        // header area height (increased for extra padding)
-    // Add a shared per-tile title vertical offset so title and favorite toggle stay aligned
     private static final int TILE_TITLE_Y = 8;         // pixels below tile top
 
     public StorageOverviewRender(StorageOverviewData storageData) {
@@ -79,7 +80,7 @@ public class StorageOverviewRender {
     private void calculateMaxScroll() {
         ScaledResolution sr = new ScaledResolution(mc);
         int screenHeight = sr.getScaledHeight();
-        // Determine how many rows needed (max of EC rows and BP rows)
+        // Determine rows per column
         List<StorageOverviewData.Storage> ec = new ArrayList<>();
         List<StorageOverviewData.Storage> bp = new ArrayList<>();
         for (StorageOverviewData.Storage s : storageData.storages) {
@@ -87,11 +88,15 @@ public class StorageOverviewRender {
         }
         List<StorageOverviewData.Storage> ecSorted = sortForColumn(ec);
         List<StorageOverviewData.Storage> bpSorted = sortForColumn(bp);
-        int rows = Math.max(ecSorted.size(), bpSorted.size());
-        int contentHeight = TITLE_HEIGHT + rows * (STORAGE_HEIGHT + V_GAP) - V_GAP; // last row no gap
+        int rowsEC = ecSorted.size();
+        int rowsBP = bpSorted.size();
+        int contentHeightEC = (rowsEC == 0) ? 0 : (TITLE_HEIGHT + rowsEC * (STORAGE_HEIGHT + V_GAP) - V_GAP);
+        int contentHeightBP = (rowsBP == 0) ? 0 : (TITLE_HEIGHT + rowsBP * (STORAGE_HEIGHT + V_GAP) - V_GAP);
         int availableHeight = screenHeight - PANEL_MARGIN * 2; // leave a small margin
-        maxScroll = Math.max(0, contentHeight - availableHeight);
-        scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+        maxScrollEC = Math.max(0, contentHeightEC - availableHeight);
+        maxScrollBP = Math.max(0, contentHeightBP - availableHeight);
+        scrollOffsetEC = Math.max(0, Math.min(scrollOffsetEC, maxScrollEC));
+        scrollOffsetBP = Math.max(0, Math.min(scrollOffsetBP, maxScrollBP));
     }
 
     private boolean isAllowedScreen(GuiScreen gui) {
@@ -109,8 +114,7 @@ public class StorageOverviewRender {
 
     private int computeTileWidthForPanel(int panelWidth) {
         int availableForTiles = panelWidth - PANEL_SIDE_PADDING * 2 - COLUMN_GAP;
-        int perTile = Math.max(MIN_TILE_WIDTH, Math.min(TILE_WIDTH, availableForTiles / 2));
-        return perTile;
+        return Math.max(MIN_TILE_WIDTH, Math.min(TILE_WIDTH, availableForTiles / 2));
     }
 
     private boolean hasEnoughSpace(PanelDims panel) {
@@ -185,7 +189,6 @@ public class StorageOverviewRender {
         int containerLeftApprox = screenWidth / 2 - approxGuiWidth / 2;
         int preferredWidth = PANEL_SIDE_PADDING * 2 + TILE_WIDTH * 2 + COLUMN_GAP;
         int maxAllowedWidth = Math.max(0, containerLeftApprox - PANEL_MARGIN - 4);
-        int minPanelWidth = PANEL_SIDE_PADDING * 2 + MIN_TILE_WIDTH * 2 + COLUMN_GAP;
         int width = Math.min(preferredWidth, maxAllowedWidth);
         int x = PANEL_MARGIN;
         int y = PANEL_MARGIN;
@@ -206,20 +209,53 @@ public class StorageOverviewRender {
         PanelDims panel = computePanel(sr);
         if (!hasEnoughSpace(panel)) return; // not enough room, do nothing
 
-        // Scroll wheel inside panel
+        int tileWidth = computeTileWidthForPanel(panel.width);
+        int leftX = panel.x + PANEL_SIDE_PADDING;
+        int rightX = leftX + tileWidth + COLUMN_GAP;
+        int scrollableAreaY = panel.y + TITLE_HEIGHT;
+        int scrollableAreaHeight = panel.height - TITLE_HEIGHT;
+
+        // Scroll wheel inside specific column
         int wheel = Mouse.getEventDWheel();
         if (wheel != 0) {
             if (mouseX >= panel.x && mouseX <= panel.x + panel.width && mouseY >= panel.y && mouseY <= panel.y + panel.height) {
-                handleScrolling(wheel);
-                event.setCanceled(true);
-                return;
+                boolean inScrollableY = mouseY >= scrollableAreaY && mouseY <= scrollableAreaY + scrollableAreaHeight;
+                if (inScrollableY) {
+                    if (mouseX >= leftX && mouseX <= leftX + tileWidth) {
+                        handleScrolling(wheel, true);
+                        event.setCanceled(true);
+                        return;
+                    } else if (mouseX >= rightX && mouseX <= rightX + tileWidth) {
+                        handleScrolling(wheel, false);
+                        event.setCanceled(true);
+                        return;
+                    }
+                }
             }
         }
 
         // Mouse clicks inside panel
-        int button = Mouse.getEventButton();
         boolean pressed = Mouse.getEventButtonState();
         if (!pressed) return;
+
+        // Click on scrollbars to jump
+        boolean inScrollableY = mouseY >= scrollableAreaY && mouseY <= scrollableAreaY + scrollableAreaHeight;
+        if (inScrollableY) {
+            // EC scrollbar region
+            int barXLeft = leftX + tileWidth - 5;
+            if (maxScrollEC > 0 && mouseX >= barXLeft && mouseX <= barXLeft + 5) {
+                scrollToPosition(true, mouseY, scrollableAreaY, scrollableAreaHeight);
+                event.setCanceled(true);
+                return;
+            }
+            // BP scrollbar region
+            int barXRight = rightX + tileWidth - 5;
+            if (maxScrollBP > 0 && mouseX >= barXRight && mouseX <= barXRight + 5) {
+                scrollToPosition(false, mouseY, scrollableAreaY, scrollableAreaHeight);
+                event.setCanceled(true);
+                return;
+            }
+        }
 
         // First, check if clicking on a favorite toggle
         StorageOverviewData.Storage favTarget = findFavoriteToggleAt(mouseX, mouseY, panel);
@@ -251,9 +287,18 @@ public class StorageOverviewRender {
             // Click inside overlay but not a slot? swallow if in panel
             if (mouseX >= panel.x && mouseX <= panel.x + panel.width && mouseY >= panel.y && mouseY <= panel.y + panel.height) {
                 event.setCanceled(true);
-                return;
             }
         }
+    }
+
+    private void scrollToPosition(boolean isEC, int clickY, int areaY, int areaHeight) {
+        int max = isEC ? maxScrollEC : maxScrollBP;
+        if (max <= 0) return;
+        int handleHeight = Math.max(10, (areaHeight * areaHeight) / (areaHeight + max));
+        float rel = (clickY - areaY - handleHeight / 2.0f) / Math.max(1, (areaHeight - handleHeight));
+        int newOffset = (int) (rel * max);
+        newOffset = Math.max(0, Math.min(max, newOffset));
+        if (isEC) scrollOffsetEC = newOffset; else scrollOffsetBP = newOffset;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -294,14 +339,19 @@ public class StorageOverviewRender {
 
     private void playClick() {
         mc.getSoundHandler().playSound(
-            net.minecraft.client.audio.PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F)
+                net.minecraft.client.audio.PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F)
         );
     }
 
-    private void handleScrolling(int wheel) {
+    private void handleScrolling(int wheel, boolean isEC) {
         int scrollAmount = 20;
-        if (wheel > 0) scrollOffset = Math.max(0, scrollOffset - scrollAmount);
-        else if (wheel < 0) scrollOffset = Math.min(maxScroll, scrollOffset + scrollAmount);
+        if (wheel > 0) {
+            if (isEC) scrollOffsetEC = Math.max(0, scrollOffsetEC - scrollAmount);
+            else scrollOffsetBP = Math.max(0, scrollOffsetBP - scrollAmount);
+        } else if (wheel < 0) {
+            if (isEC) scrollOffsetEC = Math.min(maxScrollEC, scrollOffsetEC + scrollAmount);
+            else scrollOffsetBP = Math.min(maxScrollBP, scrollOffsetBP + scrollAmount);
+        }
     }
 
     private void renderStorageOverlay() {
@@ -336,6 +386,10 @@ public class StorageOverviewRender {
         int scrollableAreaY = panel.y + TITLE_HEIGHT;
         int scrollableAreaHeight = panel.height - TITLE_HEIGHT;
 
+        // Determine column x positions
+        int leftX = panel.x + PANEL_SIDE_PADDING;
+        int rightX = leftX + tileWidth + COLUMN_GAP;
+
         // Scissor to panel content area
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         int scaleFactor = sr.getScaleFactor();
@@ -343,18 +397,32 @@ public class StorageOverviewRender {
                 (sr.getScaledHeight() - scrollableAreaY - scrollableAreaHeight) * scaleFactor,
                 panel.width * scaleFactor,
                 scrollableAreaHeight * scaleFactor);
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(0, -scrollOffset, 0);
+
         int mouseX = Mouse.getX() * screenWidth / mc.displayWidth;
         int mouseY = screenHeight - Mouse.getY() * screenHeight / mc.displayHeight - 1;
-        drawTwoColumnStorages(ecSorted, bpSorted, panel.x + PANEL_SIDE_PADDING, scrollableAreaY, mouseX, mouseY + scrollOffset, tileWidth);
+
+        // Draw EC column with its own scroll
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0, -scrollOffsetEC, 0);
+        drawTwoColumnStorages(ecSorted, Collections.<StorageOverviewData.Storage>emptyList(), panel.x + PANEL_SIDE_PADDING, scrollableAreaY, mouseX, mouseY + scrollOffsetEC, tileWidth);
         GlStateManager.popMatrix();
+
+        // Draw BP column with its own scroll
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0, -scrollOffsetBP, 0);
+        drawTwoColumnStorages(Collections.<StorageOverviewData.Storage>emptyList(), bpSorted, panel.x + PANEL_SIDE_PADDING, scrollableAreaY, mouseX, mouseY + scrollOffsetBP, tileWidth);
+        GlStateManager.popMatrix();
+
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
-        // Scrollbar on the right edge of the panel
-        if (maxScroll > 0) {
-            int barX = panel.x + panel.width + 4;
-            drawScrollBar(barX, scrollableAreaY, scrollableAreaHeight, scrollOffset, maxScroll);
+        // Scrollbars for each column
+        if (maxScrollEC > 0) {
+            int barXLeft = leftX + tileWidth - 5;
+            drawScrollBar(barXLeft, scrollableAreaY, scrollableAreaHeight, scrollOffsetEC, maxScrollEC);
+        }
+        if (maxScrollBP > 0) {
+            int barXRight = rightX + tileWidth - 5;
+            drawScrollBar(barXRight, scrollableAreaY, scrollableAreaHeight, scrollOffsetBP, maxScrollBP);
         }
 
         // Tooltip on top
@@ -380,7 +448,7 @@ public class StorageOverviewRender {
     }
 
     private List<StorageOverviewData.Storage> sortForColumn(List<StorageOverviewData.Storage> list) {
-        List<StorageOverviewData.Storage> copy = new ArrayList<StorageOverviewData.Storage>(list);
+        List<StorageOverviewData.Storage> copy = new ArrayList<>(list);
         Collections.sort(copy, STORAGE_COMPARATOR);
         return copy;
     }
@@ -412,7 +480,6 @@ public class StorageOverviewRender {
         int containerX = x + (width - itemAreaWidth) / 2;
         int containerY = y + 20;
         String storageTitle = (storage.IsEnderChest ? "Ender Chest " : "Backpack ") + storage.StorageNum;
-        int titleWidth = mc.fontRendererObj.getStringWidth(storageTitle);
         int titleX = x + 4; // align left for space
         mc.fontRendererObj.drawStringWithShadow(storageTitle, titleX, y + TILE_TITLE_Y, storage.IsEnderChest ? 0xC080FF : 0xC0C0C0);
         // Favorite toggle box in top-right (aligned with title baseline area)
@@ -487,7 +554,6 @@ public class StorageOverviewRender {
     }
 
     private HoverTarget findOverlaySlotAt(int mouseX, int mouseY, PanelDims panel) {
-        ScaledResolution sr = new ScaledResolution(mc);
         final int ITEMS_PER_ROW = 9; final int SLOT_SIZE = 18;
         int startY = panel.y + TITLE_HEIGHT;
 
@@ -503,10 +569,14 @@ public class StorageOverviewRender {
         // Check if inside panel at all
         if (!(mouseX >= panel.x && mouseX <= panel.x + panel.width && mouseY >= panel.y && mouseY <= panel.y + panel.height)) return null;
 
-        int adjMouseY = mouseY + scrollOffset;
+        // Column geometry
         int tileWidth = computeTileWidthForPanel(panel.width);
         int leftX = panel.x + PANEL_SIDE_PADDING;
         int rightX = leftX + tileWidth + COLUMN_GAP;
+
+        int adjMouseYEC = mouseY + scrollOffsetEC;
+        int adjMouseYBP = mouseY + scrollOffsetBP;
+
         int rows = Math.max(ecSorted.size(), bpSorted.size());
         for (int row = 0; row < rows; row++) {
             int yBase = startY + row * (STORAGE_HEIGHT + V_GAP);
@@ -519,7 +589,7 @@ public class StorageOverviewRender {
                 for (int idx = 9; idx < s.contents.length; idx++) {
                     int slotX = startXSlots + ((idx - 9) % ITEMS_PER_ROW) * SLOT_SIZE;
                     int slotY = startYSlots + ((idx - 9) / ITEMS_PER_ROW) * SLOT_SIZE;
-                    if (mouseX >= slotX && mouseX <= slotX + 16 && adjMouseY >= slotY && adjMouseY <= slotY + 16) {
+                    if (mouseX >= slotX && mouseX <= slotX + 16 && adjMouseYEC >= slotY && adjMouseYEC <= slotY + 16) {
                         return new HoverTarget(s, idx);
                     }
                 }
@@ -533,7 +603,7 @@ public class StorageOverviewRender {
                 for (int idx = 9; idx < s.contents.length; idx++) {
                     int slotX = startXSlots + ((idx - 9) % ITEMS_PER_ROW) * SLOT_SIZE;
                     int slotY = startYSlots + ((idx - 9) / ITEMS_PER_ROW) * SLOT_SIZE;
-                    if (mouseX >= slotX && mouseX <= slotX + 16 && adjMouseY >= slotY && adjMouseY <= slotY + 16) {
+                    if (mouseX >= slotX && mouseX <= slotX + 16 && adjMouseYBP >= slotY && adjMouseYBP <= slotY + 16) {
                         return new HoverTarget(s, idx);
                     }
                 }
@@ -546,9 +616,10 @@ public class StorageOverviewRender {
     private StorageOverviewData.Storage findFavoriteToggleAt(int mouseX, int mouseY, PanelDims panel) {
         int startY = panel.y + TITLE_HEIGHT;
         if (!(mouseX >= panel.x && mouseX <= panel.x + panel.width && mouseY >= panel.y && mouseY <= panel.y + panel.height)) return null;
-        int adjMouseY = mouseY + scrollOffset;
-        List<StorageOverviewData.Storage> ec = new ArrayList<StorageOverviewData.Storage>();
-        List<StorageOverviewData.Storage> bp = new ArrayList<StorageOverviewData.Storage>();
+        int adjMouseYEC = mouseY + scrollOffsetEC;
+        int adjMouseYBP = mouseY + scrollOffsetBP;
+        List<StorageOverviewData.Storage> ec = new ArrayList<>();
+        List<StorageOverviewData.Storage> bp = new ArrayList<>();
         for (StorageOverviewData.Storage s : storageData.storages) {
             if (s.IsEnderChest) ec.add(s); else bp.add(s);
         }
@@ -564,13 +635,13 @@ public class StorageOverviewRender {
             if (row < ecSorted.size()) {
                 StorageOverviewData.Storage s = ecSorted.get(row);
                 int favX1 = leftX + tileWidth - 12, favY1 = yBase + TILE_TITLE_Y, favX2 = favX1 + 8, favY2 = favY1 + 8;
-                if (mouseX >= favX1 && mouseX <= favX2 && adjMouseY >= favY1 && adjMouseY <= favY2) return s;
+                if (mouseX >= favX1 && mouseX <= favX2 && adjMouseYEC >= favY1 && adjMouseYEC <= favY2) return s;
             }
             // BP column toggle
             if (row < bpSorted.size()) {
                 StorageOverviewData.Storage s = bpSorted.get(row);
                 int favX1 = rightX + tileWidth - 12, favY1 = yBase + TILE_TITLE_Y, favX2 = favX1 + 8, favY2 = favY1 + 8;
-                if (mouseX >= favX1 && mouseX <= favX2 && adjMouseY >= favY1 && adjMouseY <= favY2) return s;
+                if (mouseX >= favX1 && mouseX <= favX2 && adjMouseYBP >= favY1 && adjMouseYBP <= favY2) return s;
             }
         }
         return null;

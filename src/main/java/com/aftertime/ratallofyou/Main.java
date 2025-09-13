@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
+import com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLineUp;
@@ -43,7 +44,7 @@ import com.aftertime.ratallofyou.modules.render.NameTag; // Register NameTag
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
     public static final String MODID = "ratallofyou";
-    public static final String VERSION = "2.1";
+    public static final String VERSION = "2.2";
     public static Minecraft mc = Minecraft.getMinecraft();
 
     // Small helper to reduce repetitive register calls
@@ -74,7 +75,7 @@ public class Main {
                 new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(),
                 new ChestOpenNotice(), new PosionArrow(), new WatcherClear(),
                 // Custom Leap Menu
-                new com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu(),
+                new LeapMenu(),
 
                 // Crate/building related
                 new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),
