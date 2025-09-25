@@ -103,10 +103,24 @@ public class numbers {
         if (!(event.gui instanceof GuiChest)) return;
         if (!inTerminal) return;
         event.setCanceled(true);
-        // Recompute state from inventory (dynamic next steps only)
         solveFromInventory();
         processQueueIfReady();
         drawOverlay();
+
+        // Process queued clicks
+        while (!queue.isEmpty() && CLICK.canClick()) {
+            int[] click = queue.poll();
+            if (click != null) {
+                TerminalGuiCommon.clickSlot(click[0], click[1], true);
+                CLICK.onClick();
+            }
+        }
+    }
+
+    private static void queueClick(int slot, int button) {
+        if (slot >= 0 && slot < windowSize) {
+            queue.offer(new int[]{slot, button});
+        }
     }
 
     @SubscribeEvent
@@ -114,26 +128,18 @@ public class numbers {
         if (!enabled) return;
         if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return;
         if (!inTerminal) return;
-
-        // Block other handlers while our GUI is active
         event.setCanceled(true);
-
-        if (!Mouse.getEventButtonState()) return; // only handle press
+        if (!Mouse.getEventButtonState()) return;
         int button = Mouse.getEventButton();
         if (button != 0) return; // left click only
-
         long now = System.currentTimeMillis();
         if (openedAt + TerminalGuiCommon.Defaults.firstClickBlockMs > now) return;
-
-        // Use shared helper to map mouse to slot
         int slot = TerminalGuiCommon.computeSlotUnderMouse(windowSize, TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.offsetX, TerminalGuiCommon.Defaults.offsetY);
         if (slot < 0) return;
-
-        // Only allow clicking the next required slot
-        if (!solution.isEmpty() && solution.get(0) == slot) {
-            // Predict locally for high ping/phoenix, or when not locked yet (first click)
-            if (TerminalGuiCommon.Defaults.highPingMode || TerminalGuiCommon.Defaults.phoenixClientCompat || !CLICK.clicked) predict(slot);
-
+        if (solution.contains(slot)) {
+            if (TerminalGuiCommon.Defaults.highPingMode || TerminalGuiCommon.Defaults.phoenixClientCompat || !CLICK.clicked) {
+                TerminalGuiCommon.predictRemove(solution, slot);
+            }
             if (TerminalGuiCommon.Defaults.highPingMode && CLICK.clicked) {
                 queue.addLast(new int[]{slot, 0});
             } else {
@@ -213,6 +219,8 @@ public class numbers {
             CLICK.clicked = false;
             lastHeadSlot = head;
         }
+        // Process the queue immediately after unlocking
+        processQueueIfReady();
     }
 
 

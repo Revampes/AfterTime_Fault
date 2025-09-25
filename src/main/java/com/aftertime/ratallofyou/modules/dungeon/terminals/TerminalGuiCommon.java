@@ -18,36 +18,16 @@ import java.util.List;
  * Common helpers and constants shared by dungeon terminal custom GUIs.
  */
 public final class TerminalGuiCommon {
-    private TerminalGuiCommon() {
-    }
-
+    private TerminalGuiCommon() {}
 
     // Force-load certain terminal classes so their static initializers can register event listeners
     static {
-        try {
-            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.numbers");
-        } catch (Throwable ignored) {
-        }
-        try {
-            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.startswith");
-        } catch (Throwable ignored) {
-        }
-        try {
-            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.Colors");
-        } catch (Throwable ignored) {
-        }
-        try {
-            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.redgreen");
-        } catch (Throwable ignored) {
-        }
-        try {
-            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.rubix");
-        } catch (Throwable ignored) {
-        }
-        try {
-            Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.melody");
-        } catch (Throwable ignored) {
-        }
+        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.numbers"); } catch (Throwable ignored) {}
+        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.startswith"); } catch (Throwable ignored) {}
+        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.Colors"); } catch (Throwable ignored) {}
+        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.redgreen"); } catch (Throwable ignored) {}
+        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.rubix"); } catch (Throwable ignored) {}
+        try { Class.forName("com.aftertime.ratallofyou.modules.dungeon.terminals.melody"); } catch (Throwable ignored) {}
     }
 
     // ===================== Shared defaults/config =====================
@@ -61,20 +41,18 @@ public final class TerminalGuiCommon {
         public static int offsetY = 0;
         public static int overlayColor = 0xFF00FF00;    // opaque green
         public static int backgroundColor = 0x7F000000; // semi-transparent black
-        // Corner radii for rounded UI (rounded corners, not circles)
-        public static int cornerRadiusBg = 1;   // background panel
-        public static int cornerRadiusCell = 1; // slot highlight
+        public static int cornerRadiusBg = 1;           // background panel radius
+        public static int cornerRadiusCell = 1;         // slot highlight radius
+        public static int queueIntervalMs = 120;        // spacing between queued clicks in high ping mode
     }
 
     // Holder for per-terminal click timing state
     public static class ClickTracker {
         public boolean clicked = false;
         public long lastClickAt = 0L;
-
-        public void reset() {
-            clicked = false;
-            lastClickAt = 0L;
-        }
+        public void reset() { clicked = false; lastClickAt = 0L; }
+        public boolean canClick() { return !clicked; }
+        public void onClick() { clicked = true; lastClickAt = System.currentTimeMillis(); }
     }
 
     public static final int[] ALLOWED_SLOTS = new int[]{
@@ -93,20 +71,16 @@ public final class TerminalGuiCommon {
                     if (s0 != null && s0.inventory != null) {
                         return s0.inventory.getSizeInventory();
                     }
-                } catch (Throwable ignored) {
-                }
+                } catch (Throwable ignored) {}
                 return Math.min(54, Math.max(9, cont.inventorySlots.size() - 36));
             }
-        } catch (Throwable ignored) {
-        }
-        // Reflection fallback
+        } catch (Throwable ignored) {}
         try {
             Object lower = ReflectionHelper.getPrivateValue(GuiChest.class, chest, "lowerChestInventory", "field_147015_w");
             if (lower != null) {
                 return (Integer) lower.getClass().getMethod("getSizeInventory").invoke(lower);
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         return 54;
     }
 
@@ -120,16 +94,14 @@ public final class TerminalGuiCommon {
                         IChatComponent comp = ((IInventory) lowerInv).getDisplayName();
                         if (comp != null) return comp.getUnformattedText();
                     }
-                } catch (Throwable ignored) {
-                }
+                } catch (Throwable ignored) {}
                 try {
                     Object lower = ReflectionHelper.getPrivateValue(ContainerChest.class, (ContainerChest) cont, "lowerChestInventory", "field_75155_e");
                     if (lower instanceof IInventory) {
                         IChatComponent comp = ((IInventory) lower).getDisplayName();
                         if (comp != null) return comp.getUnformattedText();
                     }
-                } catch (Throwable ignored) {
-                }
+                } catch (Throwable ignored) {}
                 try {
                     if (cont.inventorySlots != null && !cont.inventorySlots.isEmpty()) {
                         Slot s0 = cont.getSlot(0);
@@ -138,11 +110,9 @@ public final class TerminalGuiCommon {
                             if (comp != null) return comp.getUnformattedText();
                         }
                     }
-                } catch (Throwable ignored) {
-                }
+                } catch (Throwable ignored) {}
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         try {
             Object lower = ReflectionHelper.getPrivateValue(GuiChest.class, chest, "lowerChestInventory", "field_147015_w");
             if (lower instanceof IInventory) {
@@ -151,14 +121,10 @@ public final class TerminalGuiCommon {
             } else if (lower != null) {
                 Object comp = lower.getClass().getMethod("getDisplayName").invoke(lower);
                 if (comp != null) {
-                    try {
-                        return (String) comp.getClass().getMethod("getUnformattedText").invoke(comp);
-                    } catch (Throwable ignored) {
-                    }
+                    try { return (String) comp.getClass().getMethod("getUnformattedText").invoke(comp); } catch (Throwable ignored) {}
                 }
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         return null;
     }
 
@@ -169,70 +135,32 @@ public final class TerminalGuiCommon {
 
     // Rounded filled-rect helper (ARGB). Falls back to drawRect if radius <= 0 or rect is too small.
     public static void drawRoundedRect(int left, int top, int right, int bottom, int radius, int color) {
-        int w = right - left;
-        int h = bottom - top;
+        int w = right - left; int h = bottom - top;
         if (radius <= 0 || w <= 0 || h <= 0) { drawRect(left, top, right, bottom, color); return; }
         int r = Math.min(radius, Math.min(w, h) / 2);
-
-        // Core rects (cross)
         drawRect(left + r, top + r, right - r, bottom - r, color);            // center
         drawRect(left, top + r, left + r, bottom - r, color);                  // left band
         drawRect(right - r, top + r, right, bottom - r, color);                // right band
         drawRect(left + r, top, right - r, top + r, color);                    // top band
         drawRect(left + r, bottom - r, right - r, bottom, color);              // bottom band
-
-        // Corner scanlines using circle equation (x - cx)^2 + (y - cy)^2 <= r^2
-        int cxL = left + r, cxR = right - r;
-        int cyT = top + r, cyB = bottom - r;
+        int cxL = left + r, cxR = right - r; int cyT = top + r, cyB = bottom - r;
         for (int dy = 0; dy < r; dy++) {
             int dx = (int) Math.floor(Math.sqrt(r * 1.0 - dy * dy));
-            // Top-left
-            int y = cyT - 1 - dy;
-            if (y >= top && y < top + r) {
-                int x0 = Math.max(left, cxL - dx);
-                if (x0 < cxL) drawRect(x0, y, cxL, y + 1, color);
-            }
-            // Top-right (same y)
-            if (y >= top && y < top + r) {
-                int x1 = Math.min(right, cxR + dx);
-                if (cxR < x1) drawRect(cxR, y, x1, y + 1, color);
-            }
-            // Bottom-left
-            y = cyB + dy;
-            if (y >= bottom - r && y < bottom) {
-                int x0 = Math.max(left, cxL - dx);
-                if (x0 < cxL) drawRect(x0, y, cxL, y + 1, color);
-            }
-            // Bottom-right (same y)
-            if (y >= bottom - r && y < bottom) {
-                int x1 = Math.min(right, cxR + dx);
-                if (cxR < x1) drawRect(cxR, y, x1, y + 1, color);
-            }
+            int y = cyT - 1 - dy; if (y >= top && y < top + r) { int x0 = Math.max(left, cxL - dx); if (x0 < cxL) drawRect(x0, y, cxL, y + 1, color); int x1 = Math.min(right, cxR + dx); if (cxR < x1) drawRect(cxR, y, x1, y + 1, color); }
+            y = cyB + dy; if (y >= bottom - r && y < bottom) { int x0 = Math.max(left, cxL - dx); if (x0 < cxL) drawRect(x0, y, cxL, y + 1, color); int x1 = Math.min(right, cxR + dx); if (cxR < x1) drawRect(cxR, y, x1, y + 1, color); }
         }
     }
 
-    /**
-     * Compute rows, width, height, and offsets for a terminal grid.
-     * Returns int[]{rows, width, height, offX, offY}.
-     */
+    /** Compute rows, width, height, and offsets for a terminal grid. Returns int[]{rows, width, height, offX, offY}. */
     public static int[] computeGrid(int windowSize, float scale, int offsetX, int offsetY) {
-        Minecraft mc = Minecraft.getMinecraft();
-        ScaledResolution sr = new ScaledResolution(mc);
-        int rows = Math.max(1, windowSize / 9);
-        int width = 9 * 18;
-        int height = rows * 18;
-        float cx = sr.getScaledWidth() / scale / 2f;
-        float cy = sr.getScaledHeight() / scale / 2f;
-        int offX = (int) (cx - (width / 2f) + offsetX + 1);
-        int offY = (int) (cy - (height / 2f) + offsetY);
+        Minecraft mc = Minecraft.getMinecraft(); ScaledResolution sr = new ScaledResolution(mc);
+        int rows = Math.max(1, windowSize / 9); int width = 9 * 18; int height = rows * 18;
+        float cx = sr.getScaledWidth() / scale / 2f; float cy = sr.getScaledHeight() / scale / 2f;
+        int offX = (int) (cx - (width / 2f) + offsetX + 1); int offY = (int) (cy - (height / 2f) + offsetY);
         return new int[]{rows, width, height, offX, offY};
     }
 
-    // ===================== Shared input helpers =====================
-
-    /**
-     * Returns the current mouse position in scaled GUI coordinates: {x, y}.
-     */
+    /** Returns current mouse position in scaled GUI coordinates: {x,y}. */
     public static int[] getScaledMouseXY() {
         ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
         int x = Mouse.getEventX() * sr.getScaledWidth() / Minecraft.getMinecraft().displayWidth;
@@ -240,100 +168,67 @@ public final class TerminalGuiCommon {
         return new int[]{x, y};
     }
 
-    /**
-     * Given the terminal grid parameters, computes the slot index under the mouse, or -1 if none/invalid.
-     */
+    /** Slot index under mouse or -1. */
     public static int computeSlotUnderMouse(int windowSize, float scale, int offsetX, int offsetY) {
         if (windowSize <= 0) return -1;
         ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
-        int[] xy = getScaledMouseXY();
-        int mouseX = xy[0];
-        int mouseY = xy[1];
-
+        int[] xy = getScaledMouseXY(); int mouseX = xy[0]; int mouseY = xy[1];
         int rows = Math.max(1, windowSize / 9);
-        int width = (int) (9 * 18 * scale);
-        int height = (int) (rows * 18 * scale);
+        int width = (int) (9 * 18 * scale); int height = (int) (rows * 18 * scale);
         int offX = sr.getScaledWidth() / 2 - width / 2 + (int) (offsetX * scale);
         int offY = sr.getScaledHeight() / 2 - height / 2 + (int) (offsetY * scale);
-
         int slotX = (int) Math.floor((mouseX - offX) / (18f * scale));
         int slotY = (int) Math.floor((mouseY - offY) / (18f * scale));
         if (slotX < 0 || slotX > 8 || slotY < 0) return -1;
-        int slot = slotX + slotY * 9;
-        if (slot < 0 || slot >= windowSize) return -1;
-        return slot;
+        int slot = slotX + slotY * 9; if (slot < 0 || slot >= windowSize) return -1; return slot;
     }
 
-    /**
-     * Sends a window click to the server for the player's currently open container, without picking up or moving any item.
-     * Returns true if the click was attempted, false if player/controller was null.
-     */
-    public static boolean windowClickNoPickup(int slot, int button) { // Notice that this is fake middle click, not a real one
-        Minecraft mc = Minecraft.getMinecraft();
-        if (mc.thePlayer == null || mc.playerController == null) return false;
+    /** Send a window click (no pickup). */
+    public static boolean windowClickNoPickup(int slot, int button) {
+        Minecraft mc = Minecraft.getMinecraft(); if (mc.thePlayer == null || mc.playerController == null) return false;
         try {
             int windowId = mc.thePlayer.openContainer.windowId;
             short actionNumber = mc.thePlayer.openContainer.getNextTransactionID(mc.thePlayer.inventory);
-            // clickType 0 = PICKUP, see Container.java for click types
-            net.minecraft.network.play.client.C0EPacketClickWindow packet =
-                    new net.minecraft.network.play.client.C0EPacketClickWindow(windowId, slot, button, 0, null, actionNumber);
-            mc.getNetHandler().addToSendQueue(packet);
-            return true;
-        } catch (Throwable ignored) {
-            return false;
-        }
+            net.minecraft.network.play.client.C0EPacketClickWindow packet = new net.minecraft.network.play.client.C0EPacketClickWindow(windowId, slot, button, 0, null, actionNumber);
+            mc.getNetHandler().addToSendQueue(packet); return true;
+        } catch (Throwable ignored) { return false; }
     }
 
-    /**
-     * Helper to perform a container click and update a per-terminal click tracker.
-     */
+    /** Perform click and mark tracker. */
     public static void doClickAndMark(int slot, int button, ClickTracker tracker) {
         if (!windowClickNoPickup(slot, button)) return;
-        if (tracker != null) {
-            tracker.clicked = true;
-            tracker.lastClickAt = System.currentTimeMillis();
-        }
+        if (tracker != null) tracker.onClick();
     }
 
-    /**
-     * Returns true if the given tracker is in a clicked state and the timeout elapsed.
-     */
+    /** Returns true if tracker clicked and timeout elapsed. */
     public static boolean hasTimedOut(ClickTracker tracker, int timeoutMs) {
         return tracker != null && tracker.clicked && (System.currentTimeMillis() - tracker.lastClickAt) >= timeoutMs;
     }
 
-    // ===================== Shared state helpers =====================
+    /** Predictive remove. */
+    public static void predictRemove(List<Integer> solution, int slot) { if (solution != null) solution.remove((Integer) slot); }
 
-    /**
-     * Remove a slot from a solution list by value (predictive UI update).
-     */
-    public static void predictRemove(List<Integer> solution, int slot) {
-        if (solution == null) return;
-        solution.remove((Integer) slot);
-    }
+    /** Click slot helper. */
+    public static boolean clickSlot(int slot, int button, boolean immediate) { return immediate && windowClickNoPickup(slot, button); }
 
-    /**
-     * Validate a queued series of clicks against the current solution. If all queued clicks are still valid,
-     * applies predictRemove for each queued entry (in order) and returns the first queued click to send now.
-     * If any queued click is invalid, clears the queue and returns null.
-     * Additionally, will not process the queue while a previous click is still marked as in-flight
-     * (tracker.clicked == true), matching the JS behavior of waiting for an inventory update.
-     */
+    /** Process queued clicks; in highPingMode allow timed progression when no inventory update arrives. */
     public static int[] processQueueIfReady(Deque<int[]> queue, List<Integer> solution, ClickTracker tracker) {
         if (queue == null || queue.isEmpty()) return null;
-        // Wait for server confirmation/unlock before sending the next queued click
-        if (tracker != null && tracker.clicked) return null;
-        if (solution == null) {
-            queue.clear();
-            return null;
-        }
-        for (int[] q : queue) {
-            if (q == null || q.length < 2 || !solution.contains(q[0])) {
-                queue.clear();
-                return null;
+        if (tracker != null && tracker.clicked) {
+            if (Defaults.highPingMode) {
+                long delta = System.currentTimeMillis() - tracker.lastClickAt;
+                if (delta < Defaults.queueIntervalMs) return null; // wait interval
+                tracker.clicked = false; // timed unlock
+            } else {
+                return null; // wait for inventory update
             }
         }
-        for (int[] q : queue) predictRemove(solution, q[0]);
-        return queue.pollFirst();
+        if (solution == null) { queue.clear(); return null; }
+        for (int[] e : queue) {
+            if (e == null || e.length < 2 || !solution.contains(e[0])) { queue.clear(); return null; }
+        }
+        int[] first = queue.pollFirst();
+        if (first != null) predictRemove(solution, first[0]);
+        return first;
     }
 }

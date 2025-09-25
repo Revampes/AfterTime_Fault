@@ -47,6 +47,10 @@ public class AutoExperiment {
     private long chronoNextAllowedAt = 0L;
     private long ultraNextAllowedAt = 0L;
 
+    private static final long WAIT_TIMEOUT_MS = 2000; // 2 seconds timeout for waiting state
+    private long chronoWaitStart = 0L;
+    private long ultraWaitStart = 0L;
+
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
         resetState();
@@ -85,6 +89,7 @@ public class AutoExperiment {
     }
 
     private void handleChronomatron(List<Slot> invSlots) {
+        debugSlots(invSlots, "Chrono");
         // Reset record gate between rounds: when indicator shows glass and last recorded slot is no longer enchanted
         if (isGlassOn49(invSlots) && lastAddedSlot >= 0 && lastAddedSlot < invSlots.size()) {
             Slot last = invSlots.get(lastAddedSlot);
@@ -122,10 +127,14 @@ public class AutoExperiment {
             Slot s = invSlots.get(chronoLastClickedSlot);
             ItemStack cur = (s != null) ? s.getStack() : null;
             boolean changed = !itemStacksEqual(chronoLastStack, cur);
+            debug("Chrono waiting: slot=" + chronoLastClickedSlot + ", changed=" + changed + ", elapsed=" + (now() - chronoWaitStart));
             if (changed) {
                 chronoWaitingForChange = false;
+            } else if (now() - chronoWaitStart > WAIT_TIMEOUT_MS) {
+                debug("Chrono wait timeout, forcing next click");
+                chronoWaitingForChange = false;
             } else {
-                return; // do not click again until GUI updates the slot
+                return; // do not click again until GUI updates the slot or timeout
             }
         }
 
@@ -155,6 +164,7 @@ public class AutoExperiment {
                 debug("Chrono click: index=" + clicks + ", slot=" + slotId + ", waitOk");
                 clickSlot(slotId);
                 chronoWaitingForChange = true;
+                chronoWaitStart = now;
                 lastClickTime = now;
                 chronoNextAllowedAt = now + Math.max(0, getDelayMs());
                 clicks++;
@@ -166,6 +176,7 @@ public class AutoExperiment {
     }
 
     private void handleUltrasequencer(List<Slot> invSlots) {
+        debugSlots(invSlots, "Ultra");
         // If click phase indicator shows (clock), allow clicks and ensure memorize flag resets
         if (isClockOn49(invSlots)) {
             // Ensure we can rebuild mapping next time the memorize phase returns
@@ -197,8 +208,12 @@ public class AutoExperiment {
             Slot s = invSlots.get(ultraLastClickedSlot);
             ItemStack cur = (s != null) ? s.getStack() : null;
             boolean changed = !itemStacksEqual(ultraLastStack, cur);
+            debug("Ultra waiting: slot=" + ultraLastClickedSlot + ", changed=" + changed + ", elapsed=" + (now() - ultraWaitStart));
             if (changed) {
                 ultraWaitingForChange = false; // allow next click after the GUI updates
+            } else if (now() - ultraWaitStart > WAIT_TIMEOUT_MS) {
+                debug("Ultra wait timeout, forcing next click");
+                ultraWaitingForChange = false;
             } else {
                 return; // still same state, do not spam clicks
             }
@@ -220,6 +235,7 @@ public class AutoExperiment {
                     debug("Ultra click: index=" + clicks + ", slot=" + slotId);
                     clickSlot(slotId);
                     ultraWaitingForChange = true;
+                    ultraWaitStart = now;
                     lastClickTime = now;
                     ultraNextAllowedAt = now + Math.max(0, getDelayMs());
                     clicks++;
@@ -287,7 +303,24 @@ public class AutoExperiment {
     private boolean itemStacksEqual(ItemStack a, ItemStack b) {
         if (a == b) return true;
         if (a == null || b == null) return false;
-        return a.getItem() == b.getItem() && a.getItemDamage() == b.getItemDamage() && a.stackSize == b.stackSize;
+        boolean basic = a.getItem() == b.getItem() && a.getItemDamage() == b.getItemDamage() && a.stackSize == b.stackSize;
+        boolean name = Objects.equals(a.getDisplayName(), b.getDisplayName());
+        boolean nbt = Objects.equals(a.getTagCompound(), b.getTagCompound());
+        debug("Comparing ItemStacks: basic=" + basic + ", name=" + name + ", nbt=" + nbt + ", a=" + (a != null ? a.getDisplayName() : "null") + ", b=" + (b != null ? b.getDisplayName() : "null"));
+        return basic && name && nbt;
+    }
+
+    private void debugSlots(List<Slot> slots, String phase) {
+        if (!getDebug()) return;
+        StringBuilder sb = new StringBuilder("[" + phase + "] Slots: ");
+        for (int i = 0; i < slots.size(); i++) {
+            Slot s = slots.get(i);
+            ItemStack st = (s != null) ? s.getStack() : null;
+            if (st != null) {
+                sb.append(i).append(":").append(st.getDisplayName()).append(",");
+            }
+        }
+        debug(sb.toString());
     }
 
     private void resetState() {

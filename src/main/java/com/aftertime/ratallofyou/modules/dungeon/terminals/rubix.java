@@ -110,83 +110,50 @@ public class rubix {
     public void onDrawScreenPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
         if (!enabled) return;
         if (!(event.gui instanceof GuiChest)) return;
-
-        // Fallback detection if GuiOpen missed
-        if (!inTerminal) {
-            GuiChest chest = (GuiChest) event.gui;
-            String title = TerminalGuiCommon.getChestTitle(chest);
-            if (title != null && TITLE_PATTERN.matcher(title).matches()) {
-                inTerminal = true;
-                CLICK.reset();
-                if (openedAt == 0L) openedAt = System.currentTimeMillis();
-                queue.clear();
-                windowSize = TerminalGuiCommon.getChestWindowSize(chest);
-                ensureSolutionSize();
-            } else {
-                return;
-            }
-        }
-
+        if (!inTerminal) return;
         event.setCanceled(true);
-        // Recompute from inventory, detect update to clear click lock, then process queued predictions, then draw
         solveFromInventory();
-        if (CLICK.clicked && invHash != hashAtClick) {
-            CLICK.clicked = false; // server inventory changed; allow next queued click immediately
-        }
         processQueueIfReady();
         drawOverlay();
+
+        // Process queued clicks
+        while (!queue.isEmpty() && CLICK.canClick()) {
+            int[] click = queue.poll();
+            if (click != null) {
+                TerminalGuiCommon.clickSlot(click[0], click[1], true);
+                CLICK.onClick();
+            }
+        }
+    }
+
+    private static void queueClick(int slot, int button) {
+        if (slot >= 0 && slot < windowSize) {
+            queue.offer(new int[]{slot, button});
+        }
     }
 
     @SubscribeEvent
     public void onMouseInputPre(GuiScreenEvent.MouseInputEvent.Pre event) {
         if (!enabled) return;
         if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return;
-
-        // Ensure detection even if GuiOpen was missed so the first click works
-        if (!inTerminal) {
-            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-            String title = TerminalGuiCommon.getChestTitle(chest);
-            if (title != null && TITLE_PATTERN.matcher(title).matches()) {
-                inTerminal = true;
-                CLICK.reset();
-                if (openedAt == 0L) openedAt = System.currentTimeMillis();
-                queue.clear();
-                windowSize = TerminalGuiCommon.getChestWindowSize(chest);
-                ensureSolutionSize();
-                solveFromInventory();
-            } else {
-                return; // not our GUI; don't cancel
-            }
-        }
-
-        // Block other handlers while our GUI is active
+        if (!inTerminal) return;
         event.setCanceled(true);
-
-        // Only on press
         if (!Mouse.getEventButtonState()) return;
         int button = Mouse.getEventButton();
-        if (button != 0 && button != 1) return; // left or right only
-
+        if (button != 0 && button != 1) return; // left or right click only
         long now = System.currentTimeMillis();
         if (openedAt + TerminalGuiCommon.Defaults.firstClickBlockMs > now) return;
-
         int slot = TerminalGuiCommon.computeSlotUnderMouse(windowSize, TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.offsetX, TerminalGuiCommon.Defaults.offsetY);
         if (slot < 0) return;
 
-        int need = getSolution(slot);
-        if (need == 0) return; // no action needed
-
-        // Validate button against direction
-        if ((need > 0 && button == 0) || (need < 0 && button == 1)) {
-            // Predict locally when allowed
-            if (TerminalGuiCommon.Defaults.highPingMode || TerminalGuiCommon.Defaults.phoenixClientCompat || !CLICK.clicked) predict(slot, button);
-
-            if (TerminalGuiCommon.Defaults.highPingMode && CLICK.clicked) {
-                queue.addLast(new int[]{slot, button});
-            } else {
-                // Capture current inventory hash so we can detect the next server update
-                hashAtClick = invHash;
-                TerminalGuiCommon.doClickAndMark(slot, button, CLICK);
+        if (slot < solutionBySlot.length && solutionBySlot[slot] != 0) {
+            int expectedButton = solutionBySlot[slot] > 0 ? 0 : 1; // positive -> left click, negative -> right click
+            if (button == expectedButton) {
+                if (TerminalGuiCommon.Defaults.highPingMode && CLICK.clicked) {
+                    queue.addLast(new int[]{slot, button});
+                } else {
+                    TerminalGuiCommon.doClickAndMark(slot, button, CLICK);
+                }
             }
         }
     }
@@ -236,6 +203,8 @@ public class rubix {
         }
         GlStateManager.popMatrix();
     }
+
+    private static int lastSolutionHash = 0;
 
     private static void solveFromInventory() {
         ensureSolutionSize();
@@ -291,6 +260,14 @@ public class rubix {
             else if (meta == ORDER[calcIndex(origin + 2)]) solutionBySlot[slot] = -2;
             else solutionBySlot[slot] = 0; // already correct
         }
+        // Unlock clicker as soon as solution changes (inventory update)
+        int solutionHash = Arrays.hashCode(solutionBySlot);
+        if (solutionHash != lastSolutionHash) {
+            CLICK.clicked = false;
+            lastSolutionHash = solutionHash;
+        }
+        // Process the queue immediately after unlocking
+        processQueueIfReady();
     }
 
     private static int calcIndex(int idx) {

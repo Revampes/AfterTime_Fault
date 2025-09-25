@@ -4,7 +4,6 @@ import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
-import com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLineUp;
@@ -24,7 +23,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import com.aftertime.ratallofyou.UI.config.ConfigIO;
-import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.Direction;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHitbox;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHP;
@@ -33,13 +31,11 @@ import com.aftertime.ratallofyou.modules.Performance.HideUselessMessage;
 import com.aftertime.ratallofyou.modules.Performance.HideLightning;
 import com.aftertime.ratallofyou.modules.SkyBlock.SearchBar;
 import com.aftertime.ratallofyou.modules.SkyBlock.FluxFlareTimer;
-import net.minecraftforge.client.ClientCommandHandler;
-import com.aftertime.ratallofyou.Command.OpenConfigGuiCommand;
 import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
 import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 import com.aftertime.ratallofyou.modules.SkyBlock.AutoExperiment; // Register Auto Experiment
 import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
-import com.aftertime.ratallofyou.modules.render.NameTag; // Register NameTag
+import com.aftertime.ratallofyou.modules.dungeon.CustomTerminal.BetterTerminal;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -58,24 +54,20 @@ public class Main {
     public void preInit(FMLPreInitializationEvent event) {
         // Initialize and load all configs using the new config system
         ConfigIO.INSTANCE.InitializeConfigs();
-        // Apply terminal settings (defaults + per-terminal toggles)
-        TerminalSettingsApplier.applyFromAllConfig();
+        try { BetterTerminal.init(); } catch (Throwable ignored) {}
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        // Register modules (grouped roughly by feature)
         registerAll(
                 // Kuudra utilities and phases
                 new RefillPearls(), new InvincibleTimer(), new PearlCancel(), new CalcPearlLineUp(), new KuudraUtils(),
-                new Direction(), new KuudraHitbox(), new KuudraHP(), new FixedPearlLineUp(), new CheckNoPre(),
+                new Direction(), new KuudraHitbox(), new KuudraHP(), new FixedPearlLineUp(), new CheckNoPre(), new TentCancel(),
 
                 // Dungeon helpers
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
                 new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(),
                 new ChestOpenNotice(), new PosionArrow(), new WatcherClear(),
-                // Custom Leap Menu
-                new LeapMenu(),
 
                 // Crate/building related
                 new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),
@@ -86,13 +78,10 @@ public class Main {
                 new PlayerESP(), new NameTag(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
                 new FluxFlareTimer(), new StorageOverviewModule(),
-                // Register Auto Fish
-                new AutoFish(),
-                // Register Auto Experiment
-                new AutoExperiment(),
+                new AutoFish(), new AutoExperiment(),
 
                 // Performance tweaks
-                new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(),
+                new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(), new DarkMode(),
 
                 // Input/keybind listeners
                 new KeybindHandler(),
@@ -101,8 +90,6 @@ public class Main {
                 new UIHighlighter()
         );
 
-
         KeybindHandler.registerKeybinds();
-        ClientCommandHandler.instance.registerCommand(new OpenConfigGuiCommand());
     }
 }

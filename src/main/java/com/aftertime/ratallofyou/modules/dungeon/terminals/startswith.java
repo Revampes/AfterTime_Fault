@@ -52,6 +52,7 @@ public class startswith {
     // Track inventory changes to promptly unlock after successful click
     private static int invHash = 0;
     private static int hashAtClick = 0;
+    private static int lastSolutionHash = 0;
 
     private static final Pattern TITLE_PATTERN = Pattern.compile("^What starts with: '([A-Za-z])'\\?$");
 
@@ -115,54 +116,49 @@ public class startswith {
     public void onDrawScreenPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
         if (!enabled) return;
         if (!(event.gui instanceof GuiChest)) return;
-        if (!inTerminal || startsWithLetter == null) return;
-
-        // Prevent vanilla GUI from drawing
+        if (!inTerminal) return;
         event.setCanceled(true);
-
-        // Re-solve every frame from current inventory
         solveFromInventory();
-        // Unlock click when inventory changed
-        if (CLICK.clicked && invHash != hashAtClick) CLICK.clicked = false;
-        // If we queued clicks (high ping mode) and they are still valid, send the next one
         processQueueIfReady();
-
-        // Draw our custom overlay
         drawOverlay();
+
+        // Process queued clicks
+        while (!queue.isEmpty() && CLICK.canClick()) {
+            int[] click = queue.poll();
+            if (click != null) {
+                TerminalGuiCommon.clickSlot(click[0], click[1], true);
+                CLICK.onClick();
+            }
+        }
+    }
+
+    private static void queueClick(int slot, int button) {
+        if (slot >= 0 && slot < windowSize) {
+            queue.offer(new int[]{slot, button});
+        }
     }
 
     @SubscribeEvent
     public void onMouseInputPre(GuiScreenEvent.MouseInputEvent.Pre event) {
         if (!enabled) return;
         if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return;
-        if (!inTerminal || startsWithLetter == null) return;
-
-        // Block mouse input while our custom GUI is active to avoid other handlers (vanilla or mods) processing releases
+        if (!inTerminal) return;
         event.setCanceled(true);
-
-        // Only act on actual mouse button press (not wheel)
         if (!Mouse.getEventButtonState()) return;
         int button = Mouse.getEventButton();
         if (button != 0) return; // left click only
-
         long now = System.currentTimeMillis();
-        if (openedAt + TerminalGuiCommon.Defaults.firstClickBlockMs > now) {
-            return;
-        }
-
-        // Compute slot under mouse within our virtual grid using common helper
+        if (openedAt + TerminalGuiCommon.Defaults.firstClickBlockMs > now) return;
         int slot = TerminalGuiCommon.computeSlotUnderMouse(windowSize, TerminalGuiCommon.Defaults.scale, TerminalGuiCommon.Defaults.offsetX, TerminalGuiCommon.Defaults.offsetY);
         if (slot < 0) return;
 
-        boolean isSolution = solution.contains(slot);
-        // If it's part of the solution, handle click ourselves
-        if (isSolution) {
-            if (TerminalGuiCommon.Defaults.highPingMode || TerminalGuiCommon.Defaults.phoenixClientCompat || !CLICK.clicked) TerminalGuiCommon.predictRemove(solution, slot);
+        if (solution.contains(slot)) {
+            if (TerminalGuiCommon.Defaults.highPingMode || TerminalGuiCommon.Defaults.phoenixClientCompat || !CLICK.clicked) {
+                TerminalGuiCommon.predictRemove(solution, slot);
+            }
             if (TerminalGuiCommon.Defaults.highPingMode && CLICK.clicked) {
                 queue.addLast(new int[]{slot, 0});
             } else {
-                // Record hash to detect the next update
-                hashAtClick = invHash;
                 TerminalGuiCommon.doClickAndMark(slot, 0, CLICK);
             }
         }
@@ -229,10 +225,32 @@ public class startswith {
                     if (name.toLowerCase().startsWith(startsWithLetter)) solution.add(s);
                 });
         invHash = hash[0];
+        // Unlock clicker as soon as solution changes (inventory update)
+        if (invHash != lastSolutionHash) {
+            CLICK.clicked = false;
+            lastSolutionHash = invHash;
+        }
+        // Process the queue immediately after unlocking
+        processQueueIfReady();
     }
 
     private static void processQueueIfReady() {
-        int[] first = TerminalGuiCommon.processQueueIfReady(queue, solution, CLICK);
-        if (first != null) TerminalGuiCommon.doClickAndMark(first[0], first[1], CLICK);
+        if (queue.isEmpty()) return;
+        if (CLICK.clicked) return; // wait for server confirmation
+        // Validate queued clicks against current solution order
+        for (int[] q : queue) {
+            if (q == null || q.length < 2) { queue.clear(); return; }
+            int slot = q[0];
+            if (!solution.contains(slot)) { queue.clear(); return; }
+        }
+        // Apply predictions for queued clicks
+        for (int[] q : queue) {
+            TerminalGuiCommon.predictRemove(solution, q[0]);
+        }
+        // Send the first queued click
+        int[] first = queue.pollFirst();
+        if (first != null) {
+            TerminalGuiCommon.doClickAndMark(first[0], first[1], CLICK);
+        }
     }
 }

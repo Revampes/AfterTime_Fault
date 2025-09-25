@@ -126,6 +126,17 @@ public class Colors {
         }
     }
 
+    @SubscribeEvent
+    public void onGuiRender(GuiScreenEvent.DrawScreenEvent.Pre event) {
+        if (!enabled || !inTerminal || !(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return;
+        while (!queue.isEmpty() && !CLICK.clicked) {
+            int[] click = queue.poll();
+            if (click != null) {
+                TerminalGuiCommon.doClickAndMark(click[0], click[1], CLICK);
+            }
+        }
+    }
+
     // Logic
     private static void drawOverlay() {
         Minecraft mc = Minecraft.getMinecraft();
@@ -148,6 +159,8 @@ public class Colors {
         GlStateManager.popMatrix();
     }
 
+    private static int lastSolutionHash = 0;
+
     private static void solveFromInventory() {
         solution.clear();
         if (targetColor == null) return;
@@ -167,6 +180,14 @@ public class Colors {
                 })
                 .filter(Objects::nonNull)
                 .forEach(solution::add);
+        // Unlock clicker as soon as solution changes (inventory update)
+        int solutionHash = solution.hashCode();
+        if (solutionHash != lastSolutionHash) {
+            CLICK.clicked = false;
+            lastSolutionHash = solutionHash;
+        }
+        // Process the queue immediately after unlocking
+        processQueueIfReady();
     }
 
     private static String normalizeName(String name) {
@@ -204,6 +225,12 @@ public class Colors {
             } else {
                 TerminalGuiCommon.doClickAndMark(slot, 0, CLICK);
             }
+        }
+    }
+
+    private static void queueClick(int slot, int button) {
+        if (slot >= 0 && slot < windowSize) {
+            queue.offer(new int[]{slot, button});
         }
     }
 }

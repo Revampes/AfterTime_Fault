@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.config.ConfigData;
 
 
 import com.aftertime.ratallofyou.UI.config.ConfigIO;
+import scala.xml.dtd.impl.Base;
 
 import java.awt.Color;
 import java.lang.reflect.Type;
@@ -140,68 +141,82 @@ public class AllConfig {
         put("nametag_only_party", new BaseConfig<>("Only Party Members", "Render name tag only for current party members", false));
     }};
 
+    // New: Tentacle Cancel specific settings
+    public final HashMap<String, BaseConfig<?>> TENTCANCEL_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("tentcancel_max_attempts", new BaseConfig<>("Max Attempts", "Maximum reposition attempts before disabling", 8));
+        put("tentcancel_attempt_interval_ms", new BaseConfig<>("Attempt Interval (ms)", "Minimum ms between detach reposition attempts", 120));
+        put("tentcancel_packets_per_attempt", new BaseConfig<>("Packets / Attempt", "How many position packets to spam each attempt", 5));
+        put("tentcancel_history_size", new BaseConfig<>("History Size", "How many past positions to keep (older = more stable)", 5));
+        put("tentcancel_displacement_min", new BaseConfig<>("Min Displacement", "Only reposition if moved this far (blocks)", 0.25f));
+        put("tentcancel_force_ticks", new BaseConfig<>("Force Ticks", "Extra ticks after attempt to re-send position", 2));
+        put("tentcancel_debug", new BaseConfig<>("Debug", "Print debug info for Tentacle Cancel", false));
+    }};
+
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
     {{
-            // Kuudra
-            put("kuudra_crateaura",new ModuleInfo("Crate Aura", "Suspicious", "Kuudra", false));
-            put("kuudra_pearlrefill",new ModuleInfo("Pearl Refill (Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false));
-            put("kuudra_pearlcancel",new ModuleInfo("Pearl Cancel (Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false));
-            put("kuudra_cratebeam",new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies", "Kuudra", false));
-            put("kuudra_checknopre", new ModuleInfo("Check No Pre", "Send message if no pre", "Kuudra", false));
-            put("kuudra_cratehighlighter",new ModuleInfo("Crate Highlighter", "Box Kuudra crates", "Kuudra", false));
-            put("kuudra_pearllineups",new ModuleInfo("Moveable Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
-            put("kuudra_fixedpearllineups",new ModuleInfo("Fixed Pos Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
-            put("kuudra-freshmessage",new ModuleInfo("Fresh Message", "Sends a message when you get fresh tool", "Kuudra", false));
-            put("kuudra_buildpiles",new ModuleInfo("Build Piles", "Show build pile locations", "Kuudra", false));
-            put("kuudra_buildbuilders", new ModuleInfo("Builders Count", "Show number of players helping", "Kuudra", false));
-            put("kuudra_kuudradirection", new ModuleInfo("Kuudra Directions", "Show directions of kuudra in P5", "Kuudra", false));
-            put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
-            put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
-            put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
-            put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks (not working)", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
-            put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
-            put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
+        // Kuudra
+        put("kuudra_crateaura",new ModuleInfo("Crate Aura", "Suspicious", "Kuudra", false));
+        put("kuudra_pearlrefill",new ModuleInfo("Pearl Refill (Use at your own risk!)", "Automatically refill ender pearls", "Kuudra", false));
+        put("kuudra_pearlcancel",new ModuleInfo("Pearl Cancel (Use at your own risk!)", "Allow pearl usage when facing floor", "Kuudra", false));
+        put("kuudra_cratebeam",new ModuleInfo("Crate Beam", "Draw beams on Kuudra supplies", "Kuudra", false));
+        put("kuudra_checknopre", new ModuleInfo("Check No Pre", "Send message if no pre", "Kuudra", false));
+        put("kuudra_cratehighlighter",new ModuleInfo("Crate Highlighter", "Box Kuudra crates", "Kuudra", false));
+        put("kuudra_pearllineups",new ModuleInfo("Moveable Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
+        put("kuudra_fixedpearllineups",new ModuleInfo("Fixed Pos Pearl Lineups", "Show pearl aim spots", "Kuudra", false));
+        put("kuudra-freshmessage",new ModuleInfo("Fresh Message", "Sends a message when you get fresh tool", "Kuudra", false));
+        put("kuudra_buildpiles",new ModuleInfo("Build Piles", "Show build pile locations", "Kuudra", false));
+        put("kuudra_buildbuilders", new ModuleInfo("Builders Count", "Show number of players helping", "Kuudra", false));
+        put("kuudra_kuudradirection", new ModuleInfo("Kuudra Directions", "Show directions of kuudra in P5", "Kuudra", false));
+        put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
+        put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
+        put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
+        put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks (not working)", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
+        put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
+        put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
+        put("kuudra_tentcancel", new ModuleInfo("Tentacle Cancel", "Attempt to cancel tentacle dismount (Use at your own risk!)", "Kuudra", false));
 
-            // Dungeons
-            put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
-            put("dungeons_phase3countdown",new ModuleInfo("Phase 3 Start CountDown", "Timer for phase 3 transitions", "Dungeons", false));
-            put("dungeons_phase3ticktimer",new ModuleInfo("Phase 3 Tick Timer", "Track instant damage intervals", "Dungeons", false));
-            put("dungeons_sweatmode",new ModuleInfo("Dungeon Sweat Mode", "Recommend only enable it in f7/m7", "Dungeons", false));
-            put("dungeons_leapannounce",new ModuleInfo("Leap Announce", "Yes announce", "Dungeons", false));
-            put("dungeons_keyhighlighter",new ModuleInfo("Key Highlighter", "Highlights Key", "Dungeons", false));
-            put("dungeons_starmobhighlighter",new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false));
-            put("dungeons_secretclicks",new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false));
-            put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false));
-            put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
-            put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
+        // Dungeons
+        put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
+        put("dungeons_phase3countdown",new ModuleInfo("Phase 3 Start CountDown", "Timer for phase 3 transitions", "Dungeons", false));
+        put("dungeons_phase3ticktimer",new ModuleInfo("Phase 3 Tick Timer", "Track instant damage intervals", "Dungeons", false));
+        put("dungeons_sweatmode",new ModuleInfo("Dungeon Sweat Mode", "Recommend only enable it in f7/m7", "Dungeons", false));
+        put("dungeons_leapannounce",new ModuleInfo("Leap Announce", "Yes announce", "Dungeons", false));
+        put("dungeons_keyhighlighter",new ModuleInfo("Key Highlighter", "Highlights Key", "Dungeons", false));
+        put("dungeons_starmobhighlighter",new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false));
+        put("dungeons_secretclicks",new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false));
+        put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false));
+        put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
+        put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
 
-            // SkyBlock
-            put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
-            put("skyblock_waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
-            put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
-            put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
-            put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
-            put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
-            put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
-            put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
-            put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment (not working)", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
+        // SkyBlock
+        put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
+        put("skyblock_waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
+        put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
+        put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
+        put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
+        put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
+        put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
+        put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
+        put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment (not working)", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
 
-            //Fishing
-            put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
+        //Fishing
+        put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
 
-            // Render
-            put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
-            put("render_nodebuff",new ModuleInfo("No Debuff", "Removes negative effects", "Render", false));
-            put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false));
-            put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false));
-            put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false));
+        // Render
+        put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
+        put("render_nodebuff",new ModuleInfo("No Debuff", "Removes negative effects", "Render", false));
+        put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false));
+        put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false));
+        put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false));
+        put("render_darkmode", new ModuleInfo("DarkMode", "idk", "Render", false));
 
-            //Performance
-            put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));
-            put("performance_hidelightning", new ModuleInfo("Hide Lightning", "Hide lightning bolt renders", "Performance", false));
+        //Performance
+        put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));
+        put("performance_hidelightning", new ModuleInfo("Hide Lightning", "Hide lightning bolt renders", "Performance", false));
 
-            // GUI
-            put("gui_moveguiposition",new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false));
+        // GUI
+        put("gui_moveguiposition",new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false));
     }};
 
     // New: Fast Hotkey appearance/config options
@@ -235,13 +250,16 @@ public class AllConfig {
         put("storageoverview_show_in_inventory", new BaseConfig<>("Show In Inventory", "Show overlay when player inventory is open", true));
     }};
 
+    public final HashMap<String, BaseConfig<?>> DARKMODE_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("darkmode_getopacity", new BaseConfig<>("Adjust opacity", "Adjust the opacity of dark mode from 0-255", 128));
+    }};
+
     // New: Fast Hotkey presets model and active pointer
     public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
     public int FHK_ACTIVE_PRESET = 0;
-
     // After individual maps are ready, build the index map
-    public final HashMap<Integer,HashMap<String,BaseConfig<?>>> ALLCONFIGS = new HashMap<Integer,HashMap<String,BaseConfig<?>>>()
-    {{
+    public final HashMap<Integer,HashMap<String,BaseConfig<?>>> ALLCONFIGS = new HashMap<Integer,HashMap<String,BaseConfig<?>>> () {{
         put(0, COMMAND_CONFIGS);
         put(1, MODULES);
         put(2, NODEBUFF_CONFIGS);
@@ -256,6 +274,8 @@ public class AllConfig {
         put(11, AUTOEXPERIMENT_CONFIGS);
         put(12, PLAYERESP_CONFIGS);
         put(13, NAMETAG_CONFIGS);
+        put(14, TENTCANCEL_CONFIGS);
+        put(15, DARKMODE_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

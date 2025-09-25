@@ -1,7 +1,7 @@
 // For those who want the bleeding edge
 buildscript {
     repositories {
-        jcenter()
+        // jcenter() removed due to deprecation / method missing on newer Gradle
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
@@ -11,12 +11,13 @@ buildscript {
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        // Removed kotlin-gradle-plugin due to Gradle version incompatibility
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
 version = "2.2"
-group= "com.aftertime.ratallofyou" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group= "com.aftertime.ratallofyou"
 archivesBaseName = "ratallofyou"
 
 // Add Java 8 compatibility here
@@ -62,3 +63,11 @@ jar {
         )
     }
 }
+
+repositories {
+    mavenCentral()
+    // Removed jcenter()
+}
+
+// Removed Kotlin stdlib dependency and kotlin compile task configuration
+// All Kotlin sources are currently ignored by the build (no plugin).

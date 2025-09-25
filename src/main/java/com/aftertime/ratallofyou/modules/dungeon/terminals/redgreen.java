@@ -236,6 +236,8 @@ public class redgreen {
             CLICK.clicked = false;
             lastRemaining = remaining;
         }
+        // Process the queue immediately after unlocking
+        processQueueIfReady();
     }
 
     private static void processQueueIfReady() {

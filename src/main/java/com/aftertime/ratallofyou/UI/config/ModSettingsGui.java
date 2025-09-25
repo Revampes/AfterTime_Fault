@@ -822,9 +822,11 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice":
             case "Hotbar Swap":
             case "Auto Fish":
-            case "Auto Experiment":
+            case "Auto Experiment (not working)":
             case "NameTag": // New: expose NameTag settings
-            case "Player ESP": // New: expose Player ESP settings
+            case "Player ESP":
+            case "Tentacle Cancel":
+            case "DarkMode":
                 return true;
             default:
                 return false;
@@ -843,9 +845,11 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Fish": Add_SubSetting_AutoFish(y); break;
-            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
+            case "Auto Experiment (not working)": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
-            case "Player ESP": Add_SubSetting_PlayerESP(y); break; // New
+            case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
+            case "Tentacle Cancel": Add_SubSetting_TentCancel(y); break;
+            case "DarkMode": Add_SubSetting_DarkMode(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -867,6 +871,18 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_PlayerESP(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.PLAYERESP_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 12);
+        }
+    }
+
+    private void Add_SubSetting_TentCancel(Integer y) {
+        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.TENTCANCEL_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 14);
+        }
+    }
+
+    private void Add_SubSetting_DarkMode(Integer y) {
+        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.DARKMODE_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 15);
         }
     }
 
