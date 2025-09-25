@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -13,6 +14,8 @@ import java.awt.Color;
 
 // Added: allow direct triggering of HotbarSwap from commands
 import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
+// Added: save presets when editing in-GUI
+import com.aftertime.ratallofyou.UI.config.ConfigIO;
 
 public class FastHotKeyGui extends GuiScreen {
     // Default radii (will be overridden by config each frame)
@@ -43,6 +46,17 @@ public class FastHotKeyGui extends GuiScreen {
     private int lastMouseX = 0;
     private int lastMouseY = 0;
 
+    // Edit mode (add/delete inside the radial GUI)
+    private boolean editMode = false;
+
+    // Inline editor state
+    private boolean editingEntry = false;
+    private int editingIndex = -1;
+    private GuiTextField labelField;
+    private GuiTextField commandField;
+    private String originalLabel = "";
+    private String originalCommand = "";
+
     @Override
     public void initGui() {
         super.initGui();
@@ -50,6 +64,10 @@ public class FastHotKeyGui extends GuiScreen {
         this.centerY = height / 2;
         List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
         this.regionCount = Math.min(12, entries.size());
+        // Recreate text fields if already editing (handles resize)
+        if (editMode && editingEntry) {
+            createOrLayoutTextFields();
+        }
     }
 
     @Override
@@ -61,6 +79,10 @@ public class FastHotKeyGui extends GuiScreen {
         // Center
         centerX = width / 2;
         centerY = height / 2;
+
+        // Keep regionCount in sync with entries size (supports add/delete live)
+        List<FastHotkeyEntry> entriesForCount = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        this.regionCount = Math.min(12, entriesForCount == null ? 0 : entriesForCount.size());
 
         // Load configurable radii and colors
         int innerRadius = getSafeInnerRadius();
@@ -91,9 +113,11 @@ public class FastHotKeyGui extends GuiScreen {
         // No commands configured
         if (regionCount == 0) {
             String msg = "No Fast Hotkey commands configured";
-            String hint = "Open Mod Settings > Fast Hotkey > Settings to add up to maximum 12 commands";
+            String hint = editMode ? "Press A to add a new command" : "Press E to enter edit mode";
             drawCenteredString(fontRendererObj, msg, centerX, centerY - 10, 0xFFFFFF);
             drawCenteredString(fontRendererObj, hint, centerX, centerY + 5, 0xAAAAAA);
+            // Edit HUD
+            drawEditHud();
             super.drawScreen(mouseX, mouseY, partialTicks);
             return;
         }
@@ -110,9 +134,6 @@ public class FastHotKeyGui extends GuiScreen {
         // Outer outline now extends outward with animation to match background extension, but only on hovered sector
         drawAngularGradientOuterOutlineWithExtend(centerX, centerY, outerRadius, regionCount, GAP_PIXELS,
                 mouseX, mouseY, proxRange, outerNear, outerFar, bgInfluence, bgMaxExtend, hoveredIndex);
-
-        // Temporarily disabled old hover effect (white arcs on hovered region)
-        // ...existing code for old hover arcs removed...
 
         // Labels (scaled to fit their wedge)
         List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
@@ -138,21 +159,57 @@ public class FastHotKeyGui extends GuiScreen {
             drawArrowAtAngle(centerX, centerY, mouseAngle, arrowRadius, ARROW_BASE_HALFWIDTH, ARROW_LENGTH, 0xFFFFFFFF);
         }
 
-        // On-screen quick labels to clarify settings (placeholders like terminal settings)
-        int infoX = 8;
-        int infoY = 8;
-        int cInfo = 0xCCFFFFFF; // semi-white
-        fontRendererObj.drawString("Inner radius (px): " + innerRadius, infoX, infoY, cInfo);
-        fontRendererObj.drawString("Outer radius (px): " + outerRadius, infoX, infoY + 10, cInfo);
-        fontRendererObj.drawString("Outline influence (px): " + proxRange, infoX, infoY + 20, cInfo);
-        fontRendererObj.drawString("BG influence (px): " + bgInfluence, infoX, infoY + 30, cInfo);
-        fontRendererObj.drawString("BG max extend (px): " + (int)bgMaxExtend, infoX, infoY + 40, cInfo);
+        // Edit HUD
+        drawEditHud();
+
+        // Inline editor overlay when editing a slot
+        if (editMode && editingEntry) {
+            int panelW = 260;
+            int panelH = 70;
+            int px = centerX - panelW / 2;
+            int py = height - panelH - 20;
+            drawRect(px - 4, py - 4, px + panelW + 4, py + panelH + 4, 0xAA000000);
+
+            int titleColor = 0xFFFFFF;
+            fontRendererObj.drawString("Editing slot " + (editingIndex + 1), px, py - 12, titleColor);
+            fontRendererObj.drawString("Label:", px, py + 4, 0xCCCCCC);
+            fontRendererObj.drawString("Command:", px, py + 36, 0xCCCCCC);
+
+            createOrLayoutTextFields();
+            labelField.updateCursorCounter();
+            commandField.updateCursorCounter();
+            labelField.drawTextBox();
+            commandField.drawTextBox();
+
+            String hint = "Enter: next/save  Tab: switch  Ctrl+S: save  Esc: cancel";
+            fontRendererObj.drawString(hint, px, py + panelH + 8, 0xAAAAAA);
+        }
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
+    // Small edit-mode HUD and hints (bottom-left)
+    private void drawEditHud() {
+        int hudX = 6;
+        int hudY = height - 40;
+        int col = 0xCCFFFFFF;
+        String mode = editMode ? "Edit Mode (E to exit)" : "Press E to edit";
+        fontRendererObj.drawString(mode, hudX, hudY, col);
+        if (editMode) {
+            if (editingEntry) {
+                fontRendererObj.drawString("Enter/Tab/Ctrl+S/Esc affect editor", hudX, hudY + 10, col);
+                fontRendererObj.drawString("Editing: clicks won't execute/delete", hudX, hudY + 20, col);
+            } else {
+                fontRendererObj.drawString("LMB: Edit hovered  A/Ins: Add  RMB/Del: Delete hovered", hudX, hudY + 10, col);
+                fontRendererObj.drawString("ESC: Close   Clicks won't execute", hudX, hudY + 20, col);
+            }
+        }
+    }
+
     // Public API for confirming selection when hotkey is released
     public void onHotkeyReleased() {
+        // Ignore selection when editing; keep GUI open
+        if (editMode) return;
         int innerRadius = getSafeInnerRadius();
         int outerRadius = getSafeOuterRadius(innerRadius);
         int region = getHoveredRegion(this.lastMouseX, this.lastMouseY, innerRadius, outerRadius);
@@ -361,16 +418,76 @@ public class FastHotKeyGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        // Close only on Escape; hotkey release is handled externally
-        if (keyCode == Keyboard.KEY_ESCAPE) {
-            mc.displayGuiScreen(null);
+        // Toggle edit mode (disabled while actively editing a slot)
+        if (!editingEntry && keyCode == Keyboard.KEY_E) {
+            editMode = !editMode;
             return;
         }
+        if (editMode && editingEntry) {
+            if (labelField != null) labelField.textboxKeyTyped(typedChar, keyCode);
+            if (commandField != null) commandField.textboxKeyTyped(typedChar, keyCode);
+
+            boolean ctrl = isCtrlKeyDown();
+            if (keyCode == Keyboard.KEY_RETURN) {
+                if (labelField.isFocused()) {
+                    labelField.setFocused(false);
+                    commandField.setFocused(true);
+                } else {
+                    saveEditingEntry();
+                }
+                return;
+            }
+            if (keyCode == Keyboard.KEY_TAB) {
+                boolean toLabel = !labelField.isFocused();
+                labelField.setFocused(toLabel);
+                commandField.setFocused(!toLabel);
+                return;
+            }
+            if (ctrl && keyCode == Keyboard.KEY_S) { saveEditingEntry(); return; }
+            if (keyCode == Keyboard.KEY_ESCAPE) { cancelEditingEntry(); return; }
+            return;
+        }
+        if (editMode) {
+            // Add new slot
+            if (keyCode == Keyboard.KEY_A || keyCode == Keyboard.KEY_INSERT) { addNewEntry(); return; }
+            // Delete hovered
+            if (keyCode == Keyboard.KEY_DELETE) {
+                int innerRadius = getSafeInnerRadius();
+                int outerRadius = getSafeOuterRadius(innerRadius);
+                int idx = getHoveredRegion(this.lastMouseX, this.lastMouseY, innerRadius, outerRadius);
+                if (idx != -1) { deleteEntryAt(idx); }
+                return;
+            }
+        }
+        // Close only on Escape; hotkey release is handled externally
+        if (keyCode == Keyboard.KEY_ESCAPE) { mc.displayGuiScreen(null); return; }
         super.keyTyped(typedChar, keyCode);
     }
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        // Edit-mode mouse actions
+        if (editMode) {
+            if (editingEntry) {
+                if (labelField != null) labelField.mouseClicked(mouseX, mouseY, mouseButton);
+                if (commandField != null) commandField.mouseClicked(mouseX, mouseY, mouseButton);
+                super.mouseClicked(mouseX, mouseY, mouseButton);
+                return;
+            }
+            int innerRadius = getSafeInnerRadius();
+            int outerRadius = getSafeOuterRadius(innerRadius);
+            int region = getHoveredRegion(mouseX, mouseY, innerRadius, outerRadius);
+            if (mouseButton == 0) { // left -> start editing hovered
+                if (region != -1) { startEditingEntry(region); return; }
+            }
+            if (mouseButton == 1) { // right -> delete hovered
+                if (region != -1) { deleteEntryAt(region); return; }
+            }
+            // In edit mode we don't propagate clicks to execute commands
+            super.mouseClicked(mouseX, mouseY, mouseButton);
+            return;
+        }
+        // Normal mode: left-click executes and closes
         if (mouseButton == 0) {
             int innerRadius = getSafeInnerRadius();
             int outerRadius = getSafeOuterRadius(innerRadius);
@@ -396,10 +513,75 @@ public class FastHotKeyGui extends GuiScreen {
         super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    @Override
-    public boolean doesGuiPauseGame() {
-        return false;
+    // =============================
+    // Inline editor helpers
+    // =============================
+    private void startEditingEntry(int idx) {
+        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        if (idx < 0 || idx >= list.size()) return;
+        editingEntry = true;
+        editingIndex = idx;
+        originalLabel = safeString(list.get(idx).label);
+        originalCommand = safeString(list.get(idx).command);
+        createOrLayoutTextFields();
+        if (labelField != null) { labelField.setText(originalLabel); labelField.setFocused(true); }
+        if (commandField != null) { commandField.setText(originalCommand); commandField.setFocused(false); }
     }
+
+    private void createOrLayoutTextFields() {
+        int panelW = 260;
+        int px = centerX - panelW / 2;
+        int labelY = height - 70;
+        int cmdY = labelY + 32;
+        if (labelField == null) {
+            labelField = new GuiTextField(1, this.fontRendererObj, px + 50, labelY, panelW - 54, 18);
+            labelField.setMaxStringLength(128);
+        } else {
+            labelField.xPosition = px + 50;
+            labelField.yPosition = labelY;
+            labelField.width = panelW - 54;
+            labelField.height = 18;
+        }
+        if (commandField == null) {
+            commandField = new GuiTextField(2, this.fontRendererObj, px + 50, cmdY, panelW - 54, 18);
+            commandField.setMaxStringLength(256);
+        } else {
+            commandField.xPosition = px + 50;
+            commandField.yPosition = cmdY;
+            commandField.width = panelW - 54;
+            commandField.height = 18;
+        }
+    }
+
+    private void saveEditingEntry() {
+        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        if (editingIndex < 0 || editingIndex >= list.size()) { cancelEditingEntry(); return; }
+        String newLabel = labelField != null ? labelField.getText() : originalLabel;
+        String newCommand = commandField != null ? commandField.getText() : originalCommand;
+        // Rebuild entries with updated values
+        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            FastHotkeyEntry src = list.get(i);
+            if (i == editingIndex) {
+                rebuilt.add(new FastHotkeyEntry(safeString(newLabel), safeString(newCommand), i));
+            } else {
+                rebuilt.add(new FastHotkeyEntry(src.label, src.command, i));
+            }
+        }
+        replacePresetEntries(rebuilt);
+        cancelEditingEntry();
+    }
+
+    private void cancelEditingEntry() {
+        editingEntry = false;
+        editingIndex = -1;
+        labelField = null;
+        commandField = null;
+        originalLabel = "";
+        originalCommand = "";
+    }
+
+    private String safeString(String s) { return s == null ? "" : s; }
 
     // =============================
     // Helpers for config + outlines
@@ -717,5 +899,58 @@ public class FastHotKeyGui extends GuiScreen {
     private float luminance(Color c) {
         if (c == null) return 0f;
         return (0.299f * c.getRed() + 0.587f * c.getGreen() + 0.114f * c.getBlue());
+    }
+
+    // =============================
+    // Editing helpers (add/delete) and persistence
+    // =============================
+    private void addNewEntry() {
+        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        if (list.size() >= 12) return;
+        int idx = list.size();
+        list.add(new FastHotkeyEntry("", "", idx));
+        // Reindex to be safe and persist
+        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            FastHotkeyEntry src = list.get(i);
+            rebuilt.add(new FastHotkeyEntry(src.label, src.command, i));
+        }
+        replacePresetEntries(rebuilt);
+    }
+
+    private void deleteEntryAt(int idx) {
+        // If deleting the one being edited or indices shift, exit/adjust editor
+        if (editingEntry && idx >= 0) {
+            if (idx == editingIndex) {
+                cancelEditingEntry();
+            } else if (idx < editingIndex) {
+                editingIndex -= 1;
+            }
+        }
+        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        if (idx < 0 || idx >= list.size()) return;
+        // Remove and reindex
+        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (i == idx) continue;
+            FastHotkeyEntry src = list.get(i);
+            rebuilt.add(new FastHotkeyEntry(src.label, src.command, rebuilt.size()));
+        }
+        replacePresetEntries(rebuilt);
+    }
+
+    private void replacePresetEntries(List<FastHotkeyEntry> newEntries) {
+        // Replace the entries list in both the alias and the active preset, then save
+        AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.clear();
+        AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.addAll(newEntries);
+        try {
+            java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry> presetList = AllConfig.INSTANCE.FHK_PRESETS.get(AllConfig.INSTANCE.FHK_ACTIVE_PRESET).entries;
+            presetList.clear();
+            presetList.addAll(newEntries);
+        } catch (Throwable ignored) {}
+        // Persist to disk
+        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+        // Update cached region count
+        this.regionCount = Math.min(12, AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.size());
     }
 }
