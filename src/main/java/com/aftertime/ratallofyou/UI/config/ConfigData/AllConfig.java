@@ -62,6 +62,10 @@ public class AllConfig {
         put("terminal_offset_y", new BaseConfig<>("Y Offset", "Vertical offset for terminal position", 0));
         put("terminal_overlay_color", new BaseConfig<>("Overlay Color", "Color for terminal overlay (RGBA)", new Color(0, 255, 0, 255)));
         put("terminal_background_color", new BaseConfig<>("Background Color", "Background color for terminal (RGBA)", new Color(0, 0, 0, 127)));
+        // New: optional rounded corners and high ping queue pacing
+        put("terminal_corner_radius_bg", new BaseConfig<>("BG Corner Radius", "Rounded corner radius for terminal background (px)", 1));
+        put("terminal_corner_radius_cell", new BaseConfig<>("Cell Corner Radius", "Rounded corner radius for cell highlights (px)", 1));
+        put("terminal_high_ping_interval_ms", new BaseConfig<>("High Ping Interval (ms)", "Spacing between queued clicks in Smooth Terminal mode", 120));
         // Per-terminal toggles
         put("terminal_enable_numbers", new BaseConfig<>("Enable Numbers", "Enable Numbers terminal helper GUI", true));
         put("terminal_enable_starts_with", new BaseConfig<>("Enable Starts With", "Enable Starts With terminal helper GUI", true));

@@ -121,15 +121,7 @@ public class startswith {
         solveFromInventory();
         processQueueIfReady();
         drawOverlay();
-
-        // Process queued clicks
-        while (!queue.isEmpty() && CLICK.canClick()) {
-            int[] click = queue.poll();
-            if (click != null) {
-                TerminalGuiCommon.clickSlot(click[0], click[1], true);
-                CLICK.onClick();
-            }
-        }
+        // Removed manual queue flush; sending is controlled by processQueueIfReady
     }
 
     private static void queueClick(int slot, int button) {
@@ -235,22 +227,7 @@ public class startswith {
     }
 
     private static void processQueueIfReady() {
-        if (queue.isEmpty()) return;
-        if (CLICK.clicked) return; // wait for server confirmation
-        // Validate queued clicks against current solution order
-        for (int[] q : queue) {
-            if (q == null || q.length < 2) { queue.clear(); return; }
-            int slot = q[0];
-            if (!solution.contains(slot)) { queue.clear(); return; }
-        }
-        // Apply predictions for queued clicks
-        for (int[] q : queue) {
-            TerminalGuiCommon.predictRemove(solution, q[0]);
-        }
-        // Send the first queued click
-        int[] first = queue.pollFirst();
-        if (first != null) {
-            TerminalGuiCommon.doClickAndMark(first[0], first[1], CLICK);
-        }
+        int[] first = TerminalGuiCommon.processQueueIfReady(queue, solution, CLICK);
+        if (first != null) TerminalGuiCommon.doClickAndMark(first[0], first[1], CLICK);
     }
 }

@@ -115,15 +115,7 @@ public class rubix {
         solveFromInventory();
         processQueueIfReady();
         drawOverlay();
-
-        // Process queued clicks
-        while (!queue.isEmpty() && CLICK.canClick()) {
-            int[] click = queue.poll();
-            if (click != null) {
-                TerminalGuiCommon.clickSlot(click[0], click[1], true);
-                CLICK.onClick();
-            }
-        }
+        // Removed manual while-loop flushing of the queue; processing is paced by processQueueIfReady
     }
 
     private static void queueClick(int slot, int button) {
@@ -302,7 +294,15 @@ public class rubix {
 
     private static void processQueueIfReady() {
         if (queue.isEmpty()) return;
-        if (CLICK.clicked) return; // wait for server confirmation
+        if (CLICK.clicked) {
+            if (TerminalGuiCommon.Defaults.highPingMode) {
+                long delta = System.currentTimeMillis() - CLICK.lastClickAt;
+                if (delta < TerminalGuiCommon.Defaults.queueIntervalMs) return; // space out queued clicks
+                CLICK.clicked = false; // timed unlock
+            } else {
+                return; // wait for inventory update
+            }
+        }
         // Validate queued clicks against current solution; require all queued to still be valid
         for (int[] q : queue) {
             if (q == null || q.length < 2) { queue.clear(); return; }

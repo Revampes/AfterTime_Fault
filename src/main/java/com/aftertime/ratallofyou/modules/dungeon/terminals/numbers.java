@@ -106,15 +106,7 @@ public class numbers {
         solveFromInventory();
         processQueueIfReady();
         drawOverlay();
-
-        // Process queued clicks
-        while (!queue.isEmpty() && CLICK.canClick()) {
-            int[] click = queue.poll();
-            if (click != null) {
-                TerminalGuiCommon.clickSlot(click[0], click[1], true);
-                CLICK.onClick();
-            }
-        }
+        // Removed redundant manual queue flush; processQueueIfReady sends at most one when ready
     }
 
     private static void queueClick(int slot, int button) {
@@ -232,7 +224,16 @@ public class numbers {
 
     private static void processQueueIfReady() {
         if (queue.isEmpty()) return;
-        if (CLICK.clicked) return; // wait for server confirmation like JS (process after inventory updates)
+        // Respect highPingMode: timed unlock if server confirmation hasn't arrived
+        if (CLICK.clicked) {
+            if (TerminalGuiCommon.Defaults.highPingMode) {
+                long delta = System.currentTimeMillis() - CLICK.lastClickAt;
+                if (delta < TerminalGuiCommon.Defaults.queueIntervalMs) return; // wait a bit more
+                CLICK.clicked = false; // timed unlock
+            } else {
+                return; // wait for inventory update when not in high ping mode
+            }
+        }
         // Validate queued clicks against current solution order (strict)
         int idx = 0;
         for (int[] q : queue) {

@@ -37,6 +37,8 @@ public final class TerminalSettingsApplier {
         // Optional rounded corner radii (pixels)
         TerminalGuiCommon.Defaults.cornerRadiusBg = getInt(term, "terminal_corner_radius_bg", TerminalGuiCommon.Defaults.cornerRadiusBg);
         TerminalGuiCommon.Defaults.cornerRadiusCell = getInt(term, "terminal_corner_radius_cell", TerminalGuiCommon.Defaults.cornerRadiusCell);
+        // High ping pacing interval (ms)
+        TerminalGuiCommon.Defaults.queueIntervalMs = getInt(term, "terminal_high_ping_interval_ms", TerminalGuiCommon.Defaults.queueIntervalMs);
 
         // Master module toggle: if disabled, force-disable all terminal helpers
         boolean masterOn = true;
