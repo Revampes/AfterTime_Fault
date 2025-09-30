@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu;
 
 import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
-import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.client.Minecraft;
@@ -44,6 +43,20 @@ public class LeapMenu {
     private int outerRadius = 180;
     private static final float GAP_PX = 6f;
     private static final double ANGLE_OFFSET = Math.PI / 4; // rotate so X lines are the separators
+
+    // Class colors for display
+    private static final Map<String, Integer> CLASS_COLORS = new HashMap<>();
+    static {
+        CLASS_COLORS.put("H", 0xFFFF55FF); // Healer: Pink
+        CLASS_COLORS.put("M", 0xFF55AAFF); // Mage: Blue
+        CLASS_COLORS.put("T", 0xFF55FF55); // Tank: Green
+        CLASS_COLORS.put("A", 0xFFFFFF55); // Archer: Yellow
+        CLASS_COLORS.put("B", 0xFFFF5555); // Berserker: Red
+        CLASS_COLORS.put("?", 0xFFAAAAAA); // Unknown: Gray
+    }
+
+    // Font scale for large text
+    private static final float TEXT_SCALE = 1.5f;
 
     private static final Pattern MC_USERNAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
 
@@ -96,11 +109,18 @@ public class LeapMenu {
         // Header
         FontRenderer fr = mc.fontRendererObj;
         String header = "Spirit Leap";
-        fr.drawString(header, centerX - fr.getStringWidth(header) / 2, centerY - outerRadius - 18, 0xFFFFFF, false);
+
+        // Draw header text with scaling
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(centerX, centerY - outerRadius - 18, 0);
+        GlStateManager.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
+        GlStateManager.translate(-fr.getStringWidth(header) / 2, -fr.FONT_HEIGHT / 2, 0);
+        fr.drawString(header, 0, 0, 0xFFFFFF, true);
+        GlStateManager.popMatrix();
 
         // Footer hint (limit to 1-4)
         String hint = orderedNames.isEmpty() ? "No targets" : ("Left click or press 1-" + Math.min(4, orderedNames.size()));
-        fr.drawString(hint, centerX - fr.getStringWidth(hint) / 2, centerY + outerRadius + 6, 0xAAAAAA, false);
+        fr.drawString(hint, centerX - fr.getStringWidth(hint) / 2, centerY + outerRadius + 10, 0xAAAAAA, false);
     }
 
     @SubscribeEvent
@@ -188,16 +208,56 @@ public class LeapMenu {
             double mid = (start + end) * 0.5;
             int rx = (int) (centerX + Math.cos(mid) * (innerRadius + (outerRadius - innerRadius) * 0.65));
             int ry = (int) (centerY + Math.sin(mid) * (innerRadius + (outerRadius - innerRadius) * 0.65));
-            String label = (i < orderedNames.size()) ? formatLabel(orderedNames.get(i)) : "";
-            FontRenderer fr = mc.fontRendererObj;
+
+            // Enable texture rendering for text
             GlStateManager.enableTexture2D();
             GL11.glColor4f(1f, 1f, 1f, 1f);
-            if (!label.isEmpty()) {
-                fr.drawString((i + 1) + ". " + label, rx - fr.getStringWidth((i + 1) + ". " + label) / 2, ry - fr.FONT_HEIGHT / 2, 0xFFFFFF, false);
+            FontRenderer fr = mc.fontRendererObj;
+
+            if (i < orderedNames.size()) {
+                // Get player name and class
+                String name = orderedNames.get(i);
+                String classLetter = nameToClass.get(name);
+                if (classLetter == null) classLetter = "?";
+
+                // Get color for the class
+                int classColor = CLASS_COLORS.getOrDefault(classLetter, 0xFFAAAAAA);
+
+                // Scale and position text
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(rx, ry, 0);
+                GlStateManager.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
+
+                // Calculate total width of text to center properly
+                String idxText = (i + 1) + ". ";
+                String classText = "[" + classLetter + "] ";
+                float totalWidth = fr.getStringWidth(idxText + classText + name);
+                float xOffset = -totalWidth / 2;
+                float yOffset = -fr.FONT_HEIGHT / 2;
+
+                // Draw index number
+                fr.drawString(idxText, xOffset, yOffset, 0xFFFFFF, true);
+                xOffset += fr.getStringWidth(idxText);
+
+                // Draw class letter in appropriate color
+                fr.drawString(classText, xOffset, yOffset, classColor, true);
+                xOffset += fr.getStringWidth(classText);
+
+                // Draw player name
+                fr.drawString(name, xOffset, yOffset, 0xFFFFFF, true);
+
+                GlStateManager.popMatrix();
             } else {
+                // Draw just the index number for empty slots
                 String idxStr = String.valueOf(i + 1);
-                fr.drawString(idxStr, rx - fr.getStringWidth(idxStr) / 2, ry - fr.FONT_HEIGHT / 2, 0x666666, false);
+
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(rx, ry, 0);
+                GlStateManager.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
+                fr.drawString(idxStr, -fr.getStringWidth(idxStr) / 2, -fr.FONT_HEIGHT / 2, 0x666666, true);
+                GlStateManager.popMatrix();
             }
+
             GlStateManager.disableTexture2D();
         }
 
@@ -265,6 +325,7 @@ public class LeapMenu {
         return Math.max(0, Math.min(count - 1, idx));
     }
 
+    // Keep the old formatLabel method for backward compatibility
     private String formatLabel(String name) {
         String cls = nameToClass.get(name);
         if (cls == null) cls = "?";
@@ -283,15 +344,26 @@ public class LeapMenu {
         nameToSlot.clear();
         orderedNames.clear();
         nameToClass.clear();
-        // refresh sidebar classes first
+
+        // Get class information from Tab list first (preferred source)
+        Map<String, String> tabClasses = Utils.getDungeonClassesFromTab();
+
+        // Get player names from Tab list first (preferred source)
+        List<String> tabPlayers = Utils.getPlayerNamesFromTab();
+
+        // Fall back to scoreboard if needed
         scanSidebarClasses();
+
         if (mc.thePlayer == null) return;
         if (!(mc.thePlayer.openContainer instanceof ContainerChest)) return;
+
         ContainerChest chest = (ContainerChest) mc.thePlayer.openContainer;
         List<Slot> slots = chest.inventorySlots;
         int chestInvSize = 27;
         try { IInventory inv = chest.getLowerChestInventory(); if (inv != null) chestInvSize = Math.min(inv.getSizeInventory(), slots.size()); } catch (Throwable ignored) {}
-        List<String> party = PartyUtils.getPartyMembers();
+
+        // Get party members - prefer Tab list, fall back to PartyUtils
+        List<String> party = !tabPlayers.isEmpty() ? tabPlayers : PartyUtils.getPartyMembers();
         Set<String> partyLower = new HashSet<>();
         for (String p : party) partyLower.add(p.toLowerCase(Locale.ENGLISH));
 
@@ -330,13 +402,42 @@ public class LeapMenu {
             }
             if (mapped != null && !nameToSlot.containsKey(mapped)) {
                 nameToSlot.put(mapped, i);
-                // Prefer sidebar class, then PartyUtils, then lore
-                String cls = classesFromSidebar.get(mapped.toLowerCase(Locale.ENGLISH));
+
+                // Class determination order of precedence:
+                // 1. Tab list class (new)
+                // 2. Scoreboard sidebar class
+                // 3. PartyUtils class
+                // 4. Item lore
+                String mappedLower = mapped.toLowerCase(Locale.ENGLISH);
+                String cls = null;
+
+                // Try Tab list first (new method)
+                if (tabClasses != null && !tabClasses.isEmpty()) {
+                    cls = tabClasses.get(mapped);
+                    if (cls == null) {
+                        // Try case-insensitive match
+                        for (Map.Entry<String, String> entry : tabClasses.entrySet()) {
+                            if (entry.getKey().equalsIgnoreCase(mapped)) {
+                                cls = entry.getValue();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Fall back to scoreboard
+                if (cls == null) cls = classesFromSidebar.get(mappedLower);
+
+                // Fall back to PartyUtils
                 if (cls == null) cls = PartyUtils.getClassLetter(mapped);
+
+                // Fall back to item lore
                 if (cls == null) cls = extractClassFromItem(st);
+
                 if (cls != null) nameToClass.put(mapped, cls);
             }
         }
+
         String self = mc.thePlayer.getName();
         if (!party.isEmpty()) {
             for (String p : party) {

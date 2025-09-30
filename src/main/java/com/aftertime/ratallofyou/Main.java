@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
 import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
+import com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLineUp;
@@ -67,7 +68,8 @@ public class Main {
                 // Dungeon helpers
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
                 new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(),
-                new ChestOpenNotice(), new PosionArrow(), new WatcherClear(),
+                new ChestOpenNotice(), new PosionArrow(), new WatcherClear(), new LeapMenu(),
+                new HealerWishAlert(),
 
                 // Crate/building related
                 new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),
