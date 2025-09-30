@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu;
 import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import com.aftertime.ratallofyou.utils.Utils;
+import com.aftertime.ratallofyou.utils.PlayerUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -114,13 +115,13 @@ public class LeapMenu {
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY - outerRadius - 18, 0);
         GlStateManager.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
-        GlStateManager.translate(-fr.getStringWidth(header) / 2, -fr.FONT_HEIGHT / 2, 0);
+        GlStateManager.translate(-fr.getStringWidth(header) / 2.0f, -fr.FONT_HEIGHT / 2.0f, 0);
         fr.drawString(header, 0, 0, 0xFFFFFF, true);
         GlStateManager.popMatrix();
 
         // Footer hint (limit to 1-4)
         String hint = orderedNames.isEmpty() ? "No targets" : ("Left click or press 1-" + Math.min(4, orderedNames.size()));
-        fr.drawString(hint, centerX - fr.getStringWidth(hint) / 2, centerY + outerRadius + 10, 0xAAAAAA, false);
+        fr.drawString(hint, (int)(centerX - fr.getStringWidth(hint) / 2.0f), centerY + outerRadius + 10, 0xAAAAAA, false);
     }
 
     @SubscribeEvent
@@ -228,34 +229,18 @@ public class LeapMenu {
                 GlStateManager.translate(rx, ry, 0);
                 GlStateManager.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
 
-                // Calculate total width of text to center properly
-                String idxText = (i + 1) + ". ";
-                String classText = "[" + classLetter + "] ";
-                float totalWidth = fr.getStringWidth(idxText + classText + name);
-                float xOffset = -totalWidth / 2;
-                float yOffset = -fr.FONT_HEIGHT / 2;
+                // Prepare display strings
+                String classFull = fullClassName(classLetter);
+                int nameWidth = fr.getStringWidth(name);
+                int classWidth = fr.getStringWidth(classFull);
 
-                // Draw index number
-                fr.drawString(idxText, xOffset, yOffset, 0xFFFFFF, true);
-                xOffset += fr.getStringWidth(idxText);
-
-                // Draw class letter in appropriate color
-                fr.drawString(classText, xOffset, yOffset, classColor, true);
-                xOffset += fr.getStringWidth(classText);
-
-                // Draw player name
-                fr.drawString(name, xOffset, yOffset, 0xFFFFFF, true);
+                // Draw player name (first line) and class (second line) centered
+                fr.drawString(name, (int)(-nameWidth / 2.0f), -fr.FONT_HEIGHT, 0xFFFFFF, true);
+                fr.drawString(classFull, (int)(-classWidth / 2.0f), 0, classColor, true);
 
                 GlStateManager.popMatrix();
             } else {
-                // Draw just the index number for empty slots
-                String idxStr = String.valueOf(i + 1);
-
-                GlStateManager.pushMatrix();
-                GlStateManager.translate(rx, ry, 0);
-                GlStateManager.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
-                fr.drawString(idxStr, -fr.getStringWidth(idxStr) / 2, -fr.FONT_HEIGHT / 2, 0x666666, true);
-                GlStateManager.popMatrix();
+                // Empty slot: draw nothing (no numeric prefixes)
             }
 
             GlStateManager.disableTexture2D();
@@ -345,8 +330,12 @@ public class LeapMenu {
         orderedNames.clear();
         nameToClass.clear();
 
-        // Get class information from Tab list first (preferred source)
-        Map<String, String> tabClasses = Utils.getDungeonClassesFromTab();
+        // Get class information from PlayerUtils (new method)
+        Map<String, String> tabClasses = PlayerUtils.getDungeonClasses();
+        if (tabClasses == null || tabClasses.isEmpty()) {
+            // Fall back to older method if PlayerUtils returns nothing
+            tabClasses = Utils.getDungeonClassesFromTab();
+        }
 
         // Get player names from Tab list first (preferred source)
         List<String> tabPlayers = Utils.getPlayerNamesFromTab();
@@ -513,5 +502,25 @@ public class LeapMenu {
         return null;
     }
 
-    private void clear() { windowId = -1; nameToSlot.clear(); orderedNames.clear(); nameToClass.clear(); parsedTick = -1; }
+    // Helper to convert single-letter class to full display name
+    private static String fullClassName(String letter) {
+        if (letter == null) return "Unknown";
+        switch (letter.toUpperCase(Locale.ENGLISH)) {
+            case "H": return "Healer";
+            case "M": return "Mage";
+            case "T": return "Tank";
+            case "A": return "Archer";
+            case "B": return "Berserker";
+            default:  return "Unknown";
+        }
+    }
+
+    private void clear() {
+        windowId = -1;
+        nameToSlot.clear();
+        orderedNames.clear();
+        nameToClass.clear();
+        classesFromSidebar.clear();
+        parsedTick = -1;
+    }
 }
