@@ -178,6 +178,7 @@ public class AllConfig {
         put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
         put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
         put("dungeons_healerwishalert", new ModuleInfo("Healer Wish Alert", "Alert when needed to wish", "Dungeons", false));
+        put("dungeons_findcorrectlivid", new ModuleInfo("Find Correct Livid (not working)", "Highlights the correct Livid in Floor 5 boss fight", "Dungeons", false));
 
         // SkyBlock
         put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
@@ -199,6 +200,7 @@ public class AllConfig {
         put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false));
         put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false));
         put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false));
+        put("render_customcape", new ModuleInfo("Custom Cape", "Load custom cape from capes/ directory (PNG/GIF)", "Render", false));
         put("render_darkmode", new ModuleInfo("DarkMode", "idk", "Render", false));
 
         //Performance

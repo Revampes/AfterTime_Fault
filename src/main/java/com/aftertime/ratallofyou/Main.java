@@ -30,6 +30,7 @@ import com.aftertime.ratallofyou.modules.Performance.HideLightning;
 import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
 import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
+import com.aftertime.ratallofyou.modules.render.CustomCape;
 import com.aftertime.ratallofyou.modules.dungeon.CustomTerminal.BetterTerminal;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
@@ -63,15 +64,14 @@ public class Main {
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
                 new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(),
                 new ChestOpenNotice(), new PosionArrow(), new WatcherClear(), new LeapMenu(),
-                new HealerWishAlert(),
-
+                new HealerWishAlert(), new FindCorrectLivid(),
                 // Crate/building related
                 new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),
                 new FreshMessageHandler(), new BuildBuildersRenderer(), new BuildStandsTracker(), new CratePriority(),
 
                 // SkyBlock QoL
                 new AutoSprint(), new PartyUtils(), new ChatCommands(), new Fullbright(), new EtherwarpOverlay(),
-                new PlayerESP(), new NameTag(),
+                new PlayerESP(), new NameTag(), new CustomCape(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
                 new FluxFlareTimer(), new StorageOverviewModule(),
                 new AutoFish(), new AutoExperiment(), new SuperPairs(),

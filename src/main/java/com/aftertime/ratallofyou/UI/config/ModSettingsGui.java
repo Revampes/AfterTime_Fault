@@ -278,7 +278,8 @@ public class ModSettingsGui extends GuiScreen {
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
-            case "Player ESP": Add_SubSetting_PlayerESP(y); break; // New
+            case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
+            case "DarkMode": Add_SubSetting_DarkMode(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -368,10 +369,6 @@ public class ModSettingsGui extends GuiScreen {
         if ("Hotbar Swap".equals(SelectedModule.name)) {
             y = hotbarPanel.drawInline(mouseX, mouseY, ia.contentX, y, ia.contentW, fontRendererObj);
         }
-        for (Toggle t : Toggles) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
-        for (LabelledInput t : labelledInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += t.getVerticalSpace(); }
-        for (ColorInput t : ColorInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 50; }
-        for (MethodDropdown t : methodDropdowns) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
     }
 
     private int computeInlineContentHeight() {
@@ -472,6 +469,7 @@ public class ModSettingsGui extends GuiScreen {
         for (ColorInput ci : ColorInputs) { int inputY = yCI + ci.height + 8; boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15); if (hover) { ci.beginEditing(mouseX); return; } yCI += 50; }
         int yd = y; for (Toggle ignored : Toggles) yd += 22; for (LabelledInput li : labelledInputs) yd += li.getVerticalSpace(); for (ColorInput ignored : ColorInputs) yd += 50;
         for (MethodDropdown dd : methodDropdowns) { int bx = dd.x + 100; int bw = dd.width - 100; int bh = dd.height; boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= yd && mouseY <= yd + bh; if (inBase) { for (MethodDropdown other : methodDropdowns) other.isOpen = false; dd.isOpen = !dd.isOpen; return; } if (dd.isOpen) { for (int i = 0; i < dd.methods.length; i++) { int optionY = yd + bh + (i * bh); boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh; if (inOpt) { dd.selectMethod(i); dd.isOpen = false; return; } } } yd += 22; }
+        int yBtn = y; for (Toggle ignored : Toggles) yBtn += 22; for (LabelledInput li : labelledInputs) yBtn += li.getVerticalSpace(); for (ColorInput ignored : ColorInputs) yBtn += 50; for (MethodDropdown ignored : methodDropdowns) yBtn += 22;
     }
 
     // Fast Hotkey left panel
@@ -758,6 +756,10 @@ public class ModSettingsGui extends GuiScreen {
         if (handleLabelledInputClicks(mouseX, mouseY)) return;
         if (handleDropdownClicks(mouseX, mouseY)) return;
         if (handleColorInputClicks(mouseX, mouseY)) return;
+
+        // Handle button clicks for side panel mode
+        if (handleButtonClicks(mouseX, mouseY)) return;
+
         if (SelectedModule == null) return;
         int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
         for (Toggle toggle : Toggles) { if (toggle.isMouseOver(mouseX, mouseY, y)) { toggle.toggle(); if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig(); return; } y += 22; }
@@ -787,6 +789,16 @@ public class ModSettingsGui extends GuiScreen {
         if (SelectedModule == null) return false; int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
         for (Toggle ignored : Toggles) y += 22; for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
         for (ColorInput ci : ColorInputs) { int inputY = y + ci.height + 8; boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15); if (hover) { ci.beginEditing(mouseX); return true; } y += 50; }
+        return false;
+    }
+
+    private boolean handleButtonClicks(int mouseX, int mouseY) {
+        if (SelectedModule == null) return false;
+        int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
+        for (Toggle ignored : Toggles) y += 22;
+        for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
+        for (ColorInput ignored : ColorInputs) y += 50;
+        for (MethodDropdown ignored : methodDropdowns) y += 22;
         return false;
     }
 
@@ -1002,3 +1014,4 @@ public class ModSettingsGui extends GuiScreen {
         void handleKeyTyped(char c, int key) { if (!isEditing) return; if (key == org.lwjgl.input.Keyboard.KEY_RETURN) { isEditing = false; return; } if (key == org.lwjgl.input.Keyboard.KEY_BACK) { if (cursorPos > 0 && !text.isEmpty()) { text = text.substring(0, cursorPos - 1) + text.substring(cursorPos); cursorPos--; } } else if (key == org.lwjgl.input.Keyboard.KEY_LEFT) { cursorPos = Math.max(0, cursorPos - 1); } else if (key == org.lwjgl.input.Keyboard.KEY_RIGHT) { cursorPos = Math.min(text.length(), cursorPos + 1); } else { if (c >= 32 && c != 127) { if (text.length() >= maxLen) return; text = text.substring(0, cursorPos) + c + text.substring(cursorPos); cursorPos++; } } cursorBlinkMs = 0; cursorVisible = true; }
     }
 }
+
