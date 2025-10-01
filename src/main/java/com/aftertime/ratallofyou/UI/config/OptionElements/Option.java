@@ -7,7 +7,7 @@ import net.minecraft.client.gui.FontRenderer;
 public abstract class Option<T> extends GuiElement {
     public final String name;
     protected final String description;
-    protected T Data;
+    public T Data;
     public PropertyRef ref;
 
     public Option(PropertyRef ref, String name, String description, T t, int x, int y, int width, int height) {

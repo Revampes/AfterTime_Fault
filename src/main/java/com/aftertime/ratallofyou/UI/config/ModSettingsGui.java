@@ -370,6 +370,24 @@ public class ModSettingsGui extends GuiScreen {
         if ("Hotbar Swap".equals(SelectedModule.name)) {
             y = hotbarPanel.drawInline(mouseX, mouseY, ia.contentX, y, ia.contentW, fontRendererObj);
         }
+
+        // Draw general options for all modules (toggles, inputs, colors, dropdowns)
+        for (Toggle toggle : Toggles) {
+            toggle.draw(mouseX, mouseY, y, fontRendererObj);
+            y += 22;
+        }
+        for (LabelledInput li : labelledInputs) {
+            li.draw(mouseX, mouseY, y, fontRendererObj);
+            y += li.getVerticalSpace();
+        }
+        for (ColorInput ci : ColorInputs) {
+            ci.draw(mouseX, mouseY, y, fontRendererObj);
+            y += 50;
+        }
+        for (MethodDropdown dd : methodDropdowns) {
+            dd.draw(mouseX, mouseY, y, fontRendererObj);
+            y += 22;
+        }
     }
 
     private int computeInlineContentHeight() {
@@ -462,15 +480,41 @@ public class ModSettingsGui extends GuiScreen {
         }
         // Inputs and toggles
         int yToggle = y;
-        for (Toggle toggle : Toggles) { if (toggle.isMouseOver(mouseX, mouseY, yToggle)) { toggle.toggle(); if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig(); return; } yToggle += 22; }
-        int yLI = y;
-        for (Toggle ignored : Toggles) yLI += 22;
-        for (LabelledInput li : labelledInputs) { if (li.isMouseOver(mouseX, mouseY, yLI)) { for (LabelledInput other : labelledInputs) other.isEditing = false; li.beginEditing(mouseX); return; } yLI += li.getVerticalSpace(); }
-        int yCI = y; for (Toggle ignored : Toggles) yCI += 22; for (LabelledInput li : labelledInputs) yCI += li.getVerticalSpace();
-        for (ColorInput ci : ColorInputs) { int inputY = yCI + ci.height + 8; boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15); if (hover) { ci.beginEditing(mouseX); return; } yCI += 50; }
-        int yd = y; for (Toggle ignored : Toggles) yd += 22; for (LabelledInput li : labelledInputs) yd += li.getVerticalSpace(); for (ColorInput ignored : ColorInputs) yd += 50;
-        for (MethodDropdown dd : methodDropdowns) { int bx = dd.x + 100; int bw = dd.width - 100; int bh = dd.height; boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= yd && mouseY <= yd + bh; if (inBase) { for (MethodDropdown other : methodDropdowns) other.isOpen = false; dd.isOpen = !dd.isOpen; return; } if (dd.isOpen) { for (int i = 0; i < dd.methods.length; i++) { int optionY = yd + bh + (i * bh); boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh; if (inOpt) { dd.selectMethod(i); dd.isOpen = false; return; } } } yd += 22; }
-        int yBtn = y; for (Toggle ignored : Toggles) yBtn += 22; for (LabelledInput li : labelledInputs) yBtn += li.getVerticalSpace(); for (ColorInput ignored : ColorInputs) yBtn += 50; for (MethodDropdown ignored : methodDropdowns) yBtn += 22;
+        for (Toggle toggle : Toggles) {
+            if (toggle.isMouseOver(mouseX, mouseY, yToggle)) {
+                toggle.toggle();
+
+                // Special handling for reload cape checkbox
+                if (toggle.ref != null && toggle.ref.ConfigType == 14 && "customcape_reloadcape".equals(toggle.ref.Key)) {
+                    // If the checkbox was just turned on, call reload and turn it back off
+                    Boolean isChecked = (Boolean) AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape").Data;
+                    if (isChecked) {
+                        // Call the reload function
+                        try {
+                            com.aftertime.ratallofyou.modules.render.CustomCape.getInstance().reloadCape();
+                        } catch (Exception e) {
+                            System.err.println("[ModSettingsGui] Error reloading cape: " + e.getMessage());
+                        }
+
+                        // Reset the checkbox back to false
+                        BaseConfig<?> cfg = AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape");
+                        if (cfg != null) {
+                            @SuppressWarnings("unchecked")
+                            BaseConfig<Object> capeConfig = (BaseConfig<Object>) cfg;
+                            capeConfig.Data = false;
+                        }
+                        toggle.Data = false; // Update the toggle display state
+
+                        // Save the config to keep it false
+                        ConfigIO.INSTANCE.SetConfig("14,customcape_reloadcape", false);
+                    }
+                }
+
+                if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
+                return;
+            }
+            yToggle += 22;
+        }
     }
 
     // Fast Hotkey left panel
@@ -763,7 +807,41 @@ public class ModSettingsGui extends GuiScreen {
 
         if (SelectedModule == null) return;
         int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle toggle : Toggles) { if (toggle.isMouseOver(mouseX, mouseY, y)) { toggle.toggle(); if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig(); return; } y += 22; }
+        for (Toggle toggle : Toggles) {
+            if (toggle.isMouseOver(mouseX, mouseY, y)) {
+                toggle.toggle();
+
+                // Special handling for reload cape checkbox
+                if (toggle.ref != null && toggle.ref.ConfigType == 14 && "customcape_reloadcape".equals(toggle.ref.Key)) {
+                    // If the checkbox was just turned on, call reload and turn it back off
+                    Boolean isChecked = (Boolean) AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape").Data;
+                    if (isChecked) {
+                        // Call the reload function
+                        try {
+                            com.aftertime.ratallofyou.modules.render.CustomCape.getInstance().reloadCape();
+                        } catch (Exception e) {
+                            System.err.println("[ModSettingsGui] Error reloading cape: " + e.getMessage());
+                        }
+
+                        // Reset the checkbox back to false
+                        BaseConfig<?> cfg = AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape");
+                        if (cfg != null) {
+                            @SuppressWarnings("unchecked")
+                            BaseConfig<Object> capeConfig = (BaseConfig<Object>) cfg;
+                            capeConfig.Data = false;
+                        }
+                        toggle.Data = false; // Update the toggle display state
+
+                        // Save the config to keep it false
+                        ConfigIO.INSTANCE.SetConfig("14,customcape_reloadcape", false);
+                    }
+                }
+
+                if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
+                return;
+            }
+            y += 22;
+        }
     }
 
     private boolean handleDropdownClicks(int mouseX, int mouseY) {

@@ -248,7 +248,7 @@ public class AllConfig {
 
     public final HashMap<String, BaseConfig<?>> CUSTOMCAPE_CONFIGS = new HashMap<String, BaseConfig<?>>()
     {{
-        put("customcape_reloadcape", new BaseConfig<>("Reload Cape", "Reload Cape", false));
+        put("customcape_reloadcape", new BaseConfig<>("Reload Cape", "Click to reload cape from file", false));
     }};
 
     // New: Fast Hotkey presets model and active pointer
