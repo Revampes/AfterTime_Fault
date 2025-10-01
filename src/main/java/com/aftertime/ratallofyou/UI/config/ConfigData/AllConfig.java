@@ -176,6 +176,7 @@ public class AllConfig {
         put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
         put("dungeons_healerwishalert", new ModuleInfo("Healer Wish Alert", "Alert when needed to wish", "Dungeons", false));
         put("dungeons_findcorrectlivid", new ModuleInfo("Find Correct Livid (not working)", "Highlights the correct Livid in Floor 5 boss fight", "Dungeons", false));
+        put("dungeons_salvageitem", new ModuleInfo("Salvage Item Highlighter", "Highlight salvageable dungeon items in chest GUIs", "Dungeons", false));
 
         // SkyBlock
         put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
