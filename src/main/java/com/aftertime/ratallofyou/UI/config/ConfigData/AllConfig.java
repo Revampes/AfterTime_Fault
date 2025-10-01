@@ -2,7 +2,6 @@ package com.aftertime.ratallofyou.UI.config.ConfigData;
 
 
 import com.aftertime.ratallofyou.UI.config.ConfigIO;
-import scala.xml.dtd.impl.Base;
 
 import java.awt.Color;
 import java.lang.reflect.Type;
@@ -246,7 +245,6 @@ public class AllConfig {
     {{
         put("darkmode_getopacity", new BaseConfig<>("Adjust opacity", "Adjust the opacity of dark mode from 0-255", 128));
     }};
-
     // New: Fast Hotkey presets model and active pointer
     public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
     public int FHK_ACTIVE_PRESET = 0;
