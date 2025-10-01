@@ -483,34 +483,6 @@ public class ModSettingsGui extends GuiScreen {
         for (Toggle toggle : Toggles) {
             if (toggle.isMouseOver(mouseX, mouseY, yToggle)) {
                 toggle.toggle();
-
-                // Special handling for reload cape checkbox
-                if (toggle.ref != null && toggle.ref.ConfigType == 14 && "customcape_reloadcape".equals(toggle.ref.Key)) {
-                    // If the checkbox was just turned on, call reload and turn it back off
-                    Boolean isChecked = (Boolean) AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape").Data;
-                    if (isChecked) {
-                        // Call the reload function
-                        try {
-                            com.aftertime.ratallofyou.modules.render.CustomCape.getInstance().reloadCape();
-                        } catch (Exception e) {
-                            System.err.println("[ModSettingsGui] Error reloading cape: " + e.getMessage());
-                        }
-
-                        // Reset the checkbox back to false
-                        BaseConfig<?> cfg = AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape");
-                        if (cfg != null) {
-                            @SuppressWarnings("unchecked")
-                            BaseConfig<Object> capeConfig = (BaseConfig<Object>) cfg;
-                            capeConfig.Data = false;
-                        }
-                        toggle.Data = false; // Update the toggle display state
-
-                        // Save the config to keep it false
-                        ConfigIO.INSTANCE.SetConfig("14,customcape_reloadcape", false);
-                    }
-                }
-
-                if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
                 return;
             }
             yToggle += 22;
@@ -810,34 +782,6 @@ public class ModSettingsGui extends GuiScreen {
         for (Toggle toggle : Toggles) {
             if (toggle.isMouseOver(mouseX, mouseY, y)) {
                 toggle.toggle();
-
-                // Special handling for reload cape checkbox
-                if (toggle.ref != null && toggle.ref.ConfigType == 14 && "customcape_reloadcape".equals(toggle.ref.Key)) {
-                    // If the checkbox was just turned on, call reload and turn it back off
-                    Boolean isChecked = (Boolean) AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape").Data;
-                    if (isChecked) {
-                        // Call the reload function
-                        try {
-                            com.aftertime.ratallofyou.modules.render.CustomCape.getInstance().reloadCape();
-                        } catch (Exception e) {
-                            System.err.println("[ModSettingsGui] Error reloading cape: " + e.getMessage());
-                        }
-
-                        // Reset the checkbox back to false
-                        BaseConfig<?> cfg = AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.get("customcape_reloadcape");
-                        if (cfg != null) {
-                            @SuppressWarnings("unchecked")
-                            BaseConfig<Object> capeConfig = (BaseConfig<Object>) cfg;
-                            capeConfig.Data = false;
-                        }
-                        toggle.Data = false; // Update the toggle display state
-
-                        // Save the config to keep it false
-                        ConfigIO.INSTANCE.SetConfig("14,customcape_reloadcape", false);
-                    }
-                }
-
-                if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
                 return;
             }
             y += 22;
@@ -983,7 +927,16 @@ public class ModSettingsGui extends GuiScreen {
         // Titles above inputs for Terminal, FastHotkey, and Auto Fish
         boolean isVerticalAbove = (ConfigType == 4 || ConfigType == 6 || ConfigType == 10);
         if (type.equals(String.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
-        else if (type.equals(Boolean.class)) Toggles.add(new Toggle(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16));
+        else if (type.equals(Boolean.class)) {
+            // Try to create a special checkbox first
+            SpecialCheckbox specialCheckbox = SpecialCheckboxFactory.createSpecialCheckbox(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16);
+            if (specialCheckbox != null) {
+                Toggles.add(specialCheckbox);
+            } else {
+                // Use normal toggle
+                Toggles.add(new Toggle(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16));
+            }
+        }
         else if (type.equals(Integer.class)) {
             String display = String.valueOf(data);
             // Special-case: show key name for Auto Fish hotkey input
