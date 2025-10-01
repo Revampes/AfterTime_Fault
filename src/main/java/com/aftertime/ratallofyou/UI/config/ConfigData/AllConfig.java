@@ -245,6 +245,12 @@ public class AllConfig {
     {{
         put("darkmode_getopacity", new BaseConfig<>("Adjust opacity", "Adjust the opacity of dark mode from 0-255", 128));
     }};
+
+    public final HashMap<String, BaseConfig<?>> CUSTOMCAPE_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    {{
+        put("customcape_reloadcape", new BaseConfig<>("Reload Cape", "Reload Cape", false));
+    }};
+
     // New: Fast Hotkey presets model and active pointer
     public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
     public int FHK_ACTIVE_PRESET = 0;
@@ -264,6 +270,7 @@ public class AllConfig {
         put(11, AUTOEXPERIMENT_CONFIGS);
         put(12, PLAYERESP_CONFIGS);
         put(13, NAMETAG_CONFIGS);
+        put(14, CUSTOMCAPE_CONFIGS);
         put(15, DARKMODE_CONFIGS);
     }};
 

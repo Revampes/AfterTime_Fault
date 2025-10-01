@@ -280,6 +280,7 @@ public class ModSettingsGui extends GuiScreen {
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
             case "DarkMode": Add_SubSetting_DarkMode(y); break;
+            case "Custom Cape": Add_SubSetting_CustomCape(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -837,6 +838,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Auto Experiment":
             case "NameTag":
             case "Player ESP":
+            case "Custom Cape":
             case "DarkMode":
                 return true;
             default:
@@ -859,6 +861,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
+            case "Custom Cape": Add_SubSetting_CustomCape(y); break;
             case "DarkMode": Add_SubSetting_DarkMode(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
@@ -881,6 +884,12 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_PlayerESP(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.PLAYERESP_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 12);
+        }
+    }
+
+    private void Add_SubSetting_CustomCape(Integer y) {
+        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 14);
         }
     }
 
