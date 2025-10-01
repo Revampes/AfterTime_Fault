@@ -1,17 +1,15 @@
 package com.aftertime.ratallofyou;
 
+import com.aftertime.ratallofyou.modules.SkyBlock.*;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
-import com.aftertime.ratallofyou.modules.SkyBlock.WaypointGrab;
 import com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLineUp;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseTwo.*;
 import com.aftertime.ratallofyou.modules.render.*;
-import com.aftertime.ratallofyou.modules.SkyBlock.AutoSprint;
-import com.aftertime.ratallofyou.modules.SkyBlock.ChatCommands;
 import com.aftertime.ratallofyou.modules.dungeon.*;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.modules.dungeon.StarMobHighlighter;
@@ -27,14 +25,10 @@ import com.aftertime.ratallofyou.UI.config.ConfigIO;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.Direction;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHitbox;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive.KuudraHP;
-import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
 import com.aftertime.ratallofyou.modules.Performance.HideUselessMessage;
 import com.aftertime.ratallofyou.modules.Performance.HideLightning;
-import com.aftertime.ratallofyou.modules.SkyBlock.SearchBar;
-import com.aftertime.ratallofyou.modules.SkyBlock.FluxFlareTimer;
 import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOverviewModule;
 import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
-import com.aftertime.ratallofyou.modules.SkyBlock.AutoExperiment; // Register Auto Experiment
 import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
 import com.aftertime.ratallofyou.modules.dungeon.CustomTerminal.BetterTerminal;
 
@@ -63,7 +57,7 @@ public class Main {
         registerAll(
                 // Kuudra utilities and phases
                 new RefillPearls(), new InvincibleTimer(), new PearlCancel(), new CalcPearlLineUp(), new KuudraUtils(),
-                new Direction(), new KuudraHitbox(), new KuudraHP(), new FixedPearlLineUp(), new CheckNoPre(), new TentCancel(),
+                new Direction(), new KuudraHitbox(), new KuudraHP(), new FixedPearlLineUp(), new CheckNoPre(),
 
                 // Dungeon helpers
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
@@ -80,8 +74,7 @@ public class Main {
                 new PlayerESP(), new NameTag(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
                 new FluxFlareTimer(), new StorageOverviewModule(),
-                new AutoFish(), new AutoExperiment(),
-
+                new AutoFish(), new AutoExperiment(), new SuperPairs(),
                 // Performance tweaks
                 new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(), new DarkMode(),
 

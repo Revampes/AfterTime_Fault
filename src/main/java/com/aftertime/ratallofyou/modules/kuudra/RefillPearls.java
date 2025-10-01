@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.modules.kuudra;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.utils.TabUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -30,7 +31,7 @@ public class RefillPearls {
         if (event.phase != TickEvent.Phase.END) return;
         tickCounter++;
 
-        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled()) {
+        if (Minecraft.getMinecraft().thePlayer == null || !isModuleEnabled() || !TabUtils.isInSkyblock()) {
             return;
         }
 

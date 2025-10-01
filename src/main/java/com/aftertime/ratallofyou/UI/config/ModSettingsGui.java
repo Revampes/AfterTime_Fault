@@ -823,9 +823,8 @@ public class ModSettingsGui extends GuiScreen {
             case "Hotbar Swap":
             case "Auto Fish":
             case "Auto Experiment (not working)":
-            case "NameTag": // New: expose NameTag settings
+            case "NameTag":
             case "Player ESP":
-            case "Tentacle Cancel":
             case "DarkMode":
                 return true;
             default:
@@ -848,7 +847,6 @@ public class ModSettingsGui extends GuiScreen {
             case "Auto Experiment (not working)": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
-            case "Tentacle Cancel": Add_SubSetting_TentCancel(y); break;
             case "DarkMode": Add_SubSetting_DarkMode(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
@@ -871,12 +869,6 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_PlayerESP(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.PLAYERESP_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 12);
-        }
-    }
-
-    private void Add_SubSetting_TentCancel(Integer y) {
-        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.TENTCANCEL_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 14);
         }
     }
 

@@ -145,18 +145,6 @@ public class AllConfig {
         put("nametag_only_party", new BaseConfig<>("Only Party Members", "Render name tag only for current party members", false));
     }};
 
-    // New: Tentacle Cancel specific settings
-    public final HashMap<String, BaseConfig<?>> TENTCANCEL_CONFIGS = new HashMap<String, BaseConfig<?>>()
-    {{
-        put("tentcancel_max_attempts", new BaseConfig<>("Max Attempts", "Maximum reposition attempts before disabling", 8));
-        put("tentcancel_attempt_interval_ms", new BaseConfig<>("Attempt Interval (ms)", "Minimum ms between detach reposition attempts", 120));
-        put("tentcancel_packets_per_attempt", new BaseConfig<>("Packets / Attempt", "How many position packets to spam each attempt", 5));
-        put("tentcancel_history_size", new BaseConfig<>("History Size", "How many past positions to keep (older = more stable)", 5));
-        put("tentcancel_displacement_min", new BaseConfig<>("Min Displacement", "Only reposition if moved this far (blocks)", 0.25f));
-        put("tentcancel_force_ticks", new BaseConfig<>("Force Ticks", "Extra ticks after attempt to re-send position", 2));
-        put("tentcancel_debug", new BaseConfig<>("Debug", "Print debug info for Tentacle Cancel", false));
-    }};
-
     public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
     {{
         // Kuudra
@@ -178,7 +166,6 @@ public class AllConfig {
         put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks (not working)", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
         put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
         put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
-        put("kuudra_tentcancel", new ModuleInfo("Tentacle Cancel", "Attempt to cancel tentacle dismount (Use at your own risk!)", "Kuudra", false));
 
         // Dungeons
         put("dungeons_invincibletimer",new ModuleInfo("Invincible Timer", "Show invincibility timers", "Dungeons", false));
@@ -204,7 +191,7 @@ public class AllConfig {
         put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
         put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
         put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment (not working)", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
-
+        put("skyblock_superpairs", new ModuleInfo("Super Pairs", "Highlight matching pairs in the Superpairs experiment", "SkyBlock", false));
         //Fishing
         put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
 
@@ -279,7 +266,6 @@ public class AllConfig {
         put(11, AUTOEXPERIMENT_CONFIGS);
         put(12, PLAYERESP_CONFIGS);
         put(13, NAMETAG_CONFIGS);
-        put(14, TENTCANCEL_CONFIGS);
         put(15, DARKMODE_CONFIGS);
     }};
 
