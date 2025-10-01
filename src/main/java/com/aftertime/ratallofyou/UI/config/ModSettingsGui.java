@@ -478,18 +478,17 @@ public class ModSettingsGui extends GuiScreen {
             // Continue to other inputs after a small gap
             y += hotbarPanel.computeSectionHeight(ia.contentW) + 12; // approximate advance for following controls
         }
-
-        // Handle all input types for all modules (including Fast Hotkey and Hotbar Swap appearance settings)
+        // Inputs and toggles
         int yToggle = y;
         for (Toggle toggle : Toggles) {
             if (toggle.isMouseOver(mouseX, mouseY, yToggle)) {
                 toggle.toggle();
+                // Add back the terminal settings applier that was missing
                 if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
                 return;
             }
             yToggle += 22;
         }
-
         // Handle LabelledInput clicks
         int yLI = y;
         for (Toggle ignored : Toggles) yLI += 22;
@@ -501,7 +500,6 @@ public class ModSettingsGui extends GuiScreen {
             }
             yLI += li.getVerticalSpace();
         }
-
         // Handle ColorInput clicks
         int yCI = y;
         for (Toggle ignored : Toggles) yCI += 22;
@@ -515,7 +513,6 @@ public class ModSettingsGui extends GuiScreen {
             }
             yCI += 50;
         }
-
         // Handle MethodDropdown clicks
         int yd = y;
         for (Toggle ignored : Toggles) yd += 22;
@@ -546,143 +543,7 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private void handleInlineOptionClicks(int mouseX, int mouseY, InlineArea ia) {
-        // Focus inputs and toggle clicks (inline)
-        int y = ia.contentY;
-        if (SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
-            int rowH = 16; int gap = 4;
-            y += 12; // after label
-            if (fhkPresetNameInput != null) {
-                fhkPresetNameInput.setBounds(ia.contentX, y, Math.max(60, ia.contentW - 65), 16);
-                if (fhkPresetNameInput.isMouseOver(mouseX, mouseY)) { fhkPresetNameInput.beginEditing(mouseX); return; }
-                int btnX = ia.contentX + ia.contentW - 60; if (mouseX >= btnX && mouseX <= btnX + 60 && mouseY >= y && mouseY <= y + 16) {
-                    String name = fhkPresetNameInput.text.trim(); if (!name.isEmpty()) {
-                        boolean exists = false; for (FastHotkeyPreset p : AllConfig.INSTANCE.FHK_PRESETS) { if (p.name.equalsIgnoreCase(name)) { exists = true; break; } }
-                        if (!exists) { AllConfig.INSTANCE.FHK_PRESETS.add(new FastHotkeyPreset(name)); AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_PRESETS.size() - 1); fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET; fhkPresetNameInput.text = ""; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET); rebuildFastHotkeyRowsForDetail(); }
-                    }
-                    return;
-                }
-                y += 22;
-            }
-            y += 12; // saved header
-            for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-                FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(i);
-                int x = ia.contentX; int w = ia.contentW; int rowY = y; // capture for this row
-                // Toggle box
-                int tSize = 14; int toggleX = x; int toggleY = rowY + (rowH - tSize) / 2;
-                boolean overToggle = mouseX >= toggleX && mouseX <= toggleX + tSize && mouseY >= toggleY && mouseY <= toggleY + tSize;
-                // Key box
-                int keyW = 80; int keyX = x + w - 60 - 6 - keyW; int keyY = rowY;
-                boolean overKey = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= keyY && mouseY <= keyY + rowH;
-                // Remove
-                int rmW = 60; int rmX = x + w - rmW; int rmY = rowY; boolean overRemove = mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + rowH;
-                // Name/select area
-                int nameX = toggleX + tSize + 6; int nameW = Math.max(40, w - 6 - tSize - 60 - 80 - 6);
-                boolean overName = mouseX >= nameX && mouseX <= nameX + nameW && mouseY >= rowY && mouseY <= rowY + rowH;
-
-                if (overToggle) {
-                    // Enforce: must have a valid, non-duplicate key to enable
-                    if (!p.enabled) {
-                        if (p.keyCode <= 0) { fhkKeyCaptureIndex = i; return; }
-                        if (isFhkKeyDuplicate(p.keyCode, i)) { return; }
-                        p.enabled = true; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    } else {
-                        p.enabled = false; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    }
-                    // Also select this preset for editing
-                    AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail();
-                    return;
-                }
-                if (overKey) { fhkKeyCaptureIndex = i; return; }
-                if (overRemove) {
-                    if (AllConfig.INSTANCE.FHK_PRESETS.size() > 1) {
-                        AllConfig.INSTANCE.FHK_PRESETS.remove(i);
-                        int newActive = Math.max(0, Math.min(AllConfig.INSTANCE.FHK_ACTIVE_PRESET - (i <= AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? 1 : 0), AllConfig.INSTANCE.FHK_PRESETS.size() - 1));
-                        AllConfig.INSTANCE.setActiveFhkPreset(newActive);
-                        fhkSelectedPreset = -1; fastRows.clear();
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    }
-                    return;
-                }
-                if (overName) { AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail(); return; }
-                y += rowH + gap; // advance to next row baseline
-            }
-            y += 6; // separator gap
-        }
-        // New: Hotbar Swap inline clicks delegated to panel
-        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
-            if (hotbarPanel.handleInlineClick(mouseX, mouseY, ia.contentX, y, ia.contentW)) return;
-            // Continue to other inputs after a small gap
-            y += hotbarPanel.computeSectionHeight(ia.contentW) + 12; // approximate advance for following controls
-        }
-
-        // Handle all input types for all modules (including Fast Hotkey and Hotbar Swap appearance settings)
-        int yToggle = y;
-        for (Toggle toggle : Toggles) {
-            if (toggle.isMouseOver(mouseX, mouseY, yToggle)) {
-                toggle.toggle();
-                if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
-                return;
-            }
-            yToggle += 22;
-        }
-
-        // Handle LabelledInput clicks
-        int yLI = y;
-        for (Toggle ignored : Toggles) yLI += 22;
-        for (LabelledInput li : labelledInputs) {
-            if (li.isMouseOver(mouseX, mouseY, yLI)) {
-                for (LabelledInput other : labelledInputs) other.isEditing = false;
-                li.beginEditing(mouseX);
-                return;
-            }
-            yLI += li.getVerticalSpace();
-        }
-
-        // Handle ColorInput clicks
-        int yCI = y;
-        for (Toggle ignored : Toggles) yCI += 22;
-        for (LabelledInput li : labelledInputs) yCI += li.getVerticalSpace();
-        for (ColorInput ci : ColorInputs) {
-            int inputY = yCI + ci.height + 8;
-            boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15);
-            if (hover) {
-                ci.beginEditing(mouseX);
-                return;
-            }
-            yCI += 50;
-        }
-
-        // Handle MethodDropdown clicks
-        int yd = y;
-        for (Toggle ignored : Toggles) yd += 22;
-        for (LabelledInput li : labelledInputs) yd += li.getVerticalSpace();
-        for (ColorInput ignored : ColorInputs) yd += 50;
-        for (MethodDropdown dd : methodDropdowns) {
-            int bx = dd.x + 100;
-            int bw = dd.width - 100;
-            int bh = dd.height;
-            boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= yd && mouseY <= yd + bh;
-            if (inBase) {
-                for (MethodDropdown other : methodDropdowns) other.isOpen = false;
-                dd.isOpen = !dd.isOpen;
-                return;
-            }
-            if (dd.isOpen) {
-                for (int i = 0; i < dd.methods.length; i++) {
-                    int optionY = yd + bh + (i * bh);
-                    boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh;
-                    if (inOpt) {
-                        dd.selectMethod(i);
-                        dd.isOpen = false;
-                        return;
-                    }
-                }
-            }
-            yd += 22;
-        }
-    }
-
+    // Fast Hotkey left panel
     private void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
         int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
         glEnable(GL_SCISSOR_TEST);
@@ -1065,19 +926,19 @@ public class ModSettingsGui extends GuiScreen {
         Toggles.clear(); labelledInputs.clear(); methodDropdowns.clear(); ColorInputs.clear(); if (SelectedModule == null) return;
         Integer y = guiTop + Dimensions.COMMAND_PANEL_Y + 30;
         switch (SelectedModule.name) {
-            case "Dungeon Terminals": SubSettingAdders.addSubSettingTerminal(this, y); break;
-            case "Party Commands": SubSettingAdders.addSubSettingCommand(this, y); break;
-            case "No Debuff": SubSettingAdders.addSubSettingNoDebuff(this, y); break;
-            case "Etherwarp Overlay": SubSettingAdders.addSubSettingEtherwarp(this, y); break;
-            case "Fast Hotkey": SubSettingAdders.addSubSettingFastHotkey(this, y); break;
-            case "Chest Open Notice": SubSettingAdders.addSubSettingChestOpen(this, y); break;
-            case "Hotbar Swap": SubSettingAdders.addSubSettingHotbarSwap(this, y); hotbarPanel.rebuildRows(); break;
-            case "Auto Fish": SubSettingAdders.addSubSettingAutoFish(this, y); break;
-            case "Auto Experiment": SubSettingAdders.addSubSettingAutoExperiment(this, y); break;
-            case "NameTag": SubSettingAdders.addSubSettingNameTag(this, y); break;
-            case "Player ESP": SubSettingAdders.addSubSettingPlayerESP(this, y); break;
-            case "Custom Cape": SubSettingAdders.addSubSettingCustomCape(this, y); break;
-            case "DarkMode": SubSettingAdders.addSubSettingDarkMode(this, y); break;
+            case "Dungeon Terminals": Add_SubSetting_Terminal(y); break;
+            case "Party Commands": Add_SubSetting_Command(y); break;
+            case "No Debuff": Add_SubSetting_NoDebuff(y); break;
+            case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
+            case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
+            case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
+            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
+            case "Auto Fish": Add_SubSetting_AutoFish(y); break;
+            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
+            case "NameTag": Add_SubSetting_NameTag(y); break; // New
+            case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
+            case "Custom Cape": Add_SubSetting_CustomCape(y); break;
+            case "DarkMode": Add_SubSetting_DarkMode(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -1147,7 +1008,19 @@ public class ModSettingsGui extends GuiScreen {
         else System.err.println("Unsupported config type: " + type);
     }
 
+    private void Add_SubSetting_Terminal(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.TERMINAL_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 4);
+        }
+    }
+
     private void addTerminalEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.TERMINAL_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 4); }
+
+    private void Add_SubSetting_FastHotkey(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 6);
+        }
+    }
 
     private void addFhkEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 6); }
 
