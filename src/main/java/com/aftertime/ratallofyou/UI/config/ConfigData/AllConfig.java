@@ -124,7 +124,7 @@ public class AllConfig {
     public final HashMap<String, BaseConfig<?>> AUTOEXPERIMENT_CONFIGS = new HashMap<String, BaseConfig<?>>()
     {{
         put("autoexperiment_delay_ms", new BaseConfig<>("Click Delay (ms)", "Delay between automated clicks", 120));
-        put("autoexperiment_auto_exit", new BaseConfig<>("Auto Exit", "Close GUI after enough rounds memorized", false));
+        put("autoexperiment_auto_exit", new BaseConfig<>("Auto Exit (with max serum)", "Close GUI after enough rounds memorized", false));
         put("autoexperiment_debug", new BaseConfig<>("Debug", "Print debug info in chat while solving", false));
     }};
 
@@ -133,7 +133,6 @@ public class AllConfig {
     {{
         put("playeresp_mode", new BaseConfig<>("Mode", "ESP render mode", new DataType_DropDown(0, new String[]{"Wireframe", "Filled"})));
         put("playeresp_color", new BaseConfig<>("Color", "ESP color (RGBA)", new Color(0, 255, 255, 200)));
-        // New toggle: only render ESP for party members
         put("playeresp_only_party", new BaseConfig<>("Only Party Members", "Render ESP only for current party members", false));
     }};
 
@@ -141,7 +140,6 @@ public class AllConfig {
     public final HashMap<String, BaseConfig<?>> NAMETAG_CONFIGS = new HashMap<String, BaseConfig<?>>()
     {{
         put("nametag_scale", new BaseConfig<>("NameTag Scale", "On-screen size scale for player name tags", 0.002f));
-        // New toggle: only render name tags for party members
         put("nametag_only_party", new BaseConfig<>("Only Party Members", "Render name tag only for current party members", false));
     }};
 
@@ -190,7 +188,7 @@ public class AllConfig {
         put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
         put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
         put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
-        put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment (not working)", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
+        put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
         put("skyblock_superpairs", new ModuleInfo("Super Pairs", "Highlight matching pairs in the Superpairs experiment", "SkyBlock", false));
         //Fishing
         put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));

@@ -822,7 +822,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice":
             case "Hotbar Swap":
             case "Auto Fish":
-            case "Auto Experiment (not working)":
+            case "Auto Experiment":
             case "NameTag":
             case "Player ESP":
             case "DarkMode":
@@ -844,7 +844,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Fish": Add_SubSetting_AutoFish(y); break;
-            case "Auto Experiment (not working)": Add_SubSetting_AutoExperiment(y); break;
+            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
             case "DarkMode": Add_SubSetting_DarkMode(y); break;
