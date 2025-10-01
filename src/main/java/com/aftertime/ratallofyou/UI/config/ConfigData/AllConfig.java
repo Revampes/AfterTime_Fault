@@ -13,7 +13,7 @@ public class AllConfig {
     public List<FastHotkeyEntry> FAST_HOTKEY_ENTRIES = new ArrayList<>();
 
     // Initialize individual config maps first to avoid nulls in ALLCONFIGS
-    public final HashMap<String, BaseConfig<?>> COMMAND_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> COMMAND_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("command_warp", new BaseConfig<>("Warp", "Enable !warp command", false));
         put("command_warp_transfer", new BaseConfig<>("Warp Transfer", "Enable !warptransfer command", false));
@@ -33,14 +33,14 @@ public class AllConfig {
         put("command_pt_warp", new BaseConfig<>("pt+warp", "Enable !ptwarp command", false));
     }};
 
-    public final HashMap<String, BaseConfig<?>> NODEBUFF_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> NODEBUFF_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("nodebuff_remove_fire_overlay", new BaseConfig<>("Remove Fire Overlay", "Disables the fire overlay effect", false));
         put("nodebuff_ignore_blindness", new BaseConfig<>("Ignore Blindness", "Removes blindness effect", false));
         put("nodebuff_clear_liquid_vision", new BaseConfig<>("Clear Liquid Vision", "Clears water/lava fog", false));
     }};
 
-    public final HashMap<String, BaseConfig<?>> ETHERWARP_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> ETHERWARP_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("etherwarp_sync_with_server", new BaseConfig<>("Sync with server", "Sync etherwarp with server position", false));
         put("etherwarp_only_show_when_sneak", new BaseConfig<>("Only show when sneak", "Only show overlay when sneaking", true));
@@ -48,10 +48,9 @@ public class AllConfig {
         put("etherwarp_render_method", new BaseConfig<>("Render Method", "Select how to render the overlay", new DataType_DropDown(0,new String[]{"Edges", "Filled", "Both"})));
         put("etherwarp_OverlayColor", new BaseConfig<>("Overlay Color", "Color for Ether Overlay", new Color(0, 255, 0, 200)));
         put("etherwarp_OverlayFailColor", new BaseConfig<>("Fail Overlay Color", "Color for Failed Etherwarp position", new Color(180, 0, 0, 200)));
-
     }};
 
-    public final HashMap<String, BaseConfig<?>> TERMINAL_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> TERMINAL_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("terminal_high_ping_mode", new BaseConfig<>("Smooth Terminal", "Smooth Terminal GUI Especially for High Ping Users", false));
         put("terminal_scale", new BaseConfig<>("Terminal Scale", "Scale factor for terminal display", 1.0f));
@@ -74,7 +73,7 @@ public class AllConfig {
         put("terminal_enable_melody", new BaseConfig<>("Enable Melody", "Enable Melody terminal helper GUI", true));
     }};
 
-    public final HashMap<String,BaseConfig<?>> Pos_CONFIGS = new HashMap<String,BaseConfig<?>>()
+    public final LinkedHashMap<String,BaseConfig<?>> Pos_CONFIGS = new LinkedHashMap<String,BaseConfig<?>>()
     {{
         put("bonzo_pos",new BaseConfig<>("Bonzo Mask Display Position","Position Of Bonzo Mask Invincibility Timer Display",new UIPosition(200,200)));
         put("spirit_pos",new BaseConfig<>("Spirit Mask Display Position","Position Of Spirit Mask Invincibility Timer Display",new UIPosition(200,200)));
@@ -90,11 +89,10 @@ public class AllConfig {
         put("arrowpoison_scale", new BaseConfig<>("Arrow Poison HUD Scale", "Scale of the Arrow Poison HUD", 1.0f));
         put("flareflux_pos", new BaseConfig<>("Flare/Flux HUD Position", "Position of the Flare/Flux timer", new UIPosition(220, 220)));
         put("flareflux_scale", new BaseConfig<>("Flare/Flux HUD Scale", "Scale of the Flare/Flux timer", 1.0f));
-
     }};
 
     // New: Kuudra Chest Open Notice sub-settings
-    public final HashMap<String, BaseConfig<?>> KUUDRA_CHESTOPEN_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> KUUDRA_CHESTOPEN_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("kuudra_auto_openchest", new BaseConfig<>("Auto Open Chest", "Automatically click Paid Chest (slot 31)", false));
         put("kuudra_auto_requeue", new BaseConfig<>("Auto Requeue at 4", "Auto /instancerequeue when 4 players looted", false));
@@ -102,7 +100,7 @@ public class AllConfig {
     }};
 
     // New: Auto Fish sub-settings
-    public final HashMap<String, BaseConfig<?>> AUTOFISH_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> AUTOFISH_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("autofish_sneak", new BaseConfig<>("Sneak while fishing", "Hold sneak while Auto Fish is enabled", false));
         put("autofish_throw_hook", new BaseConfig<>("Throw if no hook", "Auto-throw rod when no hook is out", true));
@@ -120,7 +118,7 @@ public class AllConfig {
     }};
 
     // New: Auto Experiment sub-settings
-    public final HashMap<String, BaseConfig<?>> AUTOEXPERIMENT_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> AUTOEXPERIMENT_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("autoexperiment_delay_ms", new BaseConfig<>("Click Delay (ms)", "Delay between automated clicks", 120));
         put("autoexperiment_auto_exit", new BaseConfig<>("Auto Exit (with max serum)", "Close GUI after enough rounds memorized", false));
@@ -128,7 +126,7 @@ public class AllConfig {
     }};
 
     // New: Player ESP sub-settings
-    public final HashMap<String, BaseConfig<?>> PLAYERESP_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> PLAYERESP_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("playeresp_mode", new BaseConfig<>("Mode", "ESP render mode", new DataType_DropDown(0, new String[]{"Wireframe", "Filled"})));
         put("playeresp_color", new BaseConfig<>("Color", "ESP color (RGBA)", new Color(0, 255, 255, 200)));
@@ -136,13 +134,13 @@ public class AllConfig {
     }};
 
     // New: NameTag sub-settings
-    public final HashMap<String, BaseConfig<?>> NAMETAG_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> NAMETAG_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("nametag_scale", new BaseConfig<>("NameTag Scale", "On-screen size scale for player name tags", 0.002f));
         put("nametag_only_party", new BaseConfig<>("Only Party Members", "Render name tag only for current party members", false));
     }};
 
-    public final HashMap<String,BaseConfig<?>> MODULES = new HashMap<String,BaseConfig<?>>()
+    public final LinkedHashMap<String,BaseConfig<?>> MODULES = new LinkedHashMap<String,BaseConfig<?>>()
     {{
         // Kuudra
         put("kuudra_crateaura",new ModuleInfo("Crate Aura", "Suspicious", "Kuudra", false));
@@ -211,7 +209,7 @@ public class AllConfig {
     }};
 
     // New: Fast Hotkey appearance/config options
-    public final HashMap<String, BaseConfig<?>> FASTHOTKEY_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> FASTHOTKEY_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("fhk_inner_radius", new BaseConfig<>("Inner Radius", "Inner cancel circle radius (px)", 40));
         put("fhk_outer_radius", new BaseConfig<>("Outer Radius", "Outer ring radius (px)", 150));
@@ -228,7 +226,7 @@ public class AllConfig {
     }};
 
     // New: Hotbar Swap settings
-    public final HashMap<String, BaseConfig<?>> HOTBARSWAP_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> HOTBARSWAP_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("hotbarswap_enable_chat_triggers", new BaseConfig<>("Enable Chat Triggers", "Trigger presets from exact chat messages", true));
         put("hotbarswap_enable_keybinds", new BaseConfig<>("Enable Keybinds", "Trigger presets from keybinds", true));
@@ -236,17 +234,17 @@ public class AllConfig {
     }};
 
     // New: Storage Overview settings
-    public final HashMap<String, BaseConfig<?>> STORAGEOVERVIEW_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> STORAGEOVERVIEW_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("storageoverview_show_in_inventory", new BaseConfig<>("Show In Inventory", "Show overlay when player inventory is open", true));
     }};
 
-    public final HashMap<String, BaseConfig<?>> DARKMODE_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> DARKMODE_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("darkmode_getopacity", new BaseConfig<>("Adjust opacity", "Adjust the opacity of dark mode from 0-255", 128));
     }};
 
-    public final HashMap<String, BaseConfig<?>> CUSTOMCAPE_CONFIGS = new HashMap<String, BaseConfig<?>>()
+    public final LinkedHashMap<String, BaseConfig<?>> CUSTOMCAPE_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("customcape_reloadcape", new BaseConfig<>("Reload Cape", "Click to reload cape from file", false));
     }};
@@ -255,7 +253,7 @@ public class AllConfig {
     public List<FastHotkeyPreset> FHK_PRESETS = new ArrayList<>();
     public int FHK_ACTIVE_PRESET = 0;
     // After individual maps are ready, build the index map
-    public final HashMap<Integer,HashMap<String,BaseConfig<?>>> ALLCONFIGS = new HashMap<Integer,HashMap<String,BaseConfig<?>>> () {{
+    public final LinkedHashMap<Integer,LinkedHashMap<String,BaseConfig<?>>> ALLCONFIGS = new LinkedHashMap<Integer,LinkedHashMap<String,BaseConfig<?>>> () {{
         put(0, COMMAND_CONFIGS);
         put(1, MODULES);
         put(2, NODEBUFF_CONFIGS);
@@ -288,7 +286,7 @@ public class AllConfig {
     public void LoadFromProperty(Properties properties,Properties fhk_properties)
     {
         // Load each known config key from properties using composite key "index,RealKey"
-        for (Map.Entry<Integer, HashMap<String, BaseConfig<?>>> groupEntry : ALLCONFIGS.entrySet()) {
+        for (Map.Entry<Integer, LinkedHashMap<String, BaseConfig<?>>> groupEntry : ALLCONFIGS.entrySet()) {
             int index = groupEntry.getKey();
             for (Map.Entry<String, BaseConfig<?>> entry : groupEntry.getValue().entrySet()) {
                 String realKey = entry.getKey();
@@ -323,7 +321,7 @@ public class AllConfig {
     }
     public void SaveToProperty()
     {
-        for(Map.Entry<Integer,HashMap<String,BaseConfig<?>>> bc : ALLCONFIGS.entrySet()) {
+        for(Map.Entry<Integer, LinkedHashMap<String, BaseConfig<?>>> bc : ALLCONFIGS.entrySet()) {
             int index = bc.getKey();
             for (Map.Entry<String, BaseConfig<?>> entry : bc.getValue().entrySet()) {
                 BaseConfig<?> config = entry.getValue();
