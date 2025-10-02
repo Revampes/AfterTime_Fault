@@ -118,12 +118,12 @@ public class SalvageItem {
 
     private int getOverlayColorSalvageable() {
         // Use config color for regular salvageable items, but force 80% opacity
-        int base = 0x00FFFFFF;
+        int base = 0xCC00FFFF;
         return (0xCC << 24) | base; // 0xCC = 80% opacity
     }
     private int getOverlayColorTopSalvageable() {
         // Use config color for top-tier salvageable items, but force 80% opacity
-        int base = 0x00FFFFFF;
+        int base = 0xCCFF0000;
         return (0xCC << 24) | base; // 0xCC = 80% opacity
     }
 }

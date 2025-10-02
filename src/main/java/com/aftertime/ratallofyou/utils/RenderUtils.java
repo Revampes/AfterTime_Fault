@@ -537,4 +537,13 @@ public class RenderUtils {
         GlStateManager.enableLighting();
         GlStateManager.popMatrix();
     }
+
+    // Returns interpolated position for an Entity (x, y, z)
+    public static double[] getInterpolatedPosition(Entity entity, float partialTicks) {
+        double x = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks;
+        double y = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
+        double z = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks;
+        return new double[] { x, y, z };
+    }
 }
+

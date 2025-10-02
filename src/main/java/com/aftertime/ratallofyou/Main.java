@@ -4,8 +4,6 @@ import com.aftertime.ratallofyou.modules.SkyBlock.*;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
-import com.aftertime.ratallofyou.modules.debugdata.GetScoreboardDetails;
-import com.aftertime.ratallofyou.modules.debugdata.GetTablistDetails;
 import com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
