@@ -4,6 +4,8 @@ import com.aftertime.ratallofyou.modules.SkyBlock.*;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKey;
 import com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui;
 import com.aftertime.ratallofyou.KeyBind.KeybindHandler;
+import com.aftertime.ratallofyou.modules.debugdata.GetScoreboardDetails;
+import com.aftertime.ratallofyou.modules.debugdata.GetTablistDetails;
 import com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu.LeapMenu;
 import com.aftertime.ratallofyou.modules.kuudra.*;
 import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.*;
@@ -32,6 +34,7 @@ import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
 import com.aftertime.ratallofyou.modules.render.CustomCape;
 import com.aftertime.ratallofyou.modules.dungeon.CustomTerminal.BetterTerminal;
+import com.aftertime.ratallofyou.modules.debugdata.DebugDataTicker;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -86,5 +89,6 @@ public class Main {
         );
 
         KeybindHandler.registerKeybinds();
+        DebugDataTicker.register(); // Register the debug ticker for periodic debug info
     }
 }

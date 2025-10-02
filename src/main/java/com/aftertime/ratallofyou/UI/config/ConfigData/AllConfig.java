@@ -205,6 +205,10 @@ public class AllConfig {
         put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));
         put("performance_hidelightning", new ModuleInfo("Hide Lightning", "Hide lightning bolt renders", "Performance", false));
 
+        //Debugdata
+        put("debugdata_getscoreboarddetails", new ModuleInfo("Get Scoreboard informations", "Return everything in your scoreboard", "Debugdata", false));
+        put("debugdata_gettablistdetails", new ModuleInfo("Get Tab List informations", "Return everything from your tab list", "Debugdata", false));
+
         // GUI
         put("gui_moveguiposition",new ModuleInfo("Move GUI Position", "Enable dragging of UI elements", "GUI", false));
     }};
@@ -281,6 +285,7 @@ public class AllConfig {
         add("Render");
         add("Performance");
         add("Fishing");
+        add("Debugdata");
         add("GUI");
     }};
 

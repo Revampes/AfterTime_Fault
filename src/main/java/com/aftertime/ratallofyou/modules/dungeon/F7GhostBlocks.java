@@ -49,7 +49,7 @@ public class F7GhostBlocks {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START || !isModuleEnabled()) {
+        if (event.phase != TickEvent.Phase.START || !isModuleEnabled() || !(DungeonUtils.isInDungeonFloor() == 7)) {
             return;
         }
 

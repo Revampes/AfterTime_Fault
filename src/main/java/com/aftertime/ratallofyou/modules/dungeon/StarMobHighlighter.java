@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 
 import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;

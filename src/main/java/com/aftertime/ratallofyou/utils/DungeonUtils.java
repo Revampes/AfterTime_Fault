@@ -7,6 +7,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DungeonUtils {
     private static boolean inDungeon = false;
@@ -94,14 +96,27 @@ public class DungeonUtils {
             return 0;
         }
 
+        // 1. First, look for blanket pattern (F#) or (M#)
+        Pattern blanketPattern = Pattern.compile("\\((F|M)([1-7])\\)", Pattern.CASE_INSENSITIVE);
+        for (String line : scoreBoardLines) {
+            Matcher matcher = blanketPattern.matcher(line);
+            if (matcher.find()) {
+                try {
+                    int floor = Integer.parseInt(matcher.group(2));
+                    return floor;
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // 2. Fallback: scan for f1-f7 or m1-m7 inline
         int size = scoreBoardLines.size() - 1;
         for (int i = 0; i < scoreBoardLines.size(); i++) {
             String line = scoreBoardLines.get(size - i).toLowerCase();
-            // Look for occurrences of 'f' followed by a digit 1-7 and use switch-case to map
-            for (int idx = line.indexOf('f'); idx != -1; idx = line.indexOf('f', idx + 1)) {
-                if (idx + 1 < line.length()) {
-                    char c = line.charAt(idx + 1);
-                    switch (c) {
+            for (int idx = 0; idx < line.length() - 1; idx++) {
+                char prefix = line.charAt(idx);
+                char digit = line.charAt(idx + 1);
+                if ((prefix == 'f' || prefix == 'm')) {
+                    switch (digit) {
                         case '1':
                             return 1;
                         case '2':
