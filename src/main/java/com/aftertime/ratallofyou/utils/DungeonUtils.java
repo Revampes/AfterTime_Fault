@@ -1,12 +1,16 @@
 package com.aftertime.ratallofyou.utils;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiChest;
+import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.IInventory;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +40,6 @@ public class DungeonUtils {
             return dungeonFloor;
         }
     }
-
 
 
     public static int getDungeonFloor() {
@@ -104,7 +107,8 @@ public class DungeonUtils {
                 try {
                     int floor = Integer.parseInt(matcher.group(2));
                     return floor;
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
 
@@ -147,18 +151,15 @@ public class DungeonUtils {
         if (message.contains("Here, I found this map when I first entered the dungeon.")) {
             inDungeon = true;
             dungeonFloor = parseFloor(message);
-        }
-        else if (message.contains("Dungeon failed") ||
+        } else if (message.contains("Dungeon failed") ||
                 message.contains("Dungeon completed") ||
                 Minecraft.getMinecraft() == null) {
             endDungeon();
-        }
-        else if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
+        } else if (message.equals("[BOSS] Goldor: Who dares trespass into my domain?") ||
                 message.equals("[BOSS] Goldor: What do you think you are doing there!") ||
                 message.matches("Party > (?:\\[.+\\])? ?(?:.+)?[\u127e\u2692]?: (Bonzo|Phoenix) Procced!?(?: \\(.+\\))?")) {
             isInP3 = true;
-        }
-        else if (message.equals("The Core entrance is opening!")) {
+        } else if (message.equals("The Core entrance is opening!")) {
             isInP3 = false;
         }
     }
@@ -203,5 +204,21 @@ public class DungeonUtils {
         if (message.contains("Floor VI")) return 6;
         if (message.contains("Floor VII") || message.contains("WELL! WELL! WELL! LOOK WHO'S HERE!")) return 7;
         return 0;
+    }
+
+    public static boolean isopenspiritleap() {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc == null || mc.thePlayer == null) return false;
+        if (!(mc.currentScreen instanceof GuiChest)) return false;
+        if (!(mc.thePlayer.openContainer instanceof ContainerChest)) return false;
+        try {
+            ContainerChest cc = (ContainerChest) mc.thePlayer.openContainer;
+            IInventory inv = cc.getLowerChestInventory();
+            if (inv == null || inv.getDisplayName() == null) return false;
+            String title = net.minecraft.util.StringUtils.stripControlCodes(inv.getDisplayName().getUnformattedText()).toLowerCase(Locale.ENGLISH);
+            return title.contains("spirit") && title.contains("leap");
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 }
