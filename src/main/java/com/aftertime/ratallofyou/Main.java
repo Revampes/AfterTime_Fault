@@ -33,7 +33,6 @@ import com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview.StorageOvervie
 import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
 import com.aftertime.ratallofyou.modules.render.CustomCape;
-import com.aftertime.ratallofyou.modules.dungeon.CustomTerminal.BetterTerminal;
 import com.aftertime.ratallofyou.modules.debugdata.DebugDataTicker;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
@@ -53,7 +52,6 @@ public class Main {
     public void preInit(FMLPreInitializationEvent event) {
         // Initialize and load all configs using the new config system
         ConfigIO.INSTANCE.InitializeConfigs();
-        try { BetterTerminal.init(); } catch (Throwable ignored) {}
     }
 
     @Mod.EventHandler

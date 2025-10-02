@@ -232,7 +232,6 @@ public class FindCorrectLivid {
             thread.interrupt();
             thread = null;
         }
-        debug("World changed - reset livid detection");
     }
 
     private Entity findClosestLivid(char chatFormatting) {
