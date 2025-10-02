@@ -467,5 +467,20 @@ public class Utils {
             return false;
         }
     }
-}
 
+    /**
+     * Cleans a scoreboard line by removing Minecraft formatting codes and non-printable characters.
+     * @param scoreboard The raw scoreboard line
+     * @return The cleaned string
+     */
+    public static String cleanSB(String scoreboard) {
+        char[] nvString = net.minecraft.util.StringUtils.stripControlCodes(scoreboard).toCharArray();
+        StringBuilder cleaned = new StringBuilder();
+        for (char c : nvString) {
+            if ((int) c > 20 && (int) c < 127) {
+                cleaned.append(c);
+            }
+        }
+        return cleaned.toString();
+    }
+}
