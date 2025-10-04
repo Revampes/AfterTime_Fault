@@ -7,6 +7,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class Miniboss {
     private static final Minecraft mc = Minecraft.getMinecraft();
@@ -18,11 +20,17 @@ public class Miniboss {
             "flare demon", "kindleheartdemon", "burningsoul demon"
     };
 
+    public static void register() {
+        MinecraftForge.EVENT_BUS.register(new Miniboss());
+    }
+
     // Color for miniboss box (red)
     private static final float[] MINIBOSS_COLOR = {1f, 0f, 0f};
 
+    @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
         if (!BooleanSettings.isEnabled("slayer_miniboss") || mc.theWorld == null) return;
+
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {
                 EntityArmorStand armorStand = (EntityArmorStand) entity;
@@ -51,9 +59,10 @@ public class Miniboss {
     }
 
     private Entity getMobEntity(EntityArmorStand armorStand) {
+        // Expand search area significantly - look in a 4x4x4 area around the armor stand
         for (Object entity : mc.theWorld.getEntitiesWithinAABBExcludingEntity(
                 armorStand,
-                armorStand.getEntityBoundingBox().offset(0, -1, 0))) {
+                armorStand.getEntityBoundingBox().expand(2, 2, 2))) {
             if (entity instanceof Entity &&
                     !(entity instanceof EntityArmorStand) &&
                     !(entity instanceof EntityWither && ((Entity) entity).isInvisible()) &&
