@@ -32,19 +32,37 @@ public class MethodDropdown extends Option<String[]> {
     }
     @Override
     public void draw(int mouseX, int mouseY, int yPos, FontRenderer fr) {
-        fr.drawStringWithShadow(name + ":", x, yPos + 4,Colors.COMMAND_TEXT);
+        drawBase(mouseX, mouseY, yPos, fr);
+        // Note: expanded options are now drawn separately in drawExpandedOptions
+    }
+
+    /**
+     * Draws only the base dropdown button without expanded options
+     */
+    public void drawBase(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+        fr.drawStringWithShadow(name + ":", x, yPos + 4, Colors.COMMAND_TEXT);
         int bx = x + 100; int by = yPos; int bw = width - 100; int bh = height;
         Gui.drawRect(bx, by, bx + bw, by + bh, Colors.CATEGORY_BUTTON);
         String label = methods[Math.max(0, Math.min(methods.length - 1, selected))];
         fr.drawStringWithShadow(label, bx + 4, by + 4, Colors.COMMAND_TEXT);
-        if (isOpen) {
-            for (int i = 0; i < methods.length; i++) {
-                int oy = by + bh + i * bh;
-                Gui.drawRect(bx, oy, bx + bw, oy + bh, 0xFF1E1E1E);
-                fr.drawStringWithShadow(methods[i], bx + 4, oy + 4, Colors.COMMAND_TEXT);
-            }
-        }
     }
 
+    /**
+     * Draws expanded dropdown options on top of everything else
+     * This should be called after all other UI elements to ensure proper layering
+     */
+    public void drawExpandedOptions(int mouseX, int mouseY, int yPos, FontRenderer fr) {
+        if (!isOpen) return;
 
+        int bx = x + 100; int by = yPos; int bw = width - 100; int bh = height;
+
+        // Draw expanded options with higher z-order
+        for (int i = 0; i < methods.length; i++) {
+            int oy = by + bh + i * bh;
+            Gui.drawRect(bx, oy, bx + bw, oy + bh, 0xFF1E1E1E);
+            // Add border for better visibility
+            Gui.drawRect(bx - 1, oy - 1, bx + bw + 1, oy + bh + 1, Colors.COMMAND_BORDER);
+            fr.drawStringWithShadow(methods[i], bx + 4, oy + 4, Colors.COMMAND_TEXT);
+        }
+    }
 }

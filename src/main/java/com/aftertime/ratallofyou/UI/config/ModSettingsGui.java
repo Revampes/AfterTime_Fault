@@ -7,11 +7,12 @@ import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
+import com.aftertime.ratallofyou.UI.config.ScrollManager;
+import com.aftertime.ratallofyou.UI.config.SimpleTextField;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.gui.Gui;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.input.Keyboard; // Added for key code names and capture
 
@@ -47,6 +48,10 @@ public class ModSettingsGui extends GuiScreen {
     private ModuleInfo SelectedModule = null;
     private boolean showCommandSettings = false;
     private int guiLeft, guiTop;
+
+    // Error handling for modules without settings
+    private String showNoSettingsError = null;
+    private long noSettingsErrorTime = 0;
 
     // Layout modes
     private boolean useSidePanelForSelected = false; // Fast Hotkey only
@@ -89,6 +94,10 @@ public class ModSettingsGui extends GuiScreen {
         drawModules(mouseX, mouseY);
         drawScrollbars();
         drawCommandPanel(mouseX, mouseY);
+
+        // Draw tooltips and error messages last (on top of everything)
+        drawTooltipsAndErrors(mouseX, mouseY);
+
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -200,10 +209,15 @@ public class ModSettingsGui extends GuiScreen {
     // Drawing basics
     private void drawBackground() {
         drawRect(guiLeft, guiTop, guiLeft + Dimensions.GUI_WIDTH, guiTop + Dimensions.GUI_HEIGHT, Colors.PANEL);
-        fontRendererObj.drawStringWithShadow("§l§nRat All Of You", guiLeft + 15, guiTop + 10, Colors.TEXT);
+        fontRendererObj.drawStringWithShadow("§l§nAfterTimeFault", guiLeft + 15, guiTop + 10, Colors.TEXT);
         drawRect(guiLeft + 5, guiTop + 25, guiLeft + 115, guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
         drawRect(guiLeft + 115, guiTop + 25, guiLeft + Dimensions.GUI_WIDTH - 5, guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
-        drawCenteredString(fontRendererObj, "§7Version v2.2 §8| §7Created by AfterTime", width / 2, guiTop + Dimensions.GUI_HEIGHT - 20, Colors.VERSION);
+
+        // Enhanced footer with version, author, and instructions
+        String versionText = "§7Version v2.2 §8| §7Created by AfterTime";
+        String instructionText = "§8Left Click: Toggle | Right Click: Settings | Hover: Description";
+        drawCenteredString(fontRendererObj, versionText, width / 2, guiTop + Dimensions.GUI_HEIGHT - 30, Colors.VERSION);
+        drawCenteredString(fontRendererObj, instructionText, width / 2, guiTop + Dimensions.GUI_HEIGHT - 18, Colors.VERSION);
     }
 
     private void drawCategories() {
@@ -216,7 +230,7 @@ public class ModSettingsGui extends GuiScreen {
         int scissorX = guiLeft + 115;
         int scissorY = guiTop + 25;
         int scissorWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
-        int scissorHeight = Dimensions.GUI_HEIGHT - 50;
+        int scissorHeight = Dimensions.GUI_HEIGHT - 70;
         int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
         glEnable(GL_SCISSOR_TEST);
         glScissor(scissorX * scale, (height - (scissorY + scissorHeight)) * scale, scissorWidth * scale, scissorHeight * scale);
@@ -373,7 +387,7 @@ public class ModSettingsGui extends GuiScreen {
             y = hotbarPanel.drawInline(mouseX, mouseY, ia.contentX, y, ia.contentW, fontRendererObj);
         }
 
-        // Draw general options for all modules (toggles, inputs, colors, dropdowns)
+        // Draw general options for all modules (toggles, inputs, colors) - but NOT dropdowns yet
         for (Toggle toggle : Toggles) {
             toggle.draw(mouseX, mouseY, y, fontRendererObj);
             y += 22;
@@ -386,9 +400,12 @@ public class ModSettingsGui extends GuiScreen {
             ci.draw(mouseX, mouseY, y, fontRendererObj);
             y += 50;
         }
+
+        // Draw dropdown base buttons (without expanded options)
+        int ydd = y;
         for (MethodDropdown dd : methodDropdowns) {
-            dd.draw(mouseX, mouseY, y, fontRendererObj);
-            y += 22;
+            dd.drawBase(mouseX, mouseY, ydd, fontRendererObj);
+            ydd += 22;
         }
     }
 
@@ -805,21 +822,77 @@ public class ModSettingsGui extends GuiScreen {
 
     private void handleCategoryButtonClicks() { for (GuiButton btn : categoryButtons) { if (btn.isMouseOver()) { actionPerformed(btn); return; } } }
 
-    private void handleModuleButtonClicks(int mouseX, int mouseY) { for (ModuleButton moduleBtn : moduleButtons) { if (moduleBtn.isMouseOver(mouseX, mouseY)) { handleModuleButtonClick(moduleBtn, mouseX, mouseY); return; } } }
+    private void handleModuleButtonClicks(int mouseX, int mouseY) {
+        int scissorX = guiLeft + 115;
+        int scissorY = guiTop + 25;
+        int scissorWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
+        int scissorHeight = Dimensions.GUI_HEIGHT - 70;
+        boolean inVisibleArea = mouseX >= scissorX && mouseX <= scissorX + scissorWidth &&
+                mouseY >= scissorY && mouseY <= scissorY + scissorHeight;
+
+        for (ModuleButton moduleBtn : moduleButtons) {
+            if (inVisibleArea && moduleBtn.isMouseOver(mouseX, mouseY)) {
+                drawTooltip(moduleBtn.getModule().description, mouseX, mouseY);
+            }
+        }
+        for (ModuleButton moduleBtn : moduleButtons) {
+            if (inVisibleArea && moduleBtn.isMouseOver(mouseX, mouseY)) {
+                handleModuleButtonClick(moduleBtn, mouseX, mouseY);
+                return;
+            }
+        }
+    }
+
 
     private void handleModuleButtonClick(ModuleButton moduleBtn, int mouseX, int mouseY) {
         ModuleInfo module = moduleBtn.getModule();
         if ("Move GUI Position".equals(module.name)) UIHighlighter.enterMoveMode(Minecraft.getMinecraft().currentScreen);
-        if (moduleBtn.isDropdownClicked(mouseX, mouseY)) {
-            if (showCommandSettings && SelectedModule == module) { showCommandSettings = false; SelectedModule = null; useSidePanelForSelected = false; optionsInline = false; buildModuleButtons(); return; }
+
+        // Check if this is a right click (mouse button 1) for settings
+        if (Mouse.isButtonDown(1)) { // Right click
+            if (!moduleBtn.hasSettings) {
+                // Show error message for modules without settings - will be handled in drawScreen
+                showNoSettingsError = module.name;
+                noSettingsErrorTime = System.currentTimeMillis();
+                return;
+            }
+
+            // Open settings for modules that have them
+            if (showCommandSettings && SelectedModule == module) {
+                showCommandSettings = false;
+                SelectedModule = null;
+                useSidePanelForSelected = false;
+                optionsInline = false;
+                buildModuleButtons();
+                return;
+            }
             if (!module.Data) module.Data = true;
-            SelectedModule = module; showCommandSettings = true;
-            if ("Fast Hotkey".equals(SelectedModule.name)) { useSidePanelForSelected = false; optionsInline = true; fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET; rebuildFastHotkeyRowsForDetail(); }
-            else { useSidePanelForSelected = false; optionsInline = true; }
-            initializeCommandToggles(); buildModuleButtons(); return;
+            SelectedModule = module;
+            showCommandSettings = true;
+            if ("Fast Hotkey".equals(SelectedModule.name)) {
+                useSidePanelForSelected = false;
+                optionsInline = true;
+                fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET;
+                rebuildFastHotkeyRowsForDetail();
+            } else {
+                useSidePanelForSelected = false;
+                optionsInline = true;
+            }
+            initializeCommandToggles();
+            buildModuleButtons();
+            return;
+        } else {
+            // Left click - toggle module on/off
+            boolean wasEnabled = module.Data;
+            module.Data = !module.Data;
+            if (wasEnabled && !module.Data && SelectedModule == module) {
+                showCommandSettings = false;
+                SelectedModule = null;
+                useSidePanelForSelected = false;
+                optionsInline = false;
+                buildModuleButtons();
+            }
         }
-        boolean wasEnabled = module.Data; module.Data = !module.Data;
-        if (wasEnabled && !module.Data && SelectedModule == module) { showCommandSettings = false; SelectedModule = null; useSidePanelForSelected = false; optionsInline = false; buildModuleButtons(); }
     }
 
     private void handleCommandToggleClicks(int mouseX, int mouseY) {
@@ -891,14 +964,14 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private void buildModuleButtons() {
-        moduleButtons.clear(); int listX = guiLeft + 120; int listY = guiTop + 28; int listW = Dimensions.GUI_WIDTH - 120 - 10 - Dimensions.SCROLLBAR_WIDTH; int y = listY - mainScroll.getOffset(); int rowH = 32; int usedHeight = 0;
+        moduleButtons.clear(); int listX = guiLeft + 120; int listY = guiTop + 28; int listW = Dimensions.GUI_WIDTH - 120 - 10 - Dimensions.SCROLLBAR_WIDTH; int y = listY - mainScroll.getOffset(); int rowH = 20; int usedHeight = 0;
         for (BaseConfig<?> mi : AllConfig.INSTANCE.MODULES.values()) {
             ModuleInfo info = (ModuleInfo) mi; if (!info.category.equals(selectedCategory)) continue;
             boolean hasSettings = hasSettings(info); moduleButtons.add(new ModuleButton(listX + 4, y, listW - 8, rowH - 2, info, hasSettings));
             int inc = rowH; if (showCommandSettings && optionsInline && SelectedModule == info) { inc += 20 + computeInlineContentHeight() + 8; }
             y += inc; usedHeight += inc;
         }
-        int totalHeight = usedHeight; int viewH = Dimensions.GUI_HEIGHT - 50; mainScroll.update(totalHeight, viewH); mainScroll.updateScrollbarPosition(listX + listW - 2, listY, viewH);
+        int totalHeight = usedHeight; int viewH = Dimensions.GUI_HEIGHT - 70; mainScroll.update(totalHeight, viewH); mainScroll.updateScrollbarPosition(listX + listW - 2, listY, viewH);
     }
 
     private boolean hasSettings(ModuleInfo module) {
@@ -1073,49 +1146,147 @@ public class ModSettingsGui extends GuiScreen {
         for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
     }
 
+    // Draw tooltips and error messages
+    private void drawTooltipsAndErrors(int mouseX, int mouseY) {
+        // Show error message for modules without settings
+        if (showNoSettingsError != null && System.currentTimeMillis() - noSettingsErrorTime < 3000) {
+            String errorMsg = "§c" + showNoSettingsError + " does not have any sub-settings";
+            int msgWidth = fontRendererObj.getStringWidth(errorMsg);
+            int msgX = width / 2 - msgWidth / 2;
+            int msgY = guiTop + Dimensions.GUI_HEIGHT - 45;
+
+            // Draw background
+            drawRect(msgX - 4, msgY - 2, msgX + msgWidth + 4, msgY + 10, 0x99000000);
+            drawRect(msgX - 5, msgY - 3, msgX + msgWidth + 5, msgY + 11, 0xFFCC0000);
+
+            // Draw text
+            fontRendererObj.drawStringWithShadow(errorMsg, msgX, msgY, 0xFFFFFFFF);
+        } else if (System.currentTimeMillis() - noSettingsErrorTime >= 3000) {
+            showNoSettingsError = null; // Clear expired error
+        }
+
+        // Show tooltips for module buttons on hover
+        for (ModuleButton moduleBtn : moduleButtons) {
+            if (moduleBtn.isMouseOver(mouseX, mouseY)) {
+                ModuleInfo module = moduleBtn.getModule();
+                if (module.description != null && !module.description.isEmpty()) {
+                    drawTooltip(module.description, mouseX, mouseY);
+                }
+                break; // Only show one tooltip at a time
+            }
+        }
+    }
+
+    private void drawTooltip(String text, int mouseX, int mouseY) {
+        if (text == null || text.isEmpty()) return;
+
+        List<String> lines = new ArrayList<>();
+        String[] words = text.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+        int maxWidth = 200; // Max tooltip width
+
+        // Word wrap the tooltip text
+        for (String word : words) {
+            String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
+            if (fontRendererObj.getStringWidth(testLine) <= maxWidth) {
+                currentLine = new StringBuilder(testLine);
+            } else {
+                if (currentLine.length() > 0) {
+                    lines.add(currentLine.toString());
+                    currentLine = new StringBuilder(word);
+                } else {
+                    lines.add(word); // Single word longer than max width
+                }
+            }
+        }
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+
+        // Calculate tooltip dimensions
+        int tooltipWidth = 0;
+        for (String line : lines) {
+            tooltipWidth = Math.max(tooltipWidth, fontRendererObj.getStringWidth(line));
+        }
+        int tooltipHeight = lines.size() * 10 + 4;
+
+        // Position tooltip to avoid screen edges
+        int tooltipX = mouseX + 12;
+        int tooltipY = mouseY - 12;
+
+        if (tooltipX + tooltipWidth + 8 > width) {
+            tooltipX = mouseX - tooltipWidth - 12;
+        }
+        if (tooltipY + tooltipHeight + 8 > height) {
+            tooltipY = mouseY - tooltipHeight - 12;
+        }
+        if (tooltipY < 0) {
+            tooltipY = mouseY + 12;
+        }
+
+        // Draw tooltip background
+        drawRect(tooltipX - 3, tooltipY - 3, tooltipX + tooltipWidth + 3, tooltipY + tooltipHeight + 3, 0xF0100010);
+        drawRect(tooltipX - 2, tooltipY - 2, tooltipX + tooltipWidth + 2, tooltipY + tooltipHeight + 2, 0x505000FF);
+
+        // Draw tooltip text
+        for (int i = 0; i < lines.size(); i++) {
+            fontRendererObj.drawStringWithShadow(lines.get(i), tooltipX, tooltipY + i * 10, 0xFFFFFFFF);
+        }
+    }
+
     @Override
     public void handleMouseInput() throws IOException {
-        super.handleMouseInput(); int dWheel = Mouse.getEventDWheel(); if (dWheel == 0) return;
-        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth; int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-        int listX = guiLeft + 115, listY = guiTop + 25, listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH, listH = Dimensions.GUI_HEIGHT - 50;
-        if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) { mainScroll.handleWheelScroll(dWheel, this::buildModuleButtons); return; }
-        if (showCommandSettings && useSidePanelForSelected) {
-            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; int panelW = Dimensions.COMMAND_PANEL_WIDTH; int panelH = (Dimensions.GUI_HEIGHT - 60) - 25;
-            if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); return; }
-            int detailX = panelX + Dimensions.COMMAND_PANEL_WIDTH + 6; int detailW = 170;
-            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); return; }
-        }
-        // Inline Fast Hotkey: wheel on right detail panel
-        if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0) {
-            int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y + 25; int panelH = (Dimensions.GUI_HEIGHT - 60) - 25; int detailX = getInlineDetailX(); int detailW = 170;
-            if (mouseX >= detailX && mouseX <= detailX + detailW && mouseY >= panelY && mouseY <= panelY + panelH) { commandScroll.handleWheelScroll(dWheel, null); }
-        }
-    }
+        super.handleMouseInput();
 
-    // Restored inner classes
-    private class ScrollManager {
-        boolean isDragging = false; private int contentHeight, viewHeight, offset; private int barX, barY, barH; private int handleY, handleH; private int dragStartY, dragStartOffset;
-        void reset() { contentHeight = 0; viewHeight = 0; offset = 0; isDragging = false; }
-        int getOffset() { return Math.max(0, Math.min(offset, Math.max(0, contentHeight - viewHeight))); }
-        void update(int total, int view) { contentHeight = Math.max(0, total); viewHeight = Math.max(0, view); int maxOffset = Math.max(0, contentHeight - viewHeight); if (offset > maxOffset) offset = maxOffset; recalcHandle(); }
-        void updateScrollbarPosition(int x, int y, int h) { barX = x; barY = y; barH = h; recalcHandle(); }
-        boolean shouldRenderScrollbar() { return contentHeight > viewHeight && viewHeight > 0; }
-        void drawScrollbar(int trackColor, int handleColor) { if (!shouldRenderScrollbar()) return; drawRect(barX, barY, barX + Dimensions.SCROLLBAR_WIDTH, barY + barH, trackColor); drawRect(barX, handleY, barX + Dimensions.SCROLLBAR_WIDTH, handleY + handleH, handleColor); }
-        boolean checkScrollbarClick(int mx, int my) { if (!shouldRenderScrollbar()) return false; boolean inside = mx >= barX && mx <= barX + Dimensions.SCROLLBAR_WIDTH && my >= barY && my <= barY + barH; if (inside) { isDragging = true; dragStartY = my; dragStartOffset = offset; } return inside; }
-        void endScroll() { isDragging = false; }
-        void handleDrag(int mx, int my, Runnable onChange) { if (!isDragging || !shouldRenderScrollbar()) return; if (handleH >= barH) { offset = 0; if (onChange != null) onChange.run(); return; } float ratio = (float) (contentHeight - viewHeight) / (float) (barH - handleH); int dy = my - dragStartY; offset = Math.max(0, Math.min(contentHeight - viewHeight, dragStartOffset + Math.round(dy * ratio))); recalcHandle(); if (onChange != null) onChange.run(); }
-        void handleWheelScroll(int dWheel, Runnable onChange) { int step = 20 * (dWheel < 0 ? 1 : -1); offset = Math.max(0, Math.min(contentHeight - viewHeight, offset + step)); recalcHandle(); if (onChange != null) onChange.run(); }
-        private void recalcHandle() { if (!shouldRenderScrollbar()) { handleY = barY; handleH = barH; return; } int minH = Math.max(Dimensions.MIN_SCROLLBAR_HEIGHT, barH * Math.max(1, viewHeight) / Math.max(1, contentHeight)); handleH = Math.max(Dimensions.MIN_SCROLLBAR_HEIGHT, minH); float t = (contentHeight - viewHeight) == 0 ? 0f : (float) offset / (float) (contentHeight - viewHeight); handleY = barY + Math.round((barH - handleH) * t); }
-    }
+        int dWheel = Mouse.getEventDWheel();
+        if (dWheel != 0) {
+            int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+            int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
 
-    private static class SimpleTextField {
-        String text; int x, y, w, h; boolean isEditing = false; long cursorBlinkMs = 0; boolean cursorVisible = false; int cursorPos = 0; int maxLen = 48;
-        SimpleTextField(String t, int x, int y, int w, int h) { this.text = t == null ? "" : t; setBounds(x,y,w,h); cursorPos = this.text.length(); }
-        void setBounds(int x, int y, int w, int h) { this.x=x; this.y=y; this.w=w; this.h=h; }
-        void draw(int mx, int my) { Gui.drawRect(x, y, x + w, y + h, Colors.INPUT_BG); Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(text, x + 3, y + 4, Colors.INPUT_FG); if (isEditing) { cursorBlinkMs += 10; if (cursorBlinkMs >= 500) { cursorBlinkMs = 0; cursorVisible = !cursorVisible; } if (cursorVisible) { int cx = x + 3 + Minecraft.getMinecraft().fontRendererObj.getStringWidth(text.substring(0, Math.min(cursorPos, text.length()))); Gui.drawRect(cx, y + 3, cx + 1, y + h - 3, Colors.INPUT_FG); } } }
-        boolean isMouseOver(int mx, int my) { return mx >= x && mx <= x + w && my >= y && my <= y + h; }
-        void beginEditing(int mx) { isEditing = true; cursorBlinkMs = 0; cursorVisible = true; int rel = Math.max(0, mx - x); int pos = 0; String s = text; while (pos < s.length()) { int cw = Minecraft.getMinecraft().fontRendererObj.getCharWidth(s.charAt(pos)); if (rel < cw / 2) break; rel -= cw; pos++; } cursorPos = pos; }
-        void handleKeyTyped(char c, int key) { if (!isEditing) return; if (key == org.lwjgl.input.Keyboard.KEY_RETURN) { isEditing = false; return; } if (key == org.lwjgl.input.Keyboard.KEY_BACK) { if (cursorPos > 0 && !text.isEmpty()) { text = text.substring(0, cursorPos - 1) + text.substring(cursorPos); cursorPos--; } } else if (key == org.lwjgl.input.Keyboard.KEY_LEFT) { cursorPos = Math.max(0, cursorPos - 1); } else if (key == org.lwjgl.input.Keyboard.KEY_RIGHT) { cursorPos = Math.min(text.length(), cursorPos + 1); } else { if (c >= 32 && c != 127) { if (text.length() >= maxLen) return; text = text.substring(0, cursorPos) + c + text.substring(cursorPos); cursorPos++; } } cursorBlinkMs = 0; cursorVisible = true; }
+            // Normalize scroll direction and amount
+            int scrollDirection = dWheel > 0 ? -1 : 1;
+            int scrollAmount = 15; // Pixels to scroll per wheel notch
+
+            // Check if mouse is over the main module list area
+            int moduleListX = guiLeft + 115;
+            int moduleListY = guiTop + 25;
+            int moduleListWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
+            int moduleListHeight = Dimensions.GUI_HEIGHT - 50;
+
+            boolean overModuleList = mouseX >= moduleListX && mouseX <= moduleListX + moduleListWidth &&
+                                   mouseY >= moduleListY && mouseY <= moduleListY + moduleListHeight;
+
+            // Check if mouse is over command panel area (when visible)
+            boolean overCommandPanel = false;
+            if (showCommandSettings && useSidePanelForSelected) {
+                int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
+                int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
+                int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
+                int panelHeight = Dimensions.GUI_HEIGHT - 60;
+                overCommandPanel = mouseX >= panelX && mouseX <= panelX + panelWidth &&
+                                 mouseY >= panelY && mouseY <= panelY + panelHeight;
+            }
+
+            // Check if mouse is over Fast Hotkey detail panel (when visible)
+            boolean overDetailPanel = false;
+            if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0) {
+                int detailX = getInlineDetailX();
+                int detailW = 170;
+                int detailY = guiTop + Dimensions.COMMAND_PANEL_Y;
+                int detailH = Dimensions.GUI_HEIGHT - 60;
+                overDetailPanel = mouseX >= detailX && mouseX <= detailX + detailW &&
+                                mouseY >= detailY && mouseY <= detailY + detailH;
+            }
+
+            // Apply scrolling to the appropriate scroll manager
+            if (overCommandPanel || overDetailPanel) {
+                // Scroll the command panel
+                commandScroll.scroll(scrollDirection * scrollAmount);
+            } else if (overModuleList) {
+                // Scroll the main module list
+                mainScroll.scroll(scrollDirection * scrollAmount);
+                buildModuleButtons(); // Rebuild to update positions
+            }
+        }
     }
 }
-

@@ -127,6 +127,8 @@ public class CustomCape {
                 // Create a ResourceLocation for each frame
                 for (int i = 0; i < numImages; i++) {
                     BufferedImage frame = reader.read(i);
+                    // Fix transparent pixels in GIF frame
+                    frame = makeOpaque(frame, 0xFFFFFF); // Use white background for transparent pixels
                     DynamicTexture texture = new DynamicTexture(frame);
                     ResourceLocation location = mc.getTextureManager().getDynamicTextureLocation(
                         "ratallofyou_custom_cape_" + i, texture);
@@ -319,4 +321,22 @@ public class CustomCape {
             }
         }
     }
+
+    // Add this helper method in CustomCape.java
+    private BufferedImage makeOpaque(BufferedImage image, int fillColor) {
+        BufferedImage opaque = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int argb = image.getRGB(x, y);
+                int alpha = (argb >> 24) & 0xff;
+                if (alpha == 0) {
+                    opaque.setRGB(x, y, fillColor); // fillColor e.g. 0xFFFFFF for white
+                } else {
+                    opaque.setRGB(x, y, argb | 0xFF000000); // force opaque
+                }
+            }
+        }
+        return opaque;
+    }
+
 }
