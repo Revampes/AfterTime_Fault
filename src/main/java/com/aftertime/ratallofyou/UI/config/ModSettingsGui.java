@@ -276,6 +276,8 @@ public class ModSettingsGui extends GuiScreen {
             case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
+            case "Auto Fish": Add_SubSetting_AutoFish(y); break;
+            case "Auto Sell": Add_SubSetting_AutoSell(y); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
@@ -543,7 +545,6 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    // Fast Hotkey left panel
     private void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
         int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
         glEnable(GL_SCISSOR_TEST);
@@ -911,6 +912,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice":
             case "Hotbar Swap":
             case "Auto Fish":
+            case "Auto Sell":
             case "Auto Experiment":
             case "NameTag":
             case "Player ESP":
@@ -934,6 +936,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
             case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
             case "Auto Fish": Add_SubSetting_AutoFish(y); break;
+            case "Auto Sell": Add_SubSetting_AutoSell(y); break;
             case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
             case "NameTag": Add_SubSetting_NameTag(y); break; // New
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
@@ -1049,10 +1052,17 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    // Restore: Auto Experiment sub-settings (index 11)
+    // Restore: Auto Sell sub-settings (index 11)
+    private void Add_SubSetting_AutoSell(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOSELL_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 11);
+        }
+    }
+
+    // Restore: Auto Experiment sub-settings (index 12)
     private void Add_SubSetting_AutoExperiment(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 11);
+            AddEntryAsOption(e, y, 12);
         }
     }
 

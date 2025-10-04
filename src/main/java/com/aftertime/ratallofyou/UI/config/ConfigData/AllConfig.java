@@ -117,6 +117,15 @@ public class AllConfig {
         put("autofish_hotkey", new BaseConfig<>("Toggle Hotkey", "Press a key to bind a toggle for Auto Fish (ESC to clear)", 0));
     }};
 
+    // New: Auto Sell sub-settings
+    public final LinkedHashMap<String, BaseConfig<?>> AUTOSELL_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
+    {{
+        put("autosell_delay_ms", new BaseConfig<>("Click Delay (ms)", "Delay between automated clicks", 100));
+        put("autosell_click_type", new BaseConfig<>("Click Type", "Type of click to perform", new DataType_DropDown(0, new String[]{"Shift Click", "Middle Click", "Left Click"})));
+        put("autosell_custom_items", new BaseConfig<>("Custom Items", "Additional items to sell (comma separated)", ""));
+        put("autosell_use_default_items", new BaseConfig<>("Use Default Items", "Include the default item list", true));
+    }};
+
     // New: Auto Experiment sub-settings
     public final LinkedHashMap<String, BaseConfig<?>> AUTOEXPERIMENT_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
@@ -177,6 +186,7 @@ public class AllConfig {
         put("dungeons_healerwishalert", new ModuleInfo("Healer Wish Alert", "Alert when needed to wish", "Dungeons", false));
         put("dungeons_findcorrectlivid", new ModuleInfo("Find Correct Livid (not working)", "Highlights the correct Livid in Floor 5 boss fight", "Dungeons", false));
         put("dungeons_salvageitem", new ModuleInfo("Salvage Item Highlighter", "Highlight salvageable dungeon items in chest GUIs", "Dungeons", false));
+        put("dungeons_autosell", new ModuleInfo("Auto Sell", "Automatically sell specified items in trade windows", "Dungeons", false));
 
         // SkyBlock
         put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
@@ -270,11 +280,12 @@ public class AllConfig {
         put(8, HOTBARSWAP_CONFIGS);
         put(9, STORAGEOVERVIEW_CONFIGS);
         put(10, AUTOFISH_CONFIGS);
-        put(11, AUTOEXPERIMENT_CONFIGS);
-        put(12, PLAYERESP_CONFIGS);
-        put(13, NAMETAG_CONFIGS);
-        put(14, CUSTOMCAPE_CONFIGS);
-        put(15, DARKMODE_CONFIGS);
+        put(11, AUTOSELL_CONFIGS);
+        put(12, AUTOEXPERIMENT_CONFIGS);
+        put(13, PLAYERESP_CONFIGS);
+        put(14, NAMETAG_CONFIGS);
+        put(15, CUSTOMCAPE_CONFIGS);
+        put(16, DARKMODE_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()

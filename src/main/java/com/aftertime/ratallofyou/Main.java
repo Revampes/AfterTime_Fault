@@ -63,7 +63,7 @@ public class Main {
                 new GoldorStartTimer(), new P3TickTimer(), new F7GhostBlocks(), new DungeonUtils(), new LeapAnnounce(),
                 new KeyHighlighter(), new StarMobHighlighter(), new SecretClicks(), new NoDebuff(),
                 new ChestOpenNotice(), new PosionArrow(), new WatcherClear(), new LeapMenu(),
-                new HealerWishAlert(), new FindCorrectLivid(), new SalvageItem(),
+                new HealerWishAlert(), new FindCorrectLivid(), new SalvageItem(), new AutoSell(),
                 // Crate/building related
                 new CrateHighlighter(), new CrateAura(), new CrateBeaconBeam(), new BuildPilesRenderer(),
                 new FreshMessageHandler(), new BuildBuildersRenderer(), new BuildStandsTracker(), new CratePriority(),

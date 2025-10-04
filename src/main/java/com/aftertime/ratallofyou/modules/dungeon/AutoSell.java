@@ -6,6 +6,10 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
+import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -15,11 +19,7 @@ import java.util.Locale;
 
 public class AutoSell {
     private final Minecraft mc = Minecraft.getMinecraft();
-    private boolean enabled = false;
-    private List<String> sellList = new ArrayList<>();
-    private int delay = 100; // Default delay in milliseconds
-    private int clickType = 0; // 0 = Shift, 1 = Middle, 2 = Left
-    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService executor;
 
     private final String[] defaultItems = {
         "enchanted ice", "superboom tnt", "rotten", "skeleton master", "skeleton grunt", "cutlass",
@@ -32,15 +32,29 @@ public class AutoSell {
     };
 
     public AutoSell() {
-        // Initialize with default items
-        sellList.addAll(Arrays.asList(defaultItems));
+        // Initialize executor but don't start scheduled task yet
+        executor = Executors.newSingleThreadScheduledExecutor();
+        startAutoSellLoop();
+    }
 
-        // Start the execution loop
+    private void startAutoSellLoop() {
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdownNow();
+        }
+        executor = Executors.newSingleThreadScheduledExecutor();
+
+        // Use config delay
+        int delay = getDelayFromConfig();
         executor.scheduleWithFixedDelay(this::executeAutoSell, delay, delay, TimeUnit.MILLISECONDS);
     }
 
     private void executeAutoSell() {
-        if (!enabled || sellList.isEmpty()) return;
+        // Check if module is enabled
+        if (!BooleanSettings.isEnabled("dungeons_autosell")) return;
+
+        // Get sell list from config
+        List<String> sellList = getSellListFromConfig();
+        if (sellList.isEmpty()) return;
 
         if (mc.thePlayer == null || mc.thePlayer.openContainer == null) return;
 
@@ -51,10 +65,11 @@ public class AutoSell {
         if (!isValidContainer(container)) return;
 
         // Find item to sell in inventory slots 54-90
-        Integer slotIndex = findItemToSell(container);
+        Integer slotIndex = findItemToSell(container, sellList);
         if (slotIndex == null) return;
 
-        // Perform click based on click type
+        // Perform click based on config click type
+        int clickType = getClickTypeFromConfig();
         switch (clickType) {
             case 0:
                 windowClick(slotIndex, ClickType.SHIFT);
@@ -66,6 +81,68 @@ public class AutoSell {
                 windowClick(slotIndex, ClickType.LEFT);
                 break;
         }
+    }
+
+    private int getDelayFromConfig() {
+        try {
+            BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_delay_ms");
+            if (cfg != null && cfg.Data instanceof Integer) {
+                return (Integer) cfg.Data;
+            }
+        } catch (Exception e) {
+            // Fallback to default
+        }
+        return 100; // Default delay
+    }
+
+    private int getClickTypeFromConfig() {
+        try {
+            BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_click_type");
+            if (cfg != null && cfg.Data instanceof DataType_DropDown) {
+                DataType_DropDown dropdown = (DataType_DropDown) cfg.Data;
+                return dropdown.selectedIndex;
+            }
+        } catch (Exception e) {
+            // Fallback to default
+        }
+        return 0; // Default to Shift Click
+    }
+
+    private List<String> getSellListFromConfig() {
+        List<String> result = new ArrayList<>();
+
+        try {
+            // Check if default items should be included
+            BaseConfig<?> useDefaultCfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_use_default_items");
+            boolean useDefault = true;
+            if (useDefaultCfg != null && useDefaultCfg.Data instanceof Boolean) {
+                useDefault = (Boolean) useDefaultCfg.Data;
+            }
+
+            if (useDefault) {
+                result.addAll(Arrays.asList(defaultItems));
+            }
+
+            // Add custom items
+            BaseConfig<?> customItemsCfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_custom_items");
+            if (customItemsCfg != null && customItemsCfg.Data instanceof String) {
+                String customItems = (String) customItemsCfg.Data;
+                if (!customItems.trim().isEmpty()) {
+                    String[] items = customItems.split(",");
+                    for (String item : items) {
+                        String trimmed = item.trim();
+                        if (!trimmed.isEmpty()) {
+                            result.add(trimmed.toLowerCase());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Fallback to default items
+            result.addAll(Arrays.asList(defaultItems));
+        }
+
+        return result;
     }
 
     private boolean isValidContainer(ContainerChest container) {
@@ -84,7 +161,7 @@ public class AutoSell {
         }
     }
 
-    private Integer findItemToSell(ContainerChest container) {
+    private Integer findItemToSell(ContainerChest container, List<String> sellList) {
         List<Slot> inventorySlots = container.inventorySlots;
         if (inventorySlots == null || inventorySlots.size() < 90) return null;
 
@@ -147,37 +224,15 @@ public class AutoSell {
         SHIFT, MIDDLE, LEFT
     }
 
-    // Getters and setters
-    public boolean isEnabled() {
-        return enabled;
+    // Method to restart the auto-sell loop when settings change
+    public void onConfigChanged() {
+        startAutoSellLoop();
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public List<String> getSellList() {
-        return sellList;
-    }
-
-    public void setSellList(List<String> sellList) {
-        this.sellList = sellList;
-    }
-
-    public int getDelay() {
-        return delay;
-    }
-
-    public void setDelay(int delay) {
-        this.delay = delay;
-    }
-
-    public int getClickType() {
-        return clickType;
-    }
-
-    public void setClickType(int clickType) {
-        this.clickType = clickType;
+    // Clean up method
+    public void shutdown() {
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdownNow();
+        }
     }
 }
-
