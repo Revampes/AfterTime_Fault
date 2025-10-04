@@ -199,6 +199,10 @@ public class AllConfig {
         put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
         put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
         put("skyblock_superpairs", new ModuleInfo("Super Pairs", "Highlight matching pairs in the Superpairs experiment", "SkyBlock", false));
+
+        // Slayer
+        put("slayer_miniboss", new ModuleInfo("Highlight nearby miniboss", "Highlight nearby miniboss", "Slayer", false));
+
         //Fishing
         put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
 
@@ -295,6 +299,7 @@ public class AllConfig {
         add("SkyBlock");
         add("Render");
         add("Performance");
+        add("Slayer");
         add("Fishing");
         add("Debugdata");
         add("GUI");

@@ -13,6 +13,7 @@ import com.aftertime.ratallofyou.modules.render.*;
 import com.aftertime.ratallofyou.modules.dungeon.*;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.modules.dungeon.StarMobHighlighter;
+import com.aftertime.ratallofyou.modules.slayer.Miniboss;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils;
@@ -76,6 +77,9 @@ public class Main {
                 new AutoFish(), new AutoExperiment(), new SuperPairs(),
                 // Performance tweaks
                 new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(), new DarkMode(),
+
+                // Slayer
+                new Miniboss(),
 
                 // Input/keybind listeners
                 new KeybindHandler(),
