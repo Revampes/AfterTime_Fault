@@ -74,7 +74,7 @@ public class Main {
                 new PlayerESP(), new NameTag(), new CustomCape(),
                 new FastHotKey(), new FastHotKeyGui(), new WaypointGrab(), new HotbarSwap(), new SearchBar(),
                 new FluxFlareTimer(), new StorageOverviewModule(),
-                new AutoFish(), new AutoExperiment(), new SuperPairs(),
+                new AutoFish(), new AutoExperiment(), new SuperPairs(), new MarkLocation(),
                 // Performance tweaks
                 new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(), new DarkMode(), new NoHurtCam(),
 

@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -158,7 +159,18 @@ public class WaypointGrab {
 
         for (Beam b : beams) {
             if (now < b.expiresAt) {
+                // Render beacon beam
                 RenderUtils.renderBeaconBeam(b.pos, b.color, false, b.height, event.partialTicks);
+
+                // Render filled box at the waypoint block position
+                BlockPos blockPos = new BlockPos(b.rx, b.ry, b.rz);
+                float r = b.color.getRed() / 255f;
+                float g = b.color.getGreen() / 255f;
+                float bCol = b.color.getBlue() / 255f;
+                float a = 0.4f; // semi-transparent
+
+                RenderUtils.renderBlockHitbox(blockPos, r, g, bCol, a, true, 2f, true);
+
                 // Floating labels (sender and coords label)
                 double x = b.pos.xCoord, y = b.pos.yCoord + 1.8, z = b.pos.zCoord;
                 int white = 0xFFFFFFFF;

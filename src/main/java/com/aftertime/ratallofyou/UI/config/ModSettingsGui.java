@@ -205,6 +205,9 @@ public class ModSettingsGui extends GuiScreen {
         if (showCommandSettings && optionsInline && SelectedModule != null && "Auto Fish".equals(SelectedModule.name)) {
             handleAutoFishTyping(typedChar, keyCode); return;
         }
+        if (showCommandSettings && optionsInline && SelectedModule != null && "Mark Location".equals(SelectedModule.name)) {
+            handleMarkLocationTyping(typedChar, keyCode); return;
+        }
         handleAllInputTyping(typedChar, keyCode);
     }
 
@@ -318,6 +321,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
             case "DarkMode": Add_SubSetting_DarkMode(y); break;
             case "Custom Cape": Add_SubSetting_CustomCape(y); break;
+            case "Mark Location": Add_SubSetting_MarkLocation(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -828,6 +832,43 @@ public class ModSettingsGui extends GuiScreen {
         handleAllInputTyping(typedChar, keyCode);
     }
 
+    private void handleMarkLocationTyping(char typedChar, int keyCode) {
+        LabelledInput hotkeyInput = null;
+        for (LabelledInput li : labelledInputs) {
+            if (li.ref != null && li.ref.ConfigType == 17 && "marklocation_hotkey".equals(li.ref.Key)) {
+                hotkeyInput = li;
+                break;
+            }
+        }
+        if (hotkeyInput != null && hotkeyInput.isEditing) {
+            if (keyCode == Keyboard.KEY_ESCAPE) {
+                hotkeyInput.setDisplayText("Unbound");
+                BaseConfig<?> cfg = AllConfig.INSTANCE.MARKLOCATION_CONFIGS.get("marklocation_hotkey");
+                if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = 0; }
+                ConfigIO.INSTANCE.SetConfig("17,marklocation_hotkey", 0);
+                hotkeyInput.isEditing = false;
+                return;
+            }
+            if (keyCode > 0) {
+                String name = Keyboard.getKeyName(keyCode);
+                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
+                    hotkeyInput.setDisplayText(name);
+                    BaseConfig<?> cfg = AllConfig.INSTANCE.MARKLOCATION_CONFIGS.get("marklocation_hotkey");
+                    if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = keyCode; }
+                    ConfigIO.INSTANCE.SetConfig("17,marklocation_hotkey", keyCode);
+                    hotkeyInput.isEditing = false;
+                    return;
+                }
+                // invalid key -> ignore until a valid one pressed
+                return;
+            }
+            return;
+        }
+        // Not editing hotkey -> route to default input handling
+        handleAllInputTyping(typedChar, keyCode);
+    }
+
+
     private void unfocusAllFastInputs() {
         for (FastRow r : fastRows) { r.labelInput.isEditing = false; r.commandInput.isEditing = false; }
         if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
@@ -1033,6 +1074,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Player ESP":
             case "Custom Cape":
             case "DarkMode":
+            case "Mark Location":
                 return true;
             default:
                 return false;
@@ -1057,6 +1099,7 @@ public class ModSettingsGui extends GuiScreen {
             case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
             case "Custom Cape": Add_SubSetting_CustomCape(y); break;
             case "DarkMode": Add_SubSetting_DarkMode(y); break;
+            case "Mark Location": Add_SubSetting_MarkLocation(y); break;
         }
         int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
@@ -1178,6 +1221,12 @@ public class ModSettingsGui extends GuiScreen {
     private void Add_SubSetting_AutoExperiment(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 12);
+        }
+    }
+
+    private void Add_SubSetting_MarkLocation(Integer y) {
+        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.MARKLOCATION_CONFIGS.entrySet()) {
+            AddEntryAsOption(e, y, 17);
         }
     }
 

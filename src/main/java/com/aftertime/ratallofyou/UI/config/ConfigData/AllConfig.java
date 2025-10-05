@@ -134,7 +134,13 @@ public class AllConfig {
         put("autoexperiment_debug", new BaseConfig<>("Debug", "Print debug info in chat while solving", false));
     }};
 
-    // New: Player ESP sub-settings
+    // New: MarkLocation sub-settings
+    public final LinkedHashMap<String, BaseConfig<?>> MARKLOCATION_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
+    {{
+        put("marklocation_hotkey", new BaseConfig<>("Toggle Hotkey", "Press a key to bind a toggle for Auto Fish (ESC to clear)", 0));
+    }};
+
+    // New: Player ESP sub-settings (index 12 in AllConfig.ALLCONFIGS)
     public final LinkedHashMap<String, BaseConfig<?>> PLAYERESP_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("playeresp_mode", new BaseConfig<>("Mode", "ESP render mode", new DataType_DropDown(0, new String[]{"Wireframe", "Filled"})));
@@ -199,6 +205,7 @@ public class AllConfig {
         put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
         put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
         put("skyblock_superpairs", new ModuleInfo("Super Pairs", "Highlight matching pairs in the Superpairs experiment", "SkyBlock", false));
+        put("skyblock_marklocation", new ModuleInfo("Mark Location", "Send the coordinates that you currently look at", "SkyBlock", false));
 
         // Slayer
         put("slayer_miniboss", new ModuleInfo("Highlight nearby miniboss", "Highlight nearby miniboss", "Slayer", false));
@@ -291,6 +298,7 @@ public class AllConfig {
         put(14, NAMETAG_CONFIGS);
         put(15, CUSTOMCAPE_CONFIGS);
         put(16, DARKMODE_CONFIGS);
+        put(17, MARKLOCATION_CONFIGS);
     }};
 
     public final List<String> Categories = new ArrayList<String>()
