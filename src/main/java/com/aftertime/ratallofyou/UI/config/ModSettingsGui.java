@@ -5,6 +5,8 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.*;
 import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
+import com.aftertime.ratallofyou.UI.config.drawMethod.drawCategory;
+import com.aftertime.ratallofyou.UI.config.drawMethod.drawModule;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
 import com.aftertime.ratallofyou.UI.config.ScrollManager;
@@ -28,14 +30,14 @@ import com.aftertime.ratallofyou.UI.config.panels.HotbarSwapPanel;
 
 public class ModSettingsGui extends GuiScreen {
     // Fields
-    private final List<GuiButton> categoryButtons = new ArrayList<>();
-    private final List<ModuleButton> moduleButtons = new ArrayList<>();
+    public final List<GuiButton> categoryButtons = new ArrayList<>();
+    public final List<ModuleButton> moduleButtons = new ArrayList<>();
     private final List<ColorInput> ColorInputs = new ArrayList<>();
     private final List<LabelledInput> labelledInputs = new ArrayList<>();
     private final List<MethodDropdown> methodDropdowns = new ArrayList<>();
     private final List<Toggle> Toggles = new ArrayList<>();
 
-    private final ScrollManager mainScroll = new ScrollManager();
+    public final ScrollManager mainScroll = new ScrollManager();
     private final ScrollManager commandScroll = new ScrollManager();
 
     // Fast Hotkey editor rows (right-side detail panel)
@@ -44,10 +46,11 @@ public class ModSettingsGui extends GuiScreen {
     // New: Hotbar Swap UI extracted to its own panel
     private final HotbarSwapPanel hotbarPanel = new HotbarSwapPanel();
 
-    private String selectedCategory = "Kuudra";
-    private ModuleInfo SelectedModule = null;
-    private boolean showCommandSettings = false;
-    private int guiLeft, guiTop;
+    public String selectedCategory = "Kuudra";
+    public ModuleInfo SelectedModule = null;
+    public boolean showCommandSettings = false;
+    public int guiLeft;
+    public int guiTop;
 
     // Error handling for modules without settings
     private String showNoSettingsError = null;
@@ -55,7 +58,7 @@ public class ModSettingsGui extends GuiScreen {
 
     // Layout modes
     private boolean useSidePanelForSelected = false; // Fast Hotkey only
-    private boolean optionsInline = false; // inline box below module row
+    public boolean optionsInline = false; // inline box below module row
 
     // Fast Hotkey state (left panel preset list + input)
     private SimpleTextField fhkPresetNameInput = null;
@@ -174,6 +177,11 @@ public class ModSettingsGui extends GuiScreen {
         handleCommandToggleClicks(mouseX, mouseY);
     }
 
+    public net.minecraft.client.gui.FontRenderer getFontRendererObj() {
+        return this.fontRendererObj;
+    }
+
+
     @Override
     protected void mouseReleased(int mouseX, int mouseY, int state) {
         super.mouseReleased(mouseX, mouseY, state);
@@ -225,46 +233,15 @@ public class ModSettingsGui extends GuiScreen {
         drawCenteredString(fontRendererObj, instructionText, width / 2, guiTop + Dimensions.GUI_HEIGHT - 18, Colors.VERSION);
     }
 
-    private void drawCategories() {
-        for (GuiButton btn : categoryButtons) {
-            // Use GUI theme colors for background instead of texture pack
-            boolean isSelected = btn.displayString.equals(selectedCategory);
-            int bgColor = isSelected ? Colors.SELECTED_CATEGORY : Colors.CATEGORY_BUTTON;
-            drawRect(btn.xPosition, btn.yPosition, btn.xPosition + btn.width, btn.yPosition + btn.height, bgColor);
+    private final drawCategory categoryDrawer = new drawCategory(this);
+    private final drawModule moduleDrawer = new drawModule(this);
 
-            // Change text color to blue when selected, white otherwise
-            int textColor = isSelected ? Colors.TEXT_BLUE : Colors.TEXT;
-            drawCenteredString(fontRendererObj, btn.displayString,
-                btn.xPosition + btn.width / 2,
-                btn.yPosition + (btn.height - 8) / 2,
-                textColor);
-        }
+    private void drawCategories() {
+        categoryDrawer.drawCategories();
     }
 
     private void drawModules(int mouseX, int mouseY) {
-        int scissorX = guiLeft + 115;
-        int scissorY = guiTop + 25;
-        int scissorWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
-        int scissorHeight = Dimensions.GUI_HEIGHT - 70;
-        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(scissorX * scale, (height - (scissorY + scissorHeight)) * scale, scissorWidth * scale, scissorHeight * scale);
-
-        // Draw category tag at the top for each category
-        int listY = guiTop + 28;
-        int categoryTagY = listY - mainScroll.getOffset();
-        String categoryTag = "------ " + selectedCategory + " ------";
-        int tagWidth = fontRendererObj.getStringWidth(categoryTag);
-        int centerX = scissorX + scissorWidth / 2;
-        fontRendererObj.drawStringWithShadow(categoryTag, centerX - tagWidth / 2, categoryTagY, Colors.VERSION);
-
-        for (ModuleButton moduleBtn : moduleButtons) {
-            moduleBtn.draw(mouseX, mouseY, 0, fontRendererObj);
-            if (showCommandSettings && optionsInline && SelectedModule != null && moduleBtn.getModule() == SelectedModule) {
-                drawInlineSettingsBox(mouseX, mouseY);
-            }
-        }
-        glDisable(GL_SCISSOR_TEST);
+        moduleDrawer.drawModules(mouseX, mouseY);
     }
 
     private void drawScrollbars() {
@@ -360,7 +337,7 @@ public class ModSettingsGui extends GuiScreen {
         return ia;
     }
 
-    private void drawInlineSettingsBox(int mouseX, int mouseY) {
+    public void drawInlineSettingsBox(int mouseX, int mouseY) {
         InlineArea ia = getInlineAreaForSelected(); if (ia == null) return;
         drawRect(ia.boxX, ia.boxY, ia.boxX + ia.boxW, ia.boxY + ia.boxH, Colors.COMMAND_PANEL);
         drawRect(ia.boxX - 1, ia.boxY - 1, ia.boxX + ia.boxW + 1, ia.boxY + ia.boxH + 1, Colors.COMMAND_BORDER);
@@ -995,15 +972,33 @@ public class ModSettingsGui extends GuiScreen {
     private boolean handleDropdownClicks(int mouseX, int mouseY) {
         if (SelectedModule == null) return false;
         int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle ignored : Toggles) y += 22; for (LabelledInput li : labelledInputs) y += li.getVerticalSpace(); for (ColorInput ignored : ColorInputs) y += 50;
+        for (Toggle ignored : Toggles) y += 22;
+        for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
+        for (ColorInput ignored : ColorInputs) y += 50;
         for (MethodDropdown dd : methodDropdowns) {
-            int bx = dd.x + 100, bw = dd.width - 100, bh = dd.height; boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= y && mouseY <= y + bh;
-            if (inBase) { for (MethodDropdown other : methodDropdowns) other.isOpen = false; dd.isOpen = !dd.isOpen; return true; }
-            if (dd.isOpen) { for (int i = 0; i < dd.methods.length; i++) { int optionY = y + bh + (i * bh); boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh; if (inOpt) { dd.selectMethod(i); dd.isOpen = false; return true; } } }
+            int bx = dd.x + 100, bw = dd.width - 100, bh = dd.height;
+            boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= y && mouseY <= y + bh;
+            if (inBase) {
+                for (MethodDropdown other : methodDropdowns) other.isOpen = false;
+                dd.isOpen = !dd.isOpen;
+                return true; // Make sure this returns true so the UI updates
+            }
+            if (dd.isOpen) {
+                for (int i = 0; i < dd.methods.length; i++) {
+                    int optionY = y + bh + (i * bh);
+                    boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh;
+                    if (inOpt) {
+                        dd.selectMethod(i);
+                        dd.isOpen = false;
+                        return true;
+                    }
+                }
+            }
             y += 22;
         }
         return false;
     }
+
 
     private boolean handleLabelledInputClicks(int mouseX, int mouseY) {
         if (SelectedModule == null) return false; int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
