@@ -76,7 +76,7 @@ public class Main {
                 new FluxFlareTimer(), new StorageOverviewModule(),
                 new AutoFish(), new AutoExperiment(), new SuperPairs(),
                 // Performance tweaks
-                new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(), new DarkMode(),
+                new HideUselessMessage(), new HideLightning(), new BlockUselessPerk(), new DarkMode(), new NoHurtCam(),
 
                 // Slayer
                 new Miniboss(),

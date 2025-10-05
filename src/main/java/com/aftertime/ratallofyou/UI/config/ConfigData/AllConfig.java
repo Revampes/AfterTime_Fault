@@ -213,6 +213,7 @@ public class AllConfig {
         put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false));
         put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false));
         put("render_customcape", new ModuleInfo("Custom Cape", "Load custom cape from capes/ directory (PNG/GIF)", "Render", false));
+        put("render_nohurtcam", new ModuleInfo("No Hurt Camera", "Disable Camera shaking when getting hurted", "Render", false));
         put("render_darkmode", new ModuleInfo("DarkMode", "idk", "Render", false));
 
         //Performance
