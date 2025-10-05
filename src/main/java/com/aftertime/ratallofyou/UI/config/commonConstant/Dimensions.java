@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.UI.config.commonConstant;
 public final class Dimensions {
-    public static final int GUI_WIDTH = 520;
-    public static final int GUI_HEIGHT = 325; // Increased from 300 to 400 to show footer completely
+    public static final int GUI_WIDTH = 480;
+    public static final int GUI_HEIGHT = 295; // Increased from 300 to 400 to show footer completely
     public static final int SCROLLBAR_WIDTH = 6;
     public static final int MIN_SCROLLBAR_HEIGHT = 20;
     public static final int TEXT_PADDING = 10;

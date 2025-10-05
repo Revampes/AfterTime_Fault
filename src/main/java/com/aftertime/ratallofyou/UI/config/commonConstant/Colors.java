@@ -5,6 +5,7 @@ public final class Colors {
     public static final int MODULE_INACTIVE = 0xFF333333;
     public static final int MODULE_ACTIVE = 0xFF006400;
     public static final int TEXT = 0xFFFFFFFF;
+    public static final int TEXT_BLUE = 0xFF5599FF; // Blue color for selected category
     public static final int PANEL = 0xFF000000;
     public static final int CATEGORY_BUTTON = 0xFF222222;
     public static final int SELECTED_CATEGORY = 0xFF555555;
@@ -33,4 +34,5 @@ public final class Colors {
     public static final int BUTTON_RED_HOVER = 0xFFD32F2F;
     public static final int BUTTON_BLUE = 0xFF1565C0;
     public static final int BUTTON_BLUE_HOVER = 0xFF1976D2;
+    public static final int BUTTON_TEXT_BLUE = 0xFFFFFFFF; // White text color for selected category buttons
 }

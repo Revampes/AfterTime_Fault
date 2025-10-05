@@ -90,6 +90,10 @@ public class ModSettingsGui extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawBackground();
+
+        // Call super.drawScreen() first so default button rendering happens before our custom drawing
+        super.drawScreen(mouseX, mouseY, partialTicks);
+
         drawCategories();
         drawModules(mouseX, mouseY);
         drawScrollbars();
@@ -97,8 +101,6 @@ public class ModSettingsGui extends GuiScreen {
 
         // Draw tooltips and error messages last (on top of everything)
         drawTooltipsAndErrors(mouseX, mouseY);
-
-        super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
     @Override
@@ -167,7 +169,7 @@ public class ModSettingsGui extends GuiScreen {
             }
         }
 
-        handleCategoryButtonClicks();
+        handleCategoryButtonClicks(mouseX, mouseY);
         handleModuleButtonClicks(mouseX, mouseY);
         handleCommandToggleClicks(mouseX, mouseY);
     }
@@ -222,7 +224,17 @@ public class ModSettingsGui extends GuiScreen {
 
     private void drawCategories() {
         for (GuiButton btn : categoryButtons) {
-            drawRect(btn.xPosition - 2, btn.yPosition - 2, btn.xPosition + btn.width + 2, btn.yPosition + btn.height + 2, Colors.CATEGORY_BUTTON);
+            // Use GUI theme colors for background instead of texture pack
+            boolean isSelected = btn.displayString.equals(selectedCategory);
+            int bgColor = isSelected ? Colors.SELECTED_CATEGORY : Colors.CATEGORY_BUTTON;
+            drawRect(btn.xPosition, btn.yPosition, btn.xPosition + btn.width, btn.yPosition + btn.height, bgColor);
+
+            // Change text color to blue when selected, white otherwise
+            int textColor = isSelected ? Colors.TEXT_BLUE : Colors.TEXT;
+            drawCenteredString(fontRendererObj, btn.displayString,
+                btn.xPosition + btn.width / 2,
+                btn.yPosition + (btn.height - 8) / 2,
+                textColor);
         }
     }
 
@@ -234,6 +246,15 @@ public class ModSettingsGui extends GuiScreen {
         int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
         glEnable(GL_SCISSOR_TEST);
         glScissor(scissorX * scale, (height - (scissorY + scissorHeight)) * scale, scissorWidth * scale, scissorHeight * scale);
+
+        // Draw category tag at the top for each category
+        int listY = guiTop + 28;
+        int categoryTagY = listY - mainScroll.getOffset();
+        String categoryTag = "------ " + selectedCategory + " ------";
+        int tagWidth = fontRendererObj.getStringWidth(categoryTag);
+        int centerX = scissorX + scissorWidth / 2;
+        fontRendererObj.drawStringWithShadow(categoryTag, centerX - tagWidth / 2, categoryTagY, Colors.VERSION);
+
         for (ModuleButton moduleBtn : moduleButtons) {
             moduleBtn.draw(mouseX, mouseY, 0, fontRendererObj);
             if (showCommandSettings && optionsInline && SelectedModule != null && moduleBtn.getModule() == SelectedModule) {
@@ -820,7 +841,22 @@ public class ModSettingsGui extends GuiScreen {
 
     private void handleScrollbarClicks(int mouseX, int mouseY) { if (showCommandSettings && useSidePanelForSelected && commandScroll.checkScrollbarClick(mouseX, mouseY)) return; if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0 && commandScroll.checkScrollbarClick(mouseX, mouseY)) return; if (mainScroll.checkScrollbarClick(mouseX, mouseY)) return; }
 
-    private void handleCategoryButtonClicks() { for (GuiButton btn : categoryButtons) { if (btn.isMouseOver()) { actionPerformed(btn); return; } } }
+    private void handleCategoryButtonClicks(int mouseX, int mouseY) {
+        for (GuiButton btn : categoryButtons) {
+            if (mouseX >= btn.xPosition && mouseX <= btn.xPosition + btn.width &&
+                mouseY >= btn.yPosition && mouseY <= btn.yPosition + btn.height) {
+                // Manually trigger the category selection logic
+                selectedCategory = btn.displayString;
+                mainScroll.reset();
+                showCommandSettings = false;
+                SelectedModule = null;
+                useSidePanelForSelected = false;
+                optionsInline = false;
+                buildModuleButtons();
+                return;
+            }
+        }
+    }
 
     private void handleModuleButtonClicks(int mouseX, int mouseY) {
         int scissorX = guiLeft + 115;
@@ -866,7 +902,6 @@ public class ModSettingsGui extends GuiScreen {
                 buildModuleButtons();
                 return;
             }
-            if (!module.Data) module.Data = true;
             SelectedModule = module;
             showCommandSettings = true;
             if ("Fast Hotkey".equals(SelectedModule.name)) {
@@ -959,8 +994,15 @@ public class ModSettingsGui extends GuiScreen {
 
     // Build UI lists
     private void buildCategoryButtons() {
-        categoryButtons.clear(); buttonList.clear(); int y = guiTop + 30; int x = guiLeft + 10;
-        for (int i = 0; i < AllConfig.INSTANCE.Categories.size(); i++) { GuiButton b = new GuiButton(1000 + i, x, y, 95, 18, AllConfig.INSTANCE.Categories.get(i)); categoryButtons.add(b); buttonList.add(b); y += 20; }
+        categoryButtons.clear();
+        // Don't clear buttonList here or add category buttons to it - we want custom rendering only
+        int y = guiTop + 30; int x = guiLeft + 10;
+        for (int i = 0; i < AllConfig.INSTANCE.Categories.size(); i++) {
+            GuiButton b = new GuiButton(1000 + i, x, y, 95, 18, AllConfig.INSTANCE.Categories.get(i));
+            categoryButtons.add(b);
+            // Don't add to buttonList to prevent default texture rendering
+            y += 20;
+        }
     }
 
     private void buildModuleButtons() {
@@ -1254,7 +1296,7 @@ public class ModSettingsGui extends GuiScreen {
             int moduleListHeight = Dimensions.GUI_HEIGHT - 50;
 
             boolean overModuleList = mouseX >= moduleListX && mouseX <= moduleListX + moduleListWidth &&
-                                   mouseY >= moduleListY && mouseY <= moduleListY + moduleListHeight;
+                    mouseY >= moduleListY && mouseY <= moduleListY + moduleListHeight;
 
             // Check if mouse is over command panel area (when visible)
             boolean overCommandPanel = false;
@@ -1264,7 +1306,7 @@ public class ModSettingsGui extends GuiScreen {
                 int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
                 int panelHeight = Dimensions.GUI_HEIGHT - 60;
                 overCommandPanel = mouseX >= panelX && mouseX <= panelX + panelWidth &&
-                                 mouseY >= panelY && mouseY <= panelY + panelHeight;
+                        mouseY >= panelY && mouseY <= panelY + panelHeight;
             }
 
             // Check if mouse is over Fast Hotkey detail panel (when visible)
@@ -1275,7 +1317,7 @@ public class ModSettingsGui extends GuiScreen {
                 int detailY = guiTop + Dimensions.COMMAND_PANEL_Y;
                 int detailH = Dimensions.GUI_HEIGHT - 60;
                 overDetailPanel = mouseX >= detailX && mouseX <= detailX + detailW &&
-                                mouseY >= detailY && mouseY <= detailY + detailH;
+                        mouseY >= detailY && mouseY <= detailY + detailH;
             }
 
             // Apply scrolling to the appropriate scroll manager
@@ -1290,3 +1332,4 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 }
+
