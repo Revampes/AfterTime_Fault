@@ -5,8 +5,8 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.*;
 import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
-import com.aftertime.ratallofyou.UI.config.drawMethod.drawCategory;
-import com.aftertime.ratallofyou.UI.config.drawMethod.drawModule;
+import com.aftertime.ratallofyou.UI.config.drawMethod.*;
+import com.aftertime.ratallofyou.UI.utils.InlineArea;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
 import com.aftertime.ratallofyou.UI.config.ScrollManager;
@@ -32,19 +32,19 @@ public class ModSettingsGui extends GuiScreen {
     // Fields
     public final List<GuiButton> categoryButtons = new ArrayList<>();
     public final List<ModuleButton> moduleButtons = new ArrayList<>();
-    private final List<ColorInput> ColorInputs = new ArrayList<>();
-    private final List<LabelledInput> labelledInputs = new ArrayList<>();
-    private final List<MethodDropdown> methodDropdowns = new ArrayList<>();
-    private final List<Toggle> Toggles = new ArrayList<>();
+    public final List<ColorInput> ColorInputs = new ArrayList<>();
+    public final List<LabelledInput> labelledInputs = new ArrayList<>();
+    public final List<MethodDropdown> methodDropdowns = new ArrayList<>();
+    public final List<Toggle> Toggles = new ArrayList<>();
 
     public final ScrollManager mainScroll = new ScrollManager();
-    private final ScrollManager commandScroll = new ScrollManager();
+    public final ScrollManager commandScroll = new ScrollManager();
 
     // Fast Hotkey editor rows (right-side detail panel)
-    private final List<FastRow> fastRows = new ArrayList<>();
+    public final List<FastRow> fastRows = new ArrayList<>();
 
     // New: Hotbar Swap UI extracted to its own panel
-    private final HotbarSwapPanel hotbarPanel = new HotbarSwapPanel();
+    public final HotbarSwapPanel hotbarPanel = new HotbarSwapPanel();
 
     public String selectedCategory = "Kuudra";
     public ModuleInfo SelectedModule = null;
@@ -53,18 +53,18 @@ public class ModSettingsGui extends GuiScreen {
     public int guiTop;
 
     // Error handling for modules without settings
-    private String showNoSettingsError = null;
-    private long noSettingsErrorTime = 0;
+    public String showNoSettingsError = null;
+    public long noSettingsErrorTime = 0;
 
     // Layout modes
-    private boolean useSidePanelForSelected = false; // Fast Hotkey only
+    public boolean useSidePanelForSelected = false; // Fast Hotkey only
     public boolean optionsInline = false; // inline box below module row
 
     // Fast Hotkey state (left panel preset list + input)
-    private SimpleTextField fhkPresetNameInput = null;
-    private int fhkSelectedPreset = -1; // if >=0, detail panel open
+    public SimpleTextField fhkPresetNameInput = null;
+    public int fhkSelectedPreset = -1; // if >=0, detail panel open
     // Fast Hotkey inline key-capture index
-    private int fhkKeyCaptureIndex = -1;
+    public int fhkKeyCaptureIndex = -1;
 
     @Override
     public void initGui() {
@@ -219,22 +219,20 @@ public class ModSettingsGui extends GuiScreen {
         handleAllInputTyping(typedChar, keyCode);
     }
 
-    // Drawing basics
-    private void drawBackground() {
-        drawRect(guiLeft, guiTop, guiLeft + Dimensions.GUI_WIDTH, guiTop + Dimensions.GUI_HEIGHT, Colors.PANEL);
-        fontRendererObj.drawStringWithShadow("§l§nAfterTimeFault", guiLeft + 15, guiTop + 10, Colors.TEXT);
-        drawRect(guiLeft + 5, guiTop + 25, guiLeft + 115, guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
-        drawRect(guiLeft + 115, guiTop + 25, guiLeft + Dimensions.GUI_WIDTH - 5, guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
-
-        // Enhanced footer with version, author, and instructions
-        String versionText = "§7Version v2.2 §8| §7Created by AfterTime";
-        String instructionText = "§8Left Click: Toggle | Right Click: Settings | Hover: Description";
-        drawCenteredString(fontRendererObj, versionText, width / 2, guiTop + Dimensions.GUI_HEIGHT - 30, Colors.VERSION);
-        drawCenteredString(fontRendererObj, instructionText, width / 2, guiTop + Dimensions.GUI_HEIGHT - 18, Colors.VERSION);
-    }
-
+    private final drawBackground backgroundDrawer = new drawBackground(this);
     private final drawCategory categoryDrawer = new drawCategory(this);
     private final drawModule moduleDrawer = new drawModule(this);
+    private final drawScrollbar scrollbarDrawer = new drawScrollbar(this);
+    private final drawCommandPanel commandPanelDrawer = new drawCommandPanel(this);
+    private final drawInlineSettingsBox InlineSettingsBoxDrawer = new drawInlineSettingsBox(this);
+    private final drawFastHotKeyPanel fastHotKeyPanelDrawer = new drawFastHotKeyPanel(this);
+    private final drawFastHotKeyDetailPanel fastHotKeyDetailPanelDrawer = new drawFastHotKeyDetailPanel(this);
+    private final drawTooltipsAndErrors tooltipsAndErrorsDrawer = new drawTooltipsAndErrors(this);
+    private final drawTooltip tooltipDrawer = new drawTooltip(this);
+
+    private void drawBackground() {
+        backgroundDrawer.drawBackground();
+    }
 
     private void drawCategories() {
         categoryDrawer.drawCategories();
@@ -245,84 +243,48 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private void drawScrollbars() {
-        if (mainScroll.shouldRenderScrollbar()) mainScroll.drawScrollbar(Colors.SCROLLBAR, Colors.SCROLLBAR_HANDLE);
-        if (showCommandSettings && useSidePanelForSelected && commandScroll.shouldRenderScrollbar()) {
-            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
-        }
-        // Inline Fast Hotkey: draw scrollbar for right detail panel when open
-        if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0 && commandScroll.shouldRenderScrollbar()) {
-            commandScroll.drawScrollbar(Colors.COMMAND_SCROLLBAR, Colors.COMMAND_SCROLLBAR_HANDLE);
-        }
+        scrollbarDrawer.drawScrollbars();
     }
 
     private void drawCommandPanel(int mouseX, int mouseY) {
-        // If not using side panel, still allow right-only detail panel for Fast Hotkey
-        if (!showCommandSettings || SelectedModule == null) return;
-        if (optionsInline && "Fast Hotkey".equals(SelectedModule.name)) {
-            if (fhkSelectedPreset >= 0) {
-                int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-                int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-                int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-                int panelHeight = Dimensions.GUI_HEIGHT - 60;
-                // Only draw the right detail panel (no left panel)
-                drawFastHotkeyDetailPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
-            }
-            return;
-        }
-        if (!useSidePanelForSelected) return;
-        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-        int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-        int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int panelHeight = Dimensions.GUI_HEIGHT - 60;
-        drawRect(panelX, panelY, panelX + panelWidth, panelY + panelHeight, Colors.COMMAND_PANEL);
-        drawRect(panelX - 1, panelY - 1, panelX + panelWidth + 1, panelY + panelHeight + 1, Colors.COMMAND_BORDER);
-        drawCenteredString(fontRendererObj, getCommandPanelTitle(), panelX + panelWidth / 2, panelY + 5, Colors.COMMAND_TEXT);
-        if ("Fast Hotkey".equals(SelectedModule.name)) {
-            drawFastHotKeyPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
-            if (fhkSelectedPreset >= 0) drawFastHotkeyDetailPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
-            return;
-        }
-        // Inject module-specific sub-settings
-        int y = panelY + 30 - commandScroll.getOffset();
-        switch (SelectedModule.name) {
-            case "Party Commands": Add_SubSetting_Command(y); break;
-            case "No Debuff": Add_SubSetting_NoDebuff(y); break;
-            case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
-            case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
-            case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
-            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
-            case "Auto Fish": Add_SubSetting_AutoFish(y); break;
-            case "Auto Sell": Add_SubSetting_AutoSell(y); break;
-            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
-            case "NameTag": Add_SubSetting_NameTag(y); break; // New
-            case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
-            case "DarkMode": Add_SubSetting_DarkMode(y); break;
-            case "Custom Cape": Add_SubSetting_CustomCape(y); break;
-            case "Mark Location": Add_SubSetting_MarkLocation(y); break;
-        }
-        int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
-        contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
-        int panelViewHeight = Dimensions.GUI_HEIGHT - 60 - 25;
-        if (useSidePanelForSelected) {
-            commandScroll.update(contentHeight, panelViewHeight); commandScroll.updateScrollbarPosition(guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH - Dimensions.SCROLLBAR_WIDTH - 2, guiTop + Dimensions.COMMAND_PANEL_Y + 25, panelViewHeight);
-        }
+        commandPanelDrawer.drawCommandPanel(mouseX, mouseY);
+    }
+
+    public void drawInlineSettingsBox(int mouseX, int mouseY) {
+        InlineSettingsBoxDrawer.drawInlineSettingsBox(mouseX, mouseY);
+    }
+
+    public void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
+        fastHotKeyPanelDrawer.drawFastHotKeyPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
+    }
+
+    // Right detail editor for commands
+    public void drawFastHotkeyDetailPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
+        fastHotKeyDetailPanelDrawer.drawFastHotkeyDetailPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
+    }
+
+    // Draw tooltips and error messages
+    private void drawTooltipsAndErrors(int mouseX, int mouseY) {
+        tooltipsAndErrorsDrawer.drawTooltipsAndErrors(mouseX, mouseY);
+    }
+
+    public void drawTooltip(String text, int mouseX, int mouseY) {
+        tooltipDrawer.drawTooltip(text, mouseX, mouseY);
     }
 
     // Helper: Title for command panel
-    private String getCommandPanelTitle() {
+    public String getCommandPanelTitle() {
         return SelectedModule == null ? "" : ("Settings - " + SelectedModule.name);
     }
 
-    // Inline settings helpers
-    private static class InlineArea { int boxX, boxY, boxW, boxH, contentX, contentY, contentW; }
 
-    private int getInlineDetailX() {
+    public int getInlineDetailX() {
         InlineArea ia = getInlineAreaForSelected();
         if (ia != null) return ia.boxX + ia.boxW + 6; // small gap after inline box
         return guiLeft + Dimensions.COMMAND_PANEL_X; // fallback
     }
 
-    private InlineArea getInlineAreaForSelected() {
+    public InlineArea getInlineAreaForSelected() {
         if (!optionsInline || SelectedModule == null) return null;
         ModuleButton selBtn = null; for (ModuleButton b : moduleButtons) if (b.getModule() == SelectedModule) { selBtn = b; break; }
         if (selBtn == null) return null;
@@ -335,80 +297,6 @@ public class ModSettingsGui extends GuiScreen {
         ia.contentX = boxX + padding; ia.contentW = boxW - padding * 2; ia.contentY = ia.boxY + headerH;
         ia.boxH = headerH + computeInlineContentHeight() + padding;
         return ia;
-    }
-
-    public void drawInlineSettingsBox(int mouseX, int mouseY) {
-        InlineArea ia = getInlineAreaForSelected(); if (ia == null) return;
-        drawRect(ia.boxX, ia.boxY, ia.boxX + ia.boxW, ia.boxY + ia.boxH, Colors.COMMAND_PANEL);
-        drawRect(ia.boxX - 1, ia.boxY - 1, ia.boxX + ia.boxW + 1, ia.boxY + ia.boxH + 1, Colors.COMMAND_BORDER);
-        drawCenteredString(fontRendererObj, SelectedModule.name + " Settings", ia.boxX + ia.boxW / 2, ia.boxY + 6, Colors.COMMAND_TEXT);
-        int y = ia.contentY;
-        if ("Fast Hotkey".equals(SelectedModule.name)) {
-            // Inline fast hotkey: presets list + appearance
-            fontRendererObj.drawStringWithShadow("Create settings:", ia.contentX, y, Colors.COMMAND_TEXT); y += 12;
-            if (fhkPresetNameInput != null) {
-                fhkPresetNameInput.setBounds(ia.contentX, y, Math.max(60, ia.contentW - 65), 16);
-                fhkPresetNameInput.draw(mouseX, mouseY);
-                int btnX = ia.contentX + ia.contentW - 60;
-                drawRect(btnX, y, btnX + 60, y + 16, Colors.BUTTON_GREEN);
-                drawCenteredString(fontRendererObj, "Confirm", btnX + 30, y + 4, Colors.BUTTON_TEXT);
-                y += 22;
-            }
-            fontRendererObj.drawStringWithShadow("Saved settings:", ia.contentX, y, Colors.COMMAND_TEXT); y += 12;
-            int rowH = 16; int gap = 4;
-            for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-                FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(i);
-                int x = ia.contentX; int w = ia.contentW; int h = rowH; int rowY = y;
-                // Toggle 14x14
-                int tSize = 14; int toggleX = x; int toggleY = rowY + (h - tSize) / 2;
-                int toggleColor = p.enabled ? Colors.BUTTON_GREEN : Colors.BUTTON_RED;
-                drawRect(toggleX, toggleY, toggleX + tSize, toggleY + tSize, toggleColor);
-                // Name area clickable to select preset
-                int nameX = toggleX + tSize + 6; int nameW = Math.max(40, w - 6 - tSize - 60 - 80 - 6); // leave space for remove(60) + key(80) + gaps
-                int nameCenterY = rowY + 4;
-                String nm = p.name + (i == AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? "  (Active)" : "");
-                fontRendererObj.drawStringWithShadow(nm, nameX, nameCenterY, Colors.COMMAND_TEXT);
-                // Keybind box 80px
-                int keyW = 80; int keyX = x + w - 60 - 6 - keyW; int keyY = rowY;
-                drawRect(keyX, keyY, keyX + keyW, keyY + h, Colors.INPUT_BG);
-                String keyLabel;
-                if (fhkKeyCaptureIndex == i) keyLabel = "Press a key...";
-                else keyLabel = p.keyCode <= 0 ? "Unbound" : Keyboard.getKeyName(p.keyCode);
-                if (keyLabel == null || keyLabel.trim().isEmpty()) keyLabel = "Unknown";
-                fontRendererObj.drawStringWithShadow(keyLabel, keyX + 4, keyY + 4, Colors.INPUT_FG);
-                // Remove button 60px
-                int rmW = 60; int rmX = x + w - rmW; int rmY = rowY;
-                drawRect(rmX, rmY, rmX + rmW, rmY + h, Colors.BUTTON_RED);
-                drawCenteredString(fontRendererObj, "Remove", rmX + rmW / 2, rmY + 4, Colors.BUTTON_TEXT);
-                y += h + gap;
-            }
-            drawRect(ia.contentX, y, ia.contentX + ia.contentW, y + 1, 0x33000000); y += 6;
-        }
-        // New: Hotbar Swap inline drawing delegated to panel
-        if ("Hotbar Swap".equals(SelectedModule.name)) {
-            y = hotbarPanel.drawInline(mouseX, mouseY, ia.contentX, y, ia.contentW, fontRendererObj);
-        }
-
-        // Draw general options for all modules (toggles, inputs, colors) - but NOT dropdowns yet
-        for (Toggle toggle : Toggles) {
-            toggle.draw(mouseX, mouseY, y, fontRendererObj);
-            y += 22;
-        }
-        for (LabelledInput li : labelledInputs) {
-            li.draw(mouseX, mouseY, y, fontRendererObj);
-            y += li.getVerticalSpace();
-        }
-        for (ColorInput ci : ColorInputs) {
-            ci.draw(mouseX, mouseY, y, fontRendererObj);
-            y += 50;
-        }
-
-        // Draw dropdown base buttons (without expanded options)
-        int ydd = y;
-        for (MethodDropdown dd : methodDropdowns) {
-            dd.drawBase(mouseX, mouseY, ydd, fontRendererObj);
-            ydd += 22;
-        }
     }
 
     private int computeInlineContentHeight() {
@@ -561,77 +449,6 @@ public class ModSettingsGui extends GuiScreen {
                 }
             }
             yd += 22;
-        }
-    }
-
-    private void drawFastHotKeyPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
-        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor();
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(panelX * scale, (height - (panelY + panelHeight)) * scale, panelWidth * scale, (panelHeight - 25) * scale);
-        int y = panelY + 25 - commandScroll.getOffset(); int x = panelX + 5; int w = panelWidth - 10;
-        fontRendererObj.drawStringWithShadow("Create settings:", x, y, Colors.COMMAND_TEXT); y += 12;
-        if (fhkPresetNameInput != null) {
-            fhkPresetNameInput.setBounds(x, y, Math.max(60, w - 65), 16); fhkPresetNameInput.draw(mouseX, mouseY);
-            int btnX = x + w - 60; drawRect(btnX, y, btnX + 60, y + 16, Colors.BUTTON_GREEN); drawCenteredString(fontRendererObj, "Confirm", btnX + 30, y + 4, Colors.BUTTON_TEXT); y += 22;
-        }
-        fontRendererObj.drawStringWithShadow("Saved settings:", x, y, Colors.COMMAND_TEXT); y += 12;
-        int presetBtnH = 16;
-        for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-            int openW = Math.max(60, w - 70);
-            int openX = x, openY = y;
-            boolean isActive = (i == AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-            drawRect(openX, openY, openX + openW, openY + presetBtnH, isActive ? Colors.BUTTON_GREEN : Colors.BUTTON_RED);
-            drawCenteredString(fontRendererObj, AllConfig.INSTANCE.FHK_PRESETS.get(i).name + (isActive ? "  (Active)" : ""), openX + openW / 2, openY + 4, Colors.BUTTON_TEXT);
-            int rmX = x + w - 60; drawRect(rmX, openY, rmX + 60, openY + presetBtnH, Colors.BUTTON_RED); drawCenteredString(fontRendererObj, "Remove", rmX + 30, openY + 4, Colors.BUTTON_TEXT);
-            y += presetBtnH + 4;
-        }
-        drawRect(x, y, x + w, y + 1, 0x33000000); y += 6;
-        // Appearance options
-        for (Toggle t : Toggles) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 22; }
-        for (LabelledInput t : labelledInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += t.getVerticalSpace(); }
-        for (ColorInput t : ColorInputs) { t.draw(mouseX, mouseY, y, fontRendererObj); y += 50; }
-        glDisable(GL_SCISSOR_TEST);
-        // Scrollbar sizing: include detail rows height to share one scroll
-        int optionsHeight = (12 + 22) + (12 + AllConfig.INSTANCE.FHK_PRESETS.size() * (presetBtnH + 4)) + (Toggles.size() * 22);
-        for (LabelledInput li : labelledInputs) optionsHeight += li.getVerticalSpace(); optionsHeight += ColorInputs.size() * 50;
-        int rowsHeight = (fhkSelectedPreset >= 0 ? (fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8 + Dimensions.FH_ADD_HEIGHT) : 0);
-        int totalHeight = Math.max(optionsHeight, rowsHeight);
-        commandScroll.update(totalHeight, panelHeight - 25);
-        if (commandScroll.shouldRenderScrollbar()) commandScroll.updateScrollbarPosition(panelX + panelWidth - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, panelHeight - 25);
-    }
-
-    // Right detail editor for commands
-    private void drawFastHotkeyDetailPanel(int mouseX, int mouseY, int panelX, int panelY, int panelWidth, int panelHeight) {
-        int detailX = useSidePanelForSelected ? (panelX + panelWidth + 6) : (optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) ? getInlineDetailX() : panelX);
-        int detailW = 170; int detailY = panelY; int detailH = panelHeight;
-        drawRect(detailX, detailY, detailX + detailW, detailY + detailH, Colors.COMMAND_PANEL);
-        drawRect(detailX - 1, detailY - 1, detailX + detailW + 1, detailY + detailH + 1, Colors.COMMAND_BORDER);
-        drawCenteredString(fontRendererObj, "Preset Editor", detailX + detailW / 2, detailY + 5, Colors.COMMAND_TEXT);
-        int scale = new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(); glEnable(GL_SCISSOR_TEST);
-        glScissor(detailX * scale, (height - (detailY + detailH)) * scale, detailW * scale, (detailH - 25) * scale);
-        int x = detailX + 5; int w = detailW - 10; int contentY = panelY + 25 - commandScroll.getOffset();
-        for (int i = 0; i < fastRows.size(); i++) {
-            FastRow row = fastRows.get(i); int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
-            if (rowTop + Dimensions.FH_ROW_HEIGHT < detailY + 25 || rowTop > detailY + detailH) continue;
-            drawRect(x, rowTop - 2, x + w, rowTop - 1, 0x33000000);
-            int title1Y = rowTop + 2; int labelInputY = title1Y + 12; int title2Y = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 4; int commandInputY = title2Y + 12;
-            fontRendererObj.drawStringWithShadow("Command " + (i + 1) + " Label:", x, title1Y, Colors.COMMAND_TEXT);
-            fontRendererObj.drawStringWithShadow("Command " + (i + 1) + " Command:", x, title2Y, Colors.COMMAND_TEXT);
-            row.DrawElements(mouseX, mouseY, labelInputY, commandInputY);
-            int removeX = x, removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
-            drawRect(removeX, removeY, removeX + Dimensions.FH_REMOVE_WIDTH, removeY + Dimensions.FH_REMOVE_HEIGHT, Colors.BUTTON_RED);
-            drawCenteredString(fontRendererObj, "Remove", removeX + Dimensions.FH_REMOVE_WIDTH / 2, removeY + 5, Colors.BUTTON_TEXT);
-        }
-        int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8; int addW = 60;
-        drawRect(x, addY, x + addW, addY + Dimensions.FH_ADD_HEIGHT, Colors.BUTTON_GREEN);
-        drawCenteredString(fontRendererObj, "Add", x + addW / 2, addY + 6, Colors.BUTTON_TEXT);
-        glDisable(GL_SCISSOR_TEST);
-        // When in inline mode (no left panel), maintain scrollbar for the detail region
-        if (!useSidePanelForSelected) {
-            int rowsHeight = (fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8 + Dimensions.FH_ADD_HEIGHT);
-            int viewH = panelHeight - 25;
-            commandScroll.update(rowsHeight, viewH);
-            commandScroll.updateScrollbarPosition(detailX + detailW - Dimensions.SCROLLBAR_WIDTH - 2, panelY + 25, viewH);
         }
     }
 
@@ -1106,26 +923,26 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     // New: NameTag sub-settings (index 13 in AllConfig.ALLCONFIGS)
-    private void Add_SubSetting_NameTag(Integer y) {
+    public void Add_SubSetting_NameTag(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.NAMETAG_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 13);
         }
     }
 
     // New: Player ESP sub-settings (index 12 in AllConfig.ALLCONFIGS)
-    private void Add_SubSetting_PlayerESP(Integer y) {
+    public void Add_SubSetting_PlayerESP(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.PLAYERESP_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 12);
         }
     }
 
-    private void Add_SubSetting_CustomCape(Integer y) {
+    public void Add_SubSetting_CustomCape(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 14);
         }
     }
 
-    private void Add_SubSetting_DarkMode(Integer y) {
+    public void Add_SubSetting_DarkMode(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.DARKMODE_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 15);
         }
@@ -1172,7 +989,7 @@ public class ModSettingsGui extends GuiScreen {
 
     private void addTerminalEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.TERMINAL_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 4); }
 
-    private void Add_SubSetting_FastHotkey(Integer y) {
+    public void Add_SubSetting_FastHotkey(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 6);
         }
@@ -1180,46 +997,46 @@ public class ModSettingsGui extends GuiScreen {
 
     private void addFhkEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 6); }
 
-    private void Add_SubSetting_Command(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.COMMAND_CONFIGS.entrySet()) AddEntryAsOption(e, y, 0); }
-    private void Add_SubSetting_NoDebuff(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.NODEBUFF_CONFIGS.entrySet()) AddEntryAsOption(e, y, 2); }
-    private void Add_SubSetting_Etherwarp(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.ETHERWARP_CONFIGS.entrySet()) AddEntryAsOption(e, y, 3); }
+    public void Add_SubSetting_Command(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.COMMAND_CONFIGS.entrySet()) AddEntryAsOption(e, y, 0); }
+    public void Add_SubSetting_NoDebuff(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.NODEBUFF_CONFIGS.entrySet()) AddEntryAsOption(e, y, 2); }
+    public void Add_SubSetting_Etherwarp(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.ETHERWARP_CONFIGS.entrySet()) AddEntryAsOption(e, y, 3); }
 
     // New: Chest Open Notice sub-settings (index 7 in AllConfig.ALLCONFIGS)
-    private void Add_SubSetting_ChestOpen(Integer y) {
+    public void Add_SubSetting_ChestOpen(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.KUUDRA_CHESTOPEN_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 7);
         }
     }
 
     // New: Hotbar Swap sub-settings (index 8 in AllConfig.ALLCONFIGS)
-    private void Add_SubSetting_HotbarSwap(Integer y) {
+    public void Add_SubSetting_HotbarSwap(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 8);
         }
     }
 
     // Restore: Auto Fish sub-settings (index 10)
-    private void Add_SubSetting_AutoFish(Integer y) {
+    public void Add_SubSetting_AutoFish(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOFISH_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 10);
         }
     }
 
     // Restore: Auto Sell sub-settings (index 11)
-    private void Add_SubSetting_AutoSell(Integer y) {
+    public void Add_SubSetting_AutoSell(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOSELL_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 11);
         }
     }
 
     // Restore: Auto Experiment sub-settings (index 12)
-    private void Add_SubSetting_AutoExperiment(Integer y) {
+    public void Add_SubSetting_AutoExperiment(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 12);
         }
     }
 
-    private void Add_SubSetting_MarkLocation(Integer y) {
+    public void Add_SubSetting_MarkLocation(Integer y) {
         for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.MARKLOCATION_CONFIGS.entrySet()) {
             AddEntryAsOption(e, y, 17);
         }
@@ -1230,94 +1047,6 @@ public class ModSettingsGui extends GuiScreen {
         int detailBaseX = useSidePanelForSelected ? (guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH + 6 + 5) : (getInlineDetailX() + 5);
         int detailInputW = 170 - 10;
         for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
-    }
-
-    // Draw tooltips and error messages
-    private void drawTooltipsAndErrors(int mouseX, int mouseY) {
-        // Show error message for modules without settings
-        if (showNoSettingsError != null && System.currentTimeMillis() - noSettingsErrorTime < 3000) {
-            String errorMsg = "§c" + showNoSettingsError + " does not have any sub-settings";
-            int msgWidth = fontRendererObj.getStringWidth(errorMsg);
-            int msgX = width / 2 - msgWidth / 2;
-            int msgY = guiTop + Dimensions.GUI_HEIGHT - 45;
-
-            // Draw background
-            drawRect(msgX - 4, msgY - 2, msgX + msgWidth + 4, msgY + 10, 0x99000000);
-            drawRect(msgX - 5, msgY - 3, msgX + msgWidth + 5, msgY + 11, 0xFFCC0000);
-
-            // Draw text
-            fontRendererObj.drawStringWithShadow(errorMsg, msgX, msgY, 0xFFFFFFFF);
-        } else if (System.currentTimeMillis() - noSettingsErrorTime >= 3000) {
-            showNoSettingsError = null; // Clear expired error
-        }
-
-        // Show tooltips for module buttons on hover
-        for (ModuleButton moduleBtn : moduleButtons) {
-            if (moduleBtn.isMouseOver(mouseX, mouseY)) {
-                ModuleInfo module = moduleBtn.getModule();
-                if (module.description != null && !module.description.isEmpty()) {
-                    drawTooltip(module.description, mouseX, mouseY);
-                }
-                break; // Only show one tooltip at a time
-            }
-        }
-    }
-
-    private void drawTooltip(String text, int mouseX, int mouseY) {
-        if (text == null || text.isEmpty()) return;
-
-        List<String> lines = new ArrayList<>();
-        String[] words = text.split(" ");
-        StringBuilder currentLine = new StringBuilder();
-        int maxWidth = 200; // Max tooltip width
-
-        // Word wrap the tooltip text
-        for (String word : words) {
-            String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
-            if (fontRendererObj.getStringWidth(testLine) <= maxWidth) {
-                currentLine = new StringBuilder(testLine);
-            } else {
-                if (currentLine.length() > 0) {
-                    lines.add(currentLine.toString());
-                    currentLine = new StringBuilder(word);
-                } else {
-                    lines.add(word); // Single word longer than max width
-                }
-            }
-        }
-        if (currentLine.length() > 0) {
-            lines.add(currentLine.toString());
-        }
-
-        // Calculate tooltip dimensions
-        int tooltipWidth = 0;
-        for (String line : lines) {
-            tooltipWidth = Math.max(tooltipWidth, fontRendererObj.getStringWidth(line));
-        }
-        int tooltipHeight = lines.size() * 10 + 4;
-
-        // Position tooltip to avoid screen edges
-        int tooltipX = mouseX + 12;
-        int tooltipY = mouseY - 12;
-
-        if (tooltipX + tooltipWidth + 8 > width) {
-            tooltipX = mouseX - tooltipWidth - 12;
-        }
-        if (tooltipY + tooltipHeight + 8 > height) {
-            tooltipY = mouseY - tooltipHeight - 12;
-        }
-        if (tooltipY < 0) {
-            tooltipY = mouseY + 12;
-        }
-
-        // Draw tooltip background
-        drawRect(tooltipX - 3, tooltipY - 3, tooltipX + tooltipWidth + 3, tooltipY + tooltipHeight + 3, 0xF0100010);
-        drawRect(tooltipX - 2, tooltipY - 2, tooltipX + tooltipWidth + 2, tooltipY + tooltipHeight + 2, 0x505000FF);
-
-        // Draw tooltip text
-        for (int i = 0; i < lines.size(); i++) {
-            fontRendererObj.drawStringWithShadow(lines.get(i), tooltipX, tooltipY + i * 10, 0xFFFFFFFF);
-        }
     }
 
     @Override
