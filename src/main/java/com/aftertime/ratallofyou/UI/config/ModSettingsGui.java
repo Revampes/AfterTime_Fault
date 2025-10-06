@@ -6,6 +6,7 @@ import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.UI.config.drawMethod.*;
+import com.aftertime.ratallofyou.UI.config.handler.*;
 import com.aftertime.ratallofyou.UI.utils.InlineArea;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
@@ -318,532 +319,110 @@ public class ModSettingsGui extends GuiScreen {
         int h = Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
     }
 
-    private void handleInlineOptionClicks(int mouseX, int mouseY, InlineArea ia) {
-        // Focus inputs and toggle clicks (inline)
-        int y = ia.contentY;
-        if (SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
-            int rowH = 16; int gap = 4;
-            y += 12; // after label
-            if (fhkPresetNameInput != null) {
-                fhkPresetNameInput.setBounds(ia.contentX, y, Math.max(60, ia.contentW - 65), 16);
-                if (fhkPresetNameInput.isMouseOver(mouseX, mouseY)) { fhkPresetNameInput.beginEditing(mouseX); return; }
-                int btnX = ia.contentX + ia.contentW - 60; if (mouseX >= btnX && mouseX <= btnX + 60 && mouseY >= y && mouseY <= y + 16) {
-                    String name = fhkPresetNameInput.text.trim(); if (!name.isEmpty()) {
-                        boolean exists = false; for (FastHotkeyPreset p : AllConfig.INSTANCE.FHK_PRESETS) { if (p.name.equalsIgnoreCase(name)) { exists = true; break; } }
-                        if (!exists) { AllConfig.INSTANCE.FHK_PRESETS.add(new FastHotkeyPreset(name)); AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_PRESETS.size() - 1); fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET; fhkPresetNameInput.text = ""; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET); rebuildFastHotkeyRowsForDetail(); }
-                    }
-                    return;
-                }
-                y += 22;
-            }
-            y += 12; // saved header
-            for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-                FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(i);
-                int x = ia.contentX; int w = ia.contentW; int rowY = y; // capture for this row
-                // Toggle box
-                int tSize = 14; int toggleX = x; int toggleY = rowY + (rowH - tSize) / 2;
-                boolean overToggle = mouseX >= toggleX && mouseX <= toggleX + tSize && mouseY >= toggleY && mouseY <= toggleY + tSize;
-                // Key box
-                int keyW = 80; int keyX = x + w - 60 - 6 - keyW; int keyY = rowY;
-                boolean overKey = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= keyY && mouseY <= keyY + rowH;
-                // Remove
-                int rmW = 60; int rmX = x + w - rmW; int rmY = rowY; boolean overRemove = mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + rowH;
-                // Name/select area
-                int nameX = toggleX + tSize + 6; int nameW = Math.max(40, w - 6 - tSize - 60 - 80 - 6);
-                boolean overName = mouseX >= nameX && mouseX <= nameX + nameW && mouseY >= rowY && mouseY <= rowY + rowH;
+    private final handleInlineOptionClicks inlineOptionClicksHandler = new handleInlineOptionClicks(this);
+    private final handleFastHotKeyClicks fastHotKeyClicksHandler = new handleFastHotKeyClicks(this);
+    private final handleFastHotKeyTyping fastHotKeyTypingHandler = new handleFastHotKeyTyping(this);
+    private final handleHotbarSwapTyping hotbarSwapTypingHandler = new handleHotbarSwapTyping(this);
+    private final handleAutoFishTyping autoFishTypingHandler = new handleAutoFishTyping(this);
+    private final handleMarkLocationTyping markLocationTypingHandler = new handleMarkLocationTyping(this);
+    private final handleInputFieldEditingState inputFieldEditingStateHandler = new handleInputFieldEditingState(this);
+    private final handleScrollbarClicks scrollbarClicksHandler = new handleScrollbarClicks(this);
+    private final handleCategoryButtonClicks categoryButtonClicksHandler = new handleCategoryButtonClicks(this);
+    private final handleModuleButtonClicks moduleButtonClicksHandler = new handleModuleButtonClicks(this);
+    private final handleModuleButtonClick moduleButtonClickHandler = new handleModuleButtonClick(this);
+    private final handleCommandToggleClicks commandToggleClicksHandler = new handleCommandToggleClicks(this);
+    private final handleDropdownClicks dropdownClicksHandler = new handleDropdownClicks(this);
+    private final handleLabelledInputClicks labelledInputClicksHandler = new handleLabelledInputClicks(this);
+    private final handleColorInputClicks colorInputClicksHandler = new handleColorInputClicks(this);
+    private final handleButtonClicks buttonClicksHandler = new handleButtonClicks(this);
+    private final handleScrollbarDrag scrollbarDragHandler = new handleScrollbarDrag(this);
+    private final handleAllInputTyping allInputTypingHandler = new handleAllInputTyping(this);
+    private final handleMouseInput mouseInputHandler = new handleMouseInput(this);
 
-                if (overToggle) {
-                    // Enforce: must have a valid, non-duplicate key to enable
-                    if (!p.enabled) {
-                        if (p.keyCode <= 0) { fhkKeyCaptureIndex = i; return; }
-                        if (isFhkKeyDuplicate(p.keyCode, i)) { return; }
-                        p.enabled = true; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    } else {
-                        p.enabled = false; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    }
-                    // Also select this preset for editing
-                    AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail();
-                    return;
-                }
-                if (overKey) { fhkKeyCaptureIndex = i; return; }
-                if (overRemove) {
-                    if (AllConfig.INSTANCE.FHK_PRESETS.size() > 1) {
-                        AllConfig.INSTANCE.FHK_PRESETS.remove(i);
-                        int newActive = Math.max(0, Math.min(AllConfig.INSTANCE.FHK_ACTIVE_PRESET - (i <= AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? 1 : 0), AllConfig.INSTANCE.FHK_PRESETS.size() - 1));
-                        AllConfig.INSTANCE.setActiveFhkPreset(newActive);
-                        fhkSelectedPreset = -1; fastRows.clear();
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    }
-                    return;
-                }
-                if (overName) { AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail(); return; }
-                y += rowH + gap; // advance to next row baseline
-            }
-            y += 6; // separator gap
-        }
-        // New: Hotbar Swap inline clicks delegated to panel
-        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
-            if (hotbarPanel.handleInlineClick(mouseX, mouseY, ia.contentX, y, ia.contentW)) return;
-            // Continue to other inputs after a small gap
-            y += hotbarPanel.computeSectionHeight(ia.contentW) + 12; // approximate advance for following controls
-        }
-        // Inputs and toggles
-        int yToggle = y;
-        for (Toggle toggle : Toggles) {
-            if (toggle.isMouseOver(mouseX, mouseY, yToggle)) {
-                toggle.toggle();
-                // Add back the terminal settings applier that was missing
-                if (toggle.ref != null && toggle.ref.ConfigType == 4) TerminalSettingsApplier.applyFromAllConfig();
-                return;
-            }
-            yToggle += 22;
-        }
-        // Handle LabelledInput clicks
-        int yLI = y;
-        for (Toggle ignored : Toggles) yLI += 22;
-        for (LabelledInput li : labelledInputs) {
-            if (li.isMouseOver(mouseX, mouseY, yLI)) {
-                for (LabelledInput other : labelledInputs) other.isEditing = false;
-                li.beginEditing(mouseX);
-                return;
-            }
-            yLI += li.getVerticalSpace();
-        }
-        // Handle ColorInput clicks
-        int yCI = y;
-        for (Toggle ignored : Toggles) yCI += 22;
-        for (LabelledInput li : labelledInputs) yCI += li.getVerticalSpace();
-        for (ColorInput ci : ColorInputs) {
-            int inputY = yCI + ci.height + 8;
-            boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15);
-            if (hover) {
-                ci.beginEditing(mouseX);
-                return;
-            }
-            yCI += 50;
-        }
-        // Handle MethodDropdown clicks
-        int yd = y;
-        for (Toggle ignored : Toggles) yd += 22;
-        for (LabelledInput li : labelledInputs) yd += li.getVerticalSpace();
-        for (ColorInput ignored : ColorInputs) yd += 50;
-        for (MethodDropdown dd : methodDropdowns) {
-            int bx = dd.x + 100;
-            int bw = dd.width - 100;
-            int bh = dd.height;
-            boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= yd && mouseY <= yd + bh;
-            if (inBase) {
-                for (MethodDropdown other : methodDropdowns) other.isOpen = false;
-                dd.isOpen = !dd.isOpen;
-                return;
-            }
-            if (dd.isOpen) {
-                for (int i = 0; i < dd.methods.length; i++) {
-                    int optionY = yd + bh + (i * bh);
-                    boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh;
-                    if (inOpt) {
-                        dd.selectMethod(i);
-                        dd.isOpen = false;
-                        return;
-                    }
-                }
-            }
-            yd += 22;
-        }
+    public void handleInlineOptionClicks(int mouseX, int mouseY, InlineArea ia) {
+        inlineOptionClicksHandler.handleInlineOptionClicks(mouseX, mouseY, ia);
     }
 
     private void handleFastHotKeyClicks(int mouseX, int mouseY, int mouseButton) {
-        if (mouseButton != 0) return;
-        int panelX = guiLeft + Dimensions.COMMAND_PANEL_X; int panelY = guiTop + Dimensions.COMMAND_PANEL_Y; int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-        int leftX = panelX + 5; int leftW = panelWidth - 10; int leftContentY = panelY + 25 - commandScroll.getOffset();
-        boolean isInline = optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name);
-        int rightPanelX = isInline ? getInlineDetailX() : (panelX + panelWidth + 6);
-        int rightPanelW = 170;
-        int areaTopY = panelY; int areaBotY = panelY + (Dimensions.GUI_HEIGHT - 60);
-        boolean clickInRight = mouseX >= rightPanelX && mouseX <= rightPanelX + rightPanelW && mouseY >= areaTopY && mouseY <= areaBotY;
-        boolean clickInLeft = !isInline && mouseX >= panelX && mouseX <= panelX + panelWidth && mouseY >= areaTopY && mouseY <= areaBotY;
-
-        // Right-side Preset Editor clicks (both modes)
-        if (clickInRight) {
-            int detailX = rightPanelX; int x = detailX + 5; int contentY = panelY + 25 - commandScroll.getOffset();
-            for (int i = 0; i < fastRows.size(); i++) {
-                FastRow row = fastRows.get(i); int rowTop = contentY + i * Dimensions.FH_ROW_HEIGHT;
-                int labelInputY = rowTop + 14; int commandInputY = labelInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y + 16;
-                if (row.labelInput.isMouseOver(mouseX, mouseY, labelInputY)) { unfocusAllFastInputs(); row.labelInput.beginEditing(mouseX, row.labelInput.x); return; }
-                if (row.commandInput.isMouseOver(mouseX, mouseY, commandInputY)) { unfocusAllFastInputs(); row.commandInput.beginEditing(mouseX, row.commandInput.x); return; }
-                int removeX = x; int removeY = commandInputY + Dimensions.FH_INPUT_HEIGHT + Dimensions.FH_GAP_Y;
-                if (mouseX >= removeX && mouseX <= removeX + Dimensions.FH_REMOVE_WIDTH && mouseY >= removeY && mouseY <= removeY + Dimensions.FH_REMOVE_HEIGHT) {
-                    if (i < AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.size()) {
-                        AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.remove(i);
-                        List<FastHotkeyEntry> old = new ArrayList<>(AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES);
-                        List<FastHotkeyEntry> rebuilt = new ArrayList<>();
-                        for (int j = 0; j < old.size(); j++) rebuilt.add(new FastHotkeyEntry(old.get(j).label, old.get(j).command, j));
-                        java.util.List<FastHotkeyEntry> list = AllConfig.INSTANCE.FHK_PRESETS.get(AllConfig.INSTANCE.FHK_ACTIVE_PRESET).entries;
-                        list.clear(); list.addAll(rebuilt);
-                        AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                        rebuildFastHotkeyRowsForDetail();
-                    }
-                    return;
-                }
-            }
-            int addY = contentY + fastRows.size() * Dimensions.FH_ROW_HEIGHT + 8; int addW = 60;
-            if (mouseX >= x && mouseX <= x + addW && mouseY >= addY && mouseY <= addY + Dimensions.FH_ADD_HEIGHT) {
-                int idx = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.size(); AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.add(new FastHotkeyEntry("", "", idx));
-                ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                rebuildFastHotkeyRowsForDetail();
-            }
-            return;
-        }
-
-        // Left side (only in side-panel mode): presets list + appearance options
-        if (clickInLeft) {
-            // Preset input + confirm
-            int y = leftContentY + 12; if (fhkPresetNameInput != null) {
-                fhkPresetNameInput.setBounds(leftX, y, Math.max(60, leftW - 65), 16);
-                if (fhkPresetNameInput.isMouseOver(mouseX, mouseY)) { unfocusAllFastInputs(); fhkPresetNameInput.beginEditing(mouseX); return; }
-                int btnX = leftX + leftW - 60; if (mouseX >= btnX && mouseX <= btnX + 60 && mouseY >= y && mouseY <= y + 16) {
-                    String name = fhkPresetNameInput.text.trim(); if (!name.isEmpty()) {
-                        boolean exists = false; for (FastHotkeyPreset p : AllConfig.INSTANCE.FHK_PRESETS) { if (p.name.equalsIgnoreCase(name)) { exists = true; break; } }
-                        if (!exists) { AllConfig.INSTANCE.FHK_PRESETS.add(new FastHotkeyPreset(name)); AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_PRESETS.size() - 1); fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET; fhkPresetNameInput.text = ""; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET); rebuildFastHotkeyRowsForDetail(); }
-                    }
-                    return;
-                }
-                y += 22;
-            }
-            // Saved list open/remove
-            y += 12; int presetBtnH = 16;
-            for (int i = 0; i < AllConfig.INSTANCE.FHK_PRESETS.size(); i++) {
-                int openW = Math.max(60, leftW - 70); int openX = leftX; int openY = y; int rmX = leftX + leftW - 60;
-                if (mouseX >= openX && mouseX <= openX + openW && mouseY >= openY && mouseY <= openY + presetBtnH) { AllConfig.INSTANCE.setActiveFhkPreset(i); fhkSelectedPreset = i; rebuildFastHotkeyRowsForDetail(); return; }
-                if (mouseX >= rmX && mouseX <= rmX + 60 && mouseY >= openY && mouseY <= openY + presetBtnH) {
-                    if (AllConfig.INSTANCE.FHK_PRESETS.size() > 1) {
-                        AllConfig.INSTANCE.FHK_PRESETS.remove(i);
-                        int newActive = Math.max(0, Math.min(AllConfig.INSTANCE.FHK_ACTIVE_PRESET - (i <= AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? 1 : 0), AllConfig.INSTANCE.FHK_PRESETS.size() - 1));
-                        AllConfig.INSTANCE.setActiveFhkPreset(newActive);
-                        fhkSelectedPreset = -1; fastRows.clear();
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                    }
-                    return;
-                }
-                y += presetBtnH + 4;
-            }
-            // Appearance options (toggles/inputs/colors)
-            if (handleLabelledInputClicks(mouseX, mouseY)) return;
-            if (handleColorInputClicks(mouseX, mouseY)) return;
-            int yToggle = leftContentY + 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (presetBtnH + 4)) + 6;
-            for (Toggle t : Toggles) { if (t.isMouseOver(mouseX, mouseY, yToggle)) { t.toggle(); return; } yToggle += 22; }
-        }
+        fastHotKeyClicksHandler.handleFastHotKeyClicks(mouseX, mouseY, mouseButton);
     }
 
     private void handleFastHotKeyTyping(char typedChar, int keyCode) {
-        // Handle key capture first
-        if (fhkKeyCaptureIndex >= 0) {
-            if (keyCode == Keyboard.KEY_ESCAPE) { fhkKeyCaptureIndex = -1; return; }
-            if (keyCode > 0) {
-                // Validate: no duplicates, valid name, not NONE
-                String name = Keyboard.getKeyName(keyCode);
-                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
-                    if (!isFhkKeyDuplicate(keyCode, fhkKeyCaptureIndex)) {
-                        FastHotkeyPreset p = AllConfig.INSTANCE.FHK_PRESETS.get(fhkKeyCaptureIndex);
-                        p.keyCode = keyCode;
-                        // Auto-enable now that key is valid and unique
-                        p.enabled = true;
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-                        // Auto-select this preset as active
-                        AllConfig.INSTANCE.setActiveFhkPreset(fhkKeyCaptureIndex); fhkSelectedPreset = fhkKeyCaptureIndex; rebuildFastHotkeyRowsForDetail();
-                        fhkKeyCaptureIndex = -1; return;
-                    } else {
-                        // Duplicate: keep capturing until a unique key is pressed
-                        return;
-                    }
-                } else {
-                    // invalid key, keep capturing
-                    return;
-                }
-            }
-            return;
-        }
-        // Existing text inputs
-        handleAllInputTyping(typedChar, keyCode);
-        for (FastRow row : fastRows) {
-            if (row.labelInput.isEditing) { row.labelInput.handleKeyTyped(typedChar, keyCode); return; }
-            if (row.commandInput.isEditing) { row.commandInput.handleKeyTyped(typedChar, keyCode); return; }
-        }
-    }
-
-    private boolean isFhkKeyDuplicate(int keyCode, int exceptIndex) {
-        if (keyCode <= 0) return false;
-        List<FastHotkeyPreset> list = AllConfig.INSTANCE.FHK_PRESETS;
-        for (int i = 0; i < list.size(); i++) {
-            if (i == exceptIndex) continue;
-            FastHotkeyPreset p = list.get(i);
-            if (p.keyCode == keyCode) return true;
-        }
-        return false;
+        fastHotKeyTypingHandler.handleFastHotKeyTyping(typedChar, keyCode);
     }
 
     // New: Hotbar Swap typing handler delegates to panel
     private void handleHotbarSwapTyping(char typedChar, int keyCode) {
-        // Update any focused hotbar preset input and propagate to HotbarSwap
-        handleAllInputTyping(typedChar, keyCode);
-        hotbarPanel.handleTyping(typedChar, keyCode);
+        fastHotKeyTypingHandler.handleFastHotKeyTyping(typedChar, keyCode);
     }
 
     // New: Auto Fish typing handler to capture Toggle Hotkey
     private void handleAutoFishTyping(char typedChar, int keyCode) {
-        // Find the hotkey input
-        LabelledInput hotkeyInput = null;
-        for (LabelledInput li : labelledInputs) {
-            if (li.ref != null && li.ref.ConfigType == 10 && "autofish_hotkey".equals(li.ref.Key)) { hotkeyInput = li; break; }
-        }
-        if (hotkeyInput != null && hotkeyInput.isEditing) {
-            if (keyCode == Keyboard.KEY_ESCAPE) {
-                // Clear binding
-                hotkeyInput.setDisplayText("Unbound");
-                BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_hotkey");
-                if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = 0; }
-                ConfigIO.INSTANCE.SetConfig("10,autofish_hotkey", 0);
-                hotkeyInput.isEditing = false;
-                return;
-            }
-            if (keyCode > 0) {
-                String name = Keyboard.getKeyName(keyCode);
-                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
-                    hotkeyInput.setDisplayText(name);
-                    BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_hotkey");
-                    if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = keyCode; }
-                    ConfigIO.INSTANCE.SetConfig("10,autofish_hotkey", keyCode);
-                    hotkeyInput.isEditing = false;
-                    return;
-                }
-                // invalid key -> ignore until a valid one pressed
-                return;
-            }
-            return;
-        }
-        // Not editing hotkey -> route to default input handling
-        handleAllInputTyping(typedChar, keyCode);
+        autoFishTypingHandler.handleAutoFishTyping(typedChar, keyCode);
     }
 
     private void handleMarkLocationTyping(char typedChar, int keyCode) {
-        LabelledInput hotkeyInput = null;
-        for (LabelledInput li : labelledInputs) {
-            if (li.ref != null && li.ref.ConfigType == 17 && "marklocation_hotkey".equals(li.ref.Key)) {
-                hotkeyInput = li;
-                break;
-            }
-        }
-        if (hotkeyInput != null && hotkeyInput.isEditing) {
-            if (keyCode == Keyboard.KEY_ESCAPE) {
-                hotkeyInput.setDisplayText("Unbound");
-                BaseConfig<?> cfg = AllConfig.INSTANCE.MARKLOCATION_CONFIGS.get("marklocation_hotkey");
-                if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = 0; }
-                ConfigIO.INSTANCE.SetConfig("17,marklocation_hotkey", 0);
-                hotkeyInput.isEditing = false;
-                return;
-            }
-            if (keyCode > 0) {
-                String name = Keyboard.getKeyName(keyCode);
-                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
-                    hotkeyInput.setDisplayText(name);
-                    BaseConfig<?> cfg = AllConfig.INSTANCE.MARKLOCATION_CONFIGS.get("marklocation_hotkey");
-                    if (cfg != null) { @SuppressWarnings("unchecked") BaseConfig<Object> c = (BaseConfig<Object>) cfg; c.Data = keyCode; }
-                    ConfigIO.INSTANCE.SetConfig("17,marklocation_hotkey", keyCode);
-                    hotkeyInput.isEditing = false;
-                    return;
-                }
-                // invalid key -> ignore until a valid one pressed
-                return;
-            }
-            return;
-        }
-        // Not editing hotkey -> route to default input handling
-        handleAllInputTyping(typedChar, keyCode);
+        markLocationTypingHandler.handleMarkLocationTyping(typedChar, keyCode);
     }
 
-
-    private void unfocusAllFastInputs() {
-        for (FastRow r : fastRows) { r.labelInput.isEditing = false; r.commandInput.isEditing = false; }
-        if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
+    private void handleInputFieldEditingState() {
+        inputFieldEditingStateHandler.handleInputFieldEditingState();
     }
 
-    // New: unfocus Hotbar Swap inputs -> delegate to panel
-    private void unfocusAllHotbarInputs() { hotbarPanel.unfocusAllInputs(); }
-
-    // Input and scroll helpers
-    private void handleInputFieldEditingState() { for (ColorInput c : ColorInputs) c.unfocus(); if (showCommandSettings && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) unfocusAllFastInputs(); if (showCommandSettings && SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) unfocusAllHotbarInputs(); }
-
-    private void handleScrollbarClicks(int mouseX, int mouseY) { if (showCommandSettings && useSidePanelForSelected && commandScroll.checkScrollbarClick(mouseX, mouseY)) return; if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0 && commandScroll.checkScrollbarClick(mouseX, mouseY)) return; if (mainScroll.checkScrollbarClick(mouseX, mouseY)) return; }
+    private void handleScrollbarClicks(int mouseX, int mouseY) {
+        scrollbarClicksHandler.handleScrollbarClicks(mouseX, mouseY);
+    }
 
     private void handleCategoryButtonClicks(int mouseX, int mouseY) {
-        for (GuiButton btn : categoryButtons) {
-            if (mouseX >= btn.xPosition && mouseX <= btn.xPosition + btn.width &&
-                mouseY >= btn.yPosition && mouseY <= btn.yPosition + btn.height) {
-                // Manually trigger the category selection logic
-                selectedCategory = btn.displayString;
-                mainScroll.reset();
-                showCommandSettings = false;
-                SelectedModule = null;
-                useSidePanelForSelected = false;
-                optionsInline = false;
-                buildModuleButtons();
-                return;
-            }
-        }
+        categoryButtonClicksHandler.handleCategoryButtonClicks(mouseX, mouseY);
     }
 
     private void handleModuleButtonClicks(int mouseX, int mouseY) {
-        int scissorX = guiLeft + 115;
-        int scissorY = guiTop + 25;
-        int scissorWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
-        int scissorHeight = Dimensions.GUI_HEIGHT - 70;
-        boolean inVisibleArea = mouseX >= scissorX && mouseX <= scissorX + scissorWidth &&
-                mouseY >= scissorY && mouseY <= scissorY + scissorHeight;
-
-        for (ModuleButton moduleBtn : moduleButtons) {
-            if (inVisibleArea && moduleBtn.isMouseOver(mouseX, mouseY)) {
-                drawTooltip(moduleBtn.getModule().description, mouseX, mouseY);
-            }
-        }
-        for (ModuleButton moduleBtn : moduleButtons) {
-            if (inVisibleArea && moduleBtn.isMouseOver(mouseX, mouseY)) {
-                handleModuleButtonClick(moduleBtn, mouseX, mouseY);
-                return;
-            }
-        }
+        moduleButtonClicksHandler.handleModuleButtonClicks(mouseX, mouseY);
     }
 
-
-    private void handleModuleButtonClick(ModuleButton moduleBtn, int mouseX, int mouseY) {
-        ModuleInfo module = moduleBtn.getModule();
-        if ("Move GUI Position".equals(module.name)) UIHighlighter.enterMoveMode(Minecraft.getMinecraft().currentScreen);
-
-        // Check if this is a right click (mouse button 1) for settings
-        if (Mouse.isButtonDown(1)) { // Right click
-            if (!moduleBtn.hasSettings) {
-                // Show error message for modules without settings - will be handled in drawScreen
-                showNoSettingsError = module.name;
-                noSettingsErrorTime = System.currentTimeMillis();
-                return;
-            }
-
-            // Open settings for modules that have them
-            if (showCommandSettings && SelectedModule == module) {
-                showCommandSettings = false;
-                SelectedModule = null;
-                useSidePanelForSelected = false;
-                optionsInline = false;
-                buildModuleButtons();
-                return;
-            }
-            SelectedModule = module;
-            showCommandSettings = true;
-            if ("Fast Hotkey".equals(SelectedModule.name)) {
-                useSidePanelForSelected = false;
-                optionsInline = true;
-                fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET;
-                rebuildFastHotkeyRowsForDetail();
-            } else {
-                useSidePanelForSelected = false;
-                optionsInline = true;
-            }
-            initializeCommandToggles();
-            buildModuleButtons();
-            return;
-        } else {
-            // Left click - toggle module on/off
-            boolean wasEnabled = module.Data;
-            module.Data = !module.Data;
-            if (wasEnabled && !module.Data && SelectedModule == module) {
-                showCommandSettings = false;
-                SelectedModule = null;
-                useSidePanelForSelected = false;
-                optionsInline = false;
-                buildModuleButtons();
-            }
-        }
+    public void handleModuleButtonClick(ModuleButton moduleBtn, int mouseX, int mouseY) {
+        moduleButtonClickHandler.handleModuleButtonClick(moduleBtn, mouseX, mouseY);
     }
 
     private void handleCommandToggleClicks(int mouseX, int mouseY) {
-        if (!showCommandSettings) return;
-        if (optionsInline && SelectedModule != null) { InlineArea ia = getInlineAreaForSelected(); if (ia != null) handleInlineOptionClicks(mouseX, mouseY, ia); return; }
-        if (handleLabelledInputClicks(mouseX, mouseY)) return;
-        if (handleDropdownClicks(mouseX, mouseY)) return;
-        if (handleColorInputClicks(mouseX, mouseY)) return;
-
-        // Handle button clicks for side panel mode
-        if (handleButtonClicks(mouseX, mouseY)) return;
-
-        if (SelectedModule == null) return;
-        int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle toggle : Toggles) {
-            if (toggle.isMouseOver(mouseX, mouseY, y)) {
-                toggle.toggle();
-                return;
-            }
-            y += 22;
-        }
+        commandToggleClicksHandler.handleCommandToggleClicks(mouseX, mouseY);
     }
 
-    private boolean handleDropdownClicks(int mouseX, int mouseY) {
-        if (SelectedModule == null) return false;
-        int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle ignored : Toggles) y += 22;
-        for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
-        for (ColorInput ignored : ColorInputs) y += 50;
-        for (MethodDropdown dd : methodDropdowns) {
-            int bx = dd.x + 100, bw = dd.width - 100, bh = dd.height;
-            boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= y && mouseY <= y + bh;
-            if (inBase) {
-                for (MethodDropdown other : methodDropdowns) other.isOpen = false;
-                dd.isOpen = !dd.isOpen;
-                return true; // Make sure this returns true so the UI updates
-            }
-            if (dd.isOpen) {
-                for (int i = 0; i < dd.methods.length; i++) {
-                    int optionY = y + bh + (i * bh);
-                    boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh;
-                    if (inOpt) {
-                        dd.selectMethod(i);
-                        dd.isOpen = false;
-                        return true;
-                    }
-                }
-            }
-            y += 22;
-        }
+    public boolean handleDropdownClicks(int mouseX, int mouseY) {
+        dropdownClicksHandler.handleDropdownClicks(mouseX, mouseY);
         return false;
     }
 
 
-    private boolean handleLabelledInputClicks(int mouseX, int mouseY) {
-        if (SelectedModule == null) return false; int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle ignored : Toggles) y += 22;
-        for (LabelledInput li : labelledInputs) { if (li.isMouseOver(mouseX, mouseY, y)) { for (LabelledInput other : labelledInputs) other.isEditing = false; li.beginEditing(mouseX); return true; } y += li.getVerticalSpace(); }
+    public boolean handleLabelledInputClicks(int mouseX, int mouseY) {
+        labelledInputClicksHandler.handleLabelledInputClicks(mouseX, mouseY);
         return false;
     }
 
-    private boolean handleColorInputClicks(int mouseX, int mouseY) {
-        if (SelectedModule == null) return false; int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle ignored : Toggles) y += 22; for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
-        for (ColorInput ci : ColorInputs) { int inputY = y + ci.height + 8; boolean hover = (mouseX >= ci.x + 40 && mouseX <= ci.x + ci.width && mouseY >= inputY - 2 && mouseY <= inputY + 15); if (hover) { ci.beginEditing(mouseX); return true; } y += 50; }
+    public boolean handleColorInputClicks(int mouseX, int mouseY) {
+        colorInputClicksHandler.handleColorInputClicks(mouseX, mouseY);
         return false;
     }
 
-    private boolean handleButtonClicks(int mouseX, int mouseY) {
-        if (SelectedModule == null) return false;
-        int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-        for (Toggle ignored : Toggles) y += 22;
-        for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
-        for (ColorInput ignored : ColorInputs) y += 50;
-        for (MethodDropdown ignored : methodDropdowns) y += 22;
+    public boolean handleButtonClicks(int mouseX, int mouseY) {
+        buttonClicksHandler.handleButtonClicks(mouseX, mouseY);
         return false;
     }
 
-    private void handleScrollbarDrag(int mouseX, int mouseY) { if (mainScroll.isDragging) mainScroll.handleDrag(mouseX, mouseY, this::buildModuleButtons); if ((useSidePanelForSelected || (optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0)) && commandScroll.isDragging) commandScroll.handleDrag(mouseX, mouseY, null); }
+    private void handleScrollbarDrag(int mouseX, int mouseY) {
+        scrollbarDragHandler.handleScrollbarDrag(mouseX, mouseY);
+    }
 
-    private void handleAllInputTyping(char typedChar, int keyCode) { if (!showCommandSettings) return; for (ColorInput t : ColorInputs) t.handleKeyTyped(typedChar, keyCode); for (LabelledInput t : labelledInputs) t.handleKeyTyped(typedChar, keyCode); }
+    public void handleAllInputTyping(char typedChar, int keyCode) {
+        allInputTypingHandler.handleAllInputTyping(typedChar, keyCode);
+    }
+
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        mouseInputHandler.handleMouseInput();
+    }
 
     // Build UI lists
     private void buildCategoryButtons() {
@@ -858,7 +437,7 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private void buildModuleButtons() {
+    public void buildModuleButtons() {
         moduleButtons.clear(); int listX = guiLeft + 120; int listY = guiTop + 28; int listW = Dimensions.GUI_WIDTH - 120 - 10 - Dimensions.SCROLLBAR_WIDTH; int y = listY - mainScroll.getOffset(); int rowH = 20; int usedHeight = 0;
         for (BaseConfig<?> mi : AllConfig.INSTANCE.MODULES.values()) {
             ModuleInfo info = (ModuleInfo) mi; if (!info.category.equals(selectedCategory)) continue;
@@ -893,7 +472,7 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private void initializeCommandToggles() {
+    public void initializeCommandToggles() {
         Toggles.clear(); labelledInputs.clear(); methodDropdowns.clear(); ColorInputs.clear(); if (SelectedModule == null) return;
         Integer y = guiTop + Dimensions.COMMAND_PANEL_Y + 30;
         switch (SelectedModule.name) {
@@ -995,8 +574,6 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private void addFhkEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 6); }
-
     public void Add_SubSetting_Command(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.COMMAND_CONFIGS.entrySet()) AddEntryAsOption(e, y, 0); }
     public void Add_SubSetting_NoDebuff(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.NODEBUFF_CONFIGS.entrySet()) AddEntryAsOption(e, y, 2); }
     public void Add_SubSetting_Etherwarp(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.ETHERWARP_CONFIGS.entrySet()) AddEntryAsOption(e, y, 3); }
@@ -1042,67 +619,30 @@ public class ModSettingsGui extends GuiScreen {
         }
     }
 
-    private void rebuildFastHotkeyRowsForDetail() {
+    public void rebuildFastHotkeyRowsForDetail() {
         fastRows.clear(); if (!("Fast Hotkey".equals(SelectedModule != null ? SelectedModule.name : null))) return;
         int detailBaseX = useSidePanelForSelected ? (guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH + 6 + 5) : (getInlineDetailX() + 5);
         int detailInputW = 170 - 10;
         for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
     }
 
-    @Override
-    public void handleMouseInput() throws IOException {
-        super.handleMouseInput();
-
-        int dWheel = Mouse.getEventDWheel();
-        if (dWheel != 0) {
-            int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
-            int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-
-            // Normalize scroll direction and amount
-            int scrollDirection = dWheel > 0 ? -1 : 1;
-            int scrollAmount = 15; // Pixels to scroll per wheel notch
-
-            // Check if mouse is over the main module list area
-            int moduleListX = guiLeft + 115;
-            int moduleListY = guiTop + 25;
-            int moduleListWidth = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH;
-            int moduleListHeight = Dimensions.GUI_HEIGHT - 50;
-
-            boolean overModuleList = mouseX >= moduleListX && mouseX <= moduleListX + moduleListWidth &&
-                    mouseY >= moduleListY && mouseY <= moduleListY + moduleListHeight;
-
-            // Check if mouse is over command panel area (when visible)
-            boolean overCommandPanel = false;
-            if (showCommandSettings && useSidePanelForSelected) {
-                int panelX = guiLeft + Dimensions.COMMAND_PANEL_X;
-                int panelY = guiTop + Dimensions.COMMAND_PANEL_Y;
-                int panelWidth = Dimensions.COMMAND_PANEL_WIDTH;
-                int panelHeight = Dimensions.GUI_HEIGHT - 60;
-                overCommandPanel = mouseX >= panelX && mouseX <= panelX + panelWidth &&
-                        mouseY >= panelY && mouseY <= panelY + panelHeight;
-            }
-
-            // Check if mouse is over Fast Hotkey detail panel (when visible)
-            boolean overDetailPanel = false;
-            if (showCommandSettings && optionsInline && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name) && fhkSelectedPreset >= 0) {
-                int detailX = getInlineDetailX();
-                int detailW = 170;
-                int detailY = guiTop + Dimensions.COMMAND_PANEL_Y;
-                int detailH = Dimensions.GUI_HEIGHT - 60;
-                overDetailPanel = mouseX >= detailX && mouseX <= detailX + detailW &&
-                        mouseY >= detailY && mouseY <= detailY + detailH;
-            }
-
-            // Apply scrolling to the appropriate scroll manager
-            if (overCommandPanel || overDetailPanel) {
-                // Scroll the command panel
-                commandScroll.scroll(scrollDirection * scrollAmount);
-            } else if (overModuleList) {
-                // Scroll the main module list
-                mainScroll.scroll(scrollDirection * scrollAmount);
-                buildModuleButtons(); // Rebuild to update positions
-            }
+    public boolean isFhkKeyDuplicate(int keyCode, int exceptIndex) {
+        if (keyCode <= 0) return false;
+        List<FastHotkeyPreset> list = AllConfig.INSTANCE.FHK_PRESETS;
+        for (int i = 0; i < list.size(); i++) {
+            if (i == exceptIndex) continue;
+            FastHotkeyPreset p = list.get(i);
+            if (p.keyCode == keyCode) return true;
         }
+        return false;
     }
+
+    public void unfocusAllFastInputs() {
+        for (FastRow r : fastRows) { r.labelInput.isEditing = false; r.commandInput.isEditing = false; }
+        if (fhkPresetNameInput != null) fhkPresetNameInput.isEditing = false;
+    }
+
+    // New: unfocus Hotbar Swap inputs -> delegate to panel
+    public void unfocusAllHotbarInputs() { hotbarPanel.unfocusAllInputs(); }
 }
 
