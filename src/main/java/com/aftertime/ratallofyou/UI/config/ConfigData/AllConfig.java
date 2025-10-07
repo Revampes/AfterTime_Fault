@@ -140,7 +140,7 @@ public class AllConfig {
         put("marklocation_hotkey", new BaseConfig<>("Toggle Hotkey", "Press a key to bind a toggle for Auto Fish (ESC to clear)", 0));
     }};
 
-    // New: Player ESP sub-settings (index 12 in AllConfig.ALLCONFIGS)
+    // New: Player ESP sub-settings (index 13 in AllConfig.ALLCONFIGS)
     public final LinkedHashMap<String, BaseConfig<?>> PLAYERESP_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
         put("playeresp_mode", new BaseConfig<>("Mode", "ESP render mode", new DataType_DropDown(0, new String[]{"Wireframe", "Filled"})));
@@ -172,7 +172,7 @@ public class AllConfig {
         put("kuudra_kuudradirection", new ModuleInfo("Kuudra Directions", "Show directions of kuudra in P5", "Kuudra", false));
         put("kuudra_kuudrahp", new ModuleInfo("Kuudra HP", "Show Kuudra's HP", "Kuudra", false));
         put("kuudra_kuudrahitbox", new ModuleInfo("Kuudra Hitbox", "Show Kuudra's Hitbox", "Kuudra", false));
-        put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false));
+        put("kuudra_chestopennotice", new ModuleInfo("Chest Open Notice", "Announce/tally chest loots; optional auto-open & requeue", "Kuudra", false, 7));
         put("kuudra_blockuselessperks", new ModuleInfo("Block Useless Perks (not working)", "Hide specified perks in Kuudra Perk Menu", "Kuudra", false));
         put("kuudra_arrowpoison", new ModuleInfo("Arrow Poison Tracker", "HUD showing Twilight/Toxic Arrow Poison and P1 alert", "Kuudra", false));
         put("kuudra_cratepriority", new ModuleInfo("Crate Priority", "Show next action when a crate is missing (No <spot> call)", "Kuudra", false));
@@ -186,42 +186,42 @@ public class AllConfig {
         put("dungeons_keyhighlighter",new ModuleInfo("Key Highlighter", "Highlights Key", "Dungeons", false));
         put("dungeons_starmobhighlighter",new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false));
         put("dungeons_secretclicks",new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false));
-        put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false));
+        put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false, 4));
         put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
         put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
         put("dungeons_healerwishalert", new ModuleInfo("Healer Wish Alert", "Alert when needed to wish", "Dungeons", false));
         put("dungeons_findcorrectlivid", new ModuleInfo("Find Correct Livid (not working)", "Highlights the correct Livid in Floor 5 boss fight", "Dungeons", false));
         put("dungeons_salvageitem", new ModuleInfo("Salvage Item Highlighter", "Highlight salvageable dungeon items in chest GUIs", "Dungeons", false));
-        put("dungeons_autosell", new ModuleInfo("Auto Sell", "Automatically sell specified items in trade windows", "Dungeons", false));
+        put("dungeons_autosell", new ModuleInfo("Auto Sell", "Automatically sell specified items in trade windows", "Dungeons", false, 11));
 
         // SkyBlock
-        put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false));
+        put("skyblock_partycommands",new ModuleInfo("Party Commands", "Only work in party chat", "SkyBlock", false, 0));
         put("skyblock_waypointgrab", new ModuleInfo("Waypoint", "Render beacon beam for waypoints", "SkyBlock", false));
         put("skyblock_autosprint",new ModuleInfo("Toggle Sprint", "Automatically sprint when moving", "SkyBlock", false));
-        put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false));
-        put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false));
+        put("skyblock_fasthotkey",new ModuleInfo("Fast Hotkey", "Fast hotkey switching", "SkyBlock", false, 6));
+        put("skyblock_hotbarswap", new ModuleInfo("Hotbar Swap", "Swap to saved hotbar via keybind or message", "SkyBlock", false, 8));
         put("skyblock_searchbar", new ModuleInfo("Inventory Search Bar", "Search and highlight items in open containers", "SkyBlock", false));
         put("skyblock_flareflux", new ModuleInfo("Flare/Flux Timer", "Detect nearby Flux or Flare and show a timer/label", "SkyBlock", false));
         put("skyblock_storageoverview", new ModuleInfo("Storage Overview", "Left-panel overlay showing Ender Chests/Backpacks contents", "SkyBlock", false));
-        put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false));
+        put("skyblock_autoexperiment", new ModuleInfo("Auto Experiment", "Chronomatron/Ultrasequencer helper (Use at your own risk)", "SkyBlock", false, 12));
         put("skyblock_superpairs", new ModuleInfo("Super Pairs", "Highlight matching pairs in the Superpairs experiment", "SkyBlock", false));
-        put("skyblock_marklocation", new ModuleInfo("Mark Location", "Send the coordinates that you currently look at", "SkyBlock", false));
+        put("skyblock_marklocation", new ModuleInfo("Mark Location", "Send the coordinates that you currently look at", "SkyBlock", false, 17));
 
         // Slayer
         put("slayer_miniboss", new ModuleInfo("Highlight nearby miniboss", "Highlight nearby miniboss", "Slayer", false));
 
         //Fishing
-        put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false));
+        put("fishing_autofish", new ModuleInfo("Auto Fish", "Automatically fish: reel on splash and re-throw", "Fishing", false, 10));
 
         // Render
         put("render_fullbright",new ModuleInfo("FullBright", "SHINE!", "Render", false));
-        put("render_nodebuff",new ModuleInfo("No Debuff", "Removes negative effects", "Render", false));
-        put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false));
-        put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false));
-        put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false));
-        put("render_customcape", new ModuleInfo("Custom Cape", "Load custom cape from capes/ directory (PNG/GIF)", "Render", false));
+        put("render_nodebuff",new ModuleInfo("No Debuff", "Removes negative effects", "Render", false, 2));
+        put("render_etherwarpoverlay",new ModuleInfo("Etherwarp Overlay", "Shows where you'll teleport with etherwarp", "Render", false, 3));
+        put("render_playeresp", new ModuleInfo("Player ESP", "Highlight other players with boxes/glow", "Render", false, 13));
+        put("render_nametag", new ModuleInfo("NameTag", "Render name tags for players (filters NPCs)", "Render", false, 14));
+        put("render_customcape", new ModuleInfo("Custom Cape", "Load custom cape from capes/ directory (PNG/GIF)", "Render", false, 15));
         put("render_nohurtcam", new ModuleInfo("No Hurt Camera", "Disable Camera shaking when getting hurted", "Render", false));
-        put("render_darkmode", new ModuleInfo("DarkMode", "idk", "Render", false));
+        put("render_darkmode", new ModuleInfo("DarkMode", "idk", "Render", false, 16));
 
         //Performance
         put("performance_hideuselessmsg",new ModuleInfo("Hide Useless Message", "Hide Message Yes!", "Performance", false));

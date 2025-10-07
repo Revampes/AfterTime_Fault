@@ -225,6 +225,26 @@ public class ModSettingsGui extends GuiScreen {
     private final drawTooltip tooltipDrawer = new drawTooltip(this);
     private final drawDropdownOverlays dropdownOverlaysDrawer = new drawDropdownOverlays(this);
 
+    private final handleInlineOptionClicks inlineOptionClicksHandler = new handleInlineOptionClicks(this);
+    private final handleFastHotKeyClicks fastHotKeyClicksHandler = new handleFastHotKeyClicks(this);
+    private final handleFastHotKeyTyping fastHotKeyTypingHandler = new handleFastHotKeyTyping(this);
+    private final handleHotbarSwapTyping hotbarSwapTypingHandler = new handleHotbarSwapTyping(this);
+    private final handleAutoFishTyping autoFishTypingHandler = new handleAutoFishTyping(this);
+    private final handleMarkLocationTyping markLocationTypingHandler = new handleMarkLocationTyping(this);
+    private final handleInputFieldEditingState inputFieldEditingStateHandler = new handleInputFieldEditingState(this);
+    private final handleScrollbarClicks scrollbarClicksHandler = new handleScrollbarClicks(this);
+    private final handleCategoryButtonClicks categoryButtonClicksHandler = new handleCategoryButtonClicks(this);
+    private final handleModuleButtonClicks moduleButtonClicksHandler = new handleModuleButtonClicks(this);
+    private final handleModuleButtonClick moduleButtonClickHandler = new handleModuleButtonClick(this);
+    private final handleCommandToggleClicks commandToggleClicksHandler = new handleCommandToggleClicks(this);
+    private final handleDropdownClicks dropdownClicksHandler = new handleDropdownClicks(this);
+    private final handleLabelledInputClicks labelledInputClicksHandler = new handleLabelledInputClicks(this);
+    private final handleColorInputClicks colorInputClicksHandler = new handleColorInputClicks(this);
+    private final handleButtonClicks buttonClicksHandler = new handleButtonClicks(this);
+    private final handleScrollbarDrag scrollbarDragHandler = new handleScrollbarDrag(this);
+    private final handleAllInputTyping allInputTypingHandler = new handleAllInputTyping(this);
+    private final handleMouseInput mouseInputHandler = new handleMouseInput(this);
+
     private void drawBackground() {
         backgroundDrawer.drawBackground();
     }
@@ -317,26 +337,6 @@ public class ModSettingsGui extends GuiScreen {
         int h = Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
     }
 
-    private final handleInlineOptionClicks inlineOptionClicksHandler = new handleInlineOptionClicks(this);
-    private final handleFastHotKeyClicks fastHotKeyClicksHandler = new handleFastHotKeyClicks(this);
-    private final handleFastHotKeyTyping fastHotKeyTypingHandler = new handleFastHotKeyTyping(this);
-    private final handleHotbarSwapTyping hotbarSwapTypingHandler = new handleHotbarSwapTyping(this);
-    private final handleAutoFishTyping autoFishTypingHandler = new handleAutoFishTyping(this);
-    private final handleMarkLocationTyping markLocationTypingHandler = new handleMarkLocationTyping(this);
-    private final handleInputFieldEditingState inputFieldEditingStateHandler = new handleInputFieldEditingState(this);
-    private final handleScrollbarClicks scrollbarClicksHandler = new handleScrollbarClicks(this);
-    private final handleCategoryButtonClicks categoryButtonClicksHandler = new handleCategoryButtonClicks(this);
-    private final handleModuleButtonClicks moduleButtonClicksHandler = new handleModuleButtonClicks(this);
-    private final handleModuleButtonClick moduleButtonClickHandler = new handleModuleButtonClick(this);
-    private final handleCommandToggleClicks commandToggleClicksHandler = new handleCommandToggleClicks(this);
-    private final handleDropdownClicks dropdownClicksHandler = new handleDropdownClicks(this);
-    private final handleLabelledInputClicks labelledInputClicksHandler = new handleLabelledInputClicks(this);
-    private final handleColorInputClicks colorInputClicksHandler = new handleColorInputClicks(this);
-    private final handleButtonClicks buttonClicksHandler = new handleButtonClicks(this);
-    private final handleScrollbarDrag scrollbarDragHandler = new handleScrollbarDrag(this);
-    private final handleAllInputTyping allInputTypingHandler = new handleAllInputTyping(this);
-    private final handleMouseInput mouseInputHandler = new handleMouseInput(this);
-
     public void handleInlineOptionClicks(int mouseX, int mouseY, InlineArea ia) {
         inlineOptionClicksHandler.handleInlineOptionClicks(mouseX, mouseY, ia);
     }
@@ -421,12 +421,10 @@ public class ModSettingsGui extends GuiScreen {
     // Build UI lists
     private void buildCategoryButtons() {
         categoryButtons.clear();
-        // Don't clear buttonList here or add category buttons to it - we want custom rendering only
         int y = guiTop + 30; int x = guiLeft + 10;
         for (int i = 0; i < AllConfig.INSTANCE.Categories.size(); i++) {
             GuiButton b = new GuiButton(1000 + i, x, y, 95, 18, AllConfig.INSTANCE.Categories.get(i));
             categoryButtons.add(b);
-            // Don't add to buttonList to prevent default texture rendering
             y += 20;
         }
     }
@@ -443,81 +441,32 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     private boolean hasSettings(ModuleInfo module) {
-        if (module == null || module.name == null) return false;
-        switch (module.name) {
-            case "Dungeon Terminals":
-            case "Party Commands":
-            case "No Debuff":
-            case "Etherwarp Overlay":
-            case "Fast Hotkey":
-            case "Chest Open Notice":
-            case "Hotbar Swap":
-            case "Auto Fish":
-            case "Auto Sell":
-            case "Auto Experiment":
-            case "NameTag":
-            case "Player ESP":
-            case "Custom Cape":
-            case "DarkMode":
-            case "Mark Location":
-                return true;
-            default:
-                return false;
-        }
+        if (module == null) return false;
+        return module.configGroupIndex != null; // Generic: has a config group => has settings
     }
 
     public void initializeCommandToggles() {
         Toggles.clear(); labelledInputs.clear(); methodDropdowns.clear(); ColorInputs.clear(); if (SelectedModule == null) return;
         Integer y = guiTop + Dimensions.COMMAND_PANEL_Y + 30;
-        switch (SelectedModule.name) {
-            case "Dungeon Terminals": Add_SubSetting_Terminal(y); break;
-            case "Party Commands": Add_SubSetting_Command(y); break;
-            case "No Debuff": Add_SubSetting_NoDebuff(y); break;
-            case "Etherwarp Overlay": Add_SubSetting_Etherwarp(y); break;
-            case "Fast Hotkey": Add_SubSetting_FastHotkey(y); break;
-            case "Chest Open Notice": Add_SubSetting_ChestOpen(y); break;
-            case "Hotbar Swap": Add_SubSetting_HotbarSwap(y); hotbarPanel.rebuildRows(); break;
-            case "Auto Fish": Add_SubSetting_AutoFish(y); break;
-            case "Auto Sell": Add_SubSetting_AutoSell(y); break;
-            case "Auto Experiment": Add_SubSetting_AutoExperiment(y); break;
-            case "NameTag": Add_SubSetting_NameTag(y); break; // New
-            case "Player ESP": Add_SubSetting_PlayerESP(y); break; //
-            case "Custom Cape": Add_SubSetting_CustomCape(y); break;
-            case "DarkMode": Add_SubSetting_DarkMode(y); break;
-            case "Mark Location": Add_SubSetting_MarkLocation(y); break;
+        // Generic: populate from the module's declared config group
+        Integer group = SelectedModule.configGroupIndex;
+        if (group != null) {
+            Map<String, BaseConfig<?>> groupMap = AllConfig.INSTANCE.ALLCONFIGS.get(group);
+            if (groupMap != null) {
+                for (Map.Entry<String, BaseConfig<?>> e : groupMap.entrySet()) {
+                    AddEntryAsOption(e, y, group);
+                }
+            }
         }
-        int contentHeight = 0; if (useSidePanelForSelected && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
+        // Special per-panel upkeep (no UI injection): keep Hotbar Swap rows in sync
+        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
+            hotbarPanel.rebuildRows();
+        }
+        int contentHeight = 0; if (useSidePanelForSelected && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
         int panelViewHeight = Dimensions.GUI_HEIGHT - 60 - 25;
-        // Only update commandScroll position/size for side panel mode; inline mode updates in draw methods as needed
         if (useSidePanelForSelected) {
             commandScroll.update(contentHeight, panelViewHeight); commandScroll.updateScrollbarPosition(guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH - Dimensions.SCROLLBAR_WIDTH - 2, guiTop + Dimensions.COMMAND_PANEL_Y + 25, panelViewHeight);
-        }
-    }
-
-    // New: NameTag sub-settings (index 13 in AllConfig.ALLCONFIGS)
-    public void Add_SubSetting_NameTag(Integer y) {
-        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.NAMETAG_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 13);
-        }
-    }
-
-    // New: Player ESP sub-settings (index 12 in AllConfig.ALLCONFIGS)
-    public void Add_SubSetting_PlayerESP(Integer y) {
-        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.PLAYERESP_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 12);
-        }
-    }
-
-    public void Add_SubSetting_CustomCape(Integer y) {
-        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.CUSTOMCAPE_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 14);
-        }
-    }
-
-    public void Add_SubSetting_DarkMode(Integer y) {
-        for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.DARKMODE_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 16);
         }
     }
 
@@ -552,65 +501,6 @@ public class ModSettingsGui extends GuiScreen {
         else if (type.equals(DataType_DropDown.class)) { DataType_DropDown dd = (DataType_DropDown) data; methodDropdowns.add(new MethodDropdown(ref, entry.getValue().name, dd.selectedIndex, xPos, y, width, 16, dd.options)); }
         else if (type.equals(Color.class)) ColorInputs.add(new ColorInput(ref, entry.getValue().name, (Color) data, xPos, y, width, 18));
         else System.err.println("Unsupported config type: " + type);
-    }
-
-    private void Add_SubSetting_Terminal(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.TERMINAL_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 4);
-        }
-    }
-
-    private void addTerminalEntry(String key, Integer y) { BaseConfig<?> cfg = AllConfig.INSTANCE.TERMINAL_CONFIGS.get(key); if (cfg == null) return; AddEntryAsOption(new java.util.AbstractMap.SimpleEntry<>(key, cfg), y, 4); }
-
-    public void Add_SubSetting_FastHotkey(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 6);
-        }
-    }
-
-    public void Add_SubSetting_Command(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.COMMAND_CONFIGS.entrySet()) AddEntryAsOption(e, y, 0); }
-    public void Add_SubSetting_NoDebuff(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.NODEBUFF_CONFIGS.entrySet()) AddEntryAsOption(e, y, 2); }
-    public void Add_SubSetting_Etherwarp(Integer y) { for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.ETHERWARP_CONFIGS.entrySet()) AddEntryAsOption(e, y, 3); }
-
-    // New: Chest Open Notice sub-settings (index 7 in AllConfig.ALLCONFIGS)
-    public void Add_SubSetting_ChestOpen(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.KUUDRA_CHESTOPEN_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 7);
-        }
-    }
-
-    // New: Hotbar Swap sub-settings (index 8 in AllConfig.ALLCONFIGS)
-    public void Add_SubSetting_HotbarSwap(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 8);
-        }
-    }
-
-    // Restore: Auto Fish sub-settings (index 10)
-    public void Add_SubSetting_AutoFish(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOFISH_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 10);
-        }
-    }
-
-    // Restore: Auto Sell sub-settings (index 11)
-    public void Add_SubSetting_AutoSell(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOSELL_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 11);
-        }
-    }
-
-    // Restore: Auto Experiment sub-settings (index 12)
-    public void Add_SubSetting_AutoExperiment(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 12);
-        }
-    }
-
-    public void Add_SubSetting_MarkLocation(Integer y) {
-        for (Map.Entry<String, BaseConfig<?>> e : AllConfig.INSTANCE.MARKLOCATION_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 17);
-        }
     }
 
     public void rebuildFastHotkeyRowsForDetail() {

@@ -9,18 +9,13 @@ public class ModuleButton extends GuiElement{
     final int x, y, width, height;
     final ModuleInfo module;
     public final boolean hasSettings; // Make this public so ModSettingsGui can access it
-    private static final String SETTINGS_LABEL = "[Settings]";
-    // Cached bounds for the settings label to make click area accurate after draw
-    private int settingsStartX;
-    private int settingsEndX;
+    private static final int HAMBURGER_W = 10;
+    private static final int HAMBURGER_H = 6;
 
     public ModuleButton(int x, int y, int width, int height, ModuleInfo module, boolean hasSettings)
     {
         super( x, y, width, height);
         this.x=x; this.y=y; this.width=width; this.height=height; this.module=module; this.hasSettings = hasSettings;
-        // Default conservative area at the far right, will be updated during draw()
-        this.settingsStartX = x + width - 24;
-        this.settingsEndX = x + width;
     }
     @Override
     public void draw(int mouseX, int mouseY, int PosY,FontRenderer fr) {
@@ -30,8 +25,18 @@ public class ModuleButton extends GuiElement{
         int textY = y + (height - 8) / 2; // Center the text vertically in the button
         fr.drawStringWithShadow(module.name, x + 6, textY, Colors.TEXT);
 
-        // No longer showing description or [Settings] label by default
-        // These will be shown only in hover popup
+        // Draw triple-bar (hamburger) indicator when settings exist
+        if (hasSettings) {
+            int pad = 8;
+            int iconX = x + width - pad - HAMBURGER_W;
+            int iconY = y + (height - HAMBURGER_H) / 2;
+            boolean hover = mouseX >= iconX && mouseX <= iconX + HAMBURGER_W && mouseY >= iconY && mouseY <= iconY + HAMBURGER_H;
+            int col = hover ? 0xFFFFFFFF : 0xFFCCCCCC;
+            // three 1px lines with 2px spacing
+            Gui.drawRect(iconX, iconY, iconX + HAMBURGER_W, iconY + 1, col);
+            Gui.drawRect(iconX, iconY + 2, iconX + HAMBURGER_W, iconY + 3, col);
+            Gui.drawRect(iconX, iconY + 4, iconX + HAMBURGER_W, iconY + 5, col);
+        }
     }
     public boolean isMouseOver(int mx, int my) { return mx >= x && mx <= x + width && my >= y && my <= y + height; }
     public boolean isDropdownClicked(int mx, int my) {

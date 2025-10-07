@@ -44,26 +44,8 @@ public class drawCommandPanel {
             if (gui.fhkSelectedPreset >= 0) gui.drawFastHotkeyDetailPanel(mouseX, mouseY, panelX, panelY, panelWidth, panelHeight);
             return;
         }
-        // Inject module-specific sub-settings
+        // Draw all UI elements using the already-populated lists (generic sub-settings)
         int y = panelY + 30 - gui.commandScroll.getOffset();
-        switch (gui.SelectedModule.name) {
-            case "Party Commands": gui.Add_SubSetting_Command(y); break;
-            case "No Debuff": gui.Add_SubSetting_NoDebuff(y); break;
-            case "Etherwarp Overlay": gui.Add_SubSetting_Etherwarp(y); break;
-            case "Fast Hotkey": gui.Add_SubSetting_FastHotkey(y); break;
-            case "Chest Open Notice": gui.Add_SubSetting_ChestOpen(y); break;
-            case "Hotbar Swap": gui.Add_SubSetting_HotbarSwap(y); gui.hotbarPanel.rebuildRows(); break;
-            case "Auto Fish": gui.Add_SubSetting_AutoFish(y); break;
-            case "Auto Sell": gui.Add_SubSetting_AutoSell(y); break;
-            case "Auto Experiment": gui.Add_SubSetting_AutoExperiment(y); break;
-            case "NameTag": gui.Add_SubSetting_NameTag(y); break; // New
-            case "Player ESP": gui.Add_SubSetting_PlayerESP(y); break; //
-            case "DarkMode": gui.Add_SubSetting_DarkMode(y); break;
-            case "Custom Cape": gui.Add_SubSetting_CustomCape(y); break;
-            case "Mark Location": gui.Add_SubSetting_MarkLocation(y); break;
-        }
-        // Draw all UI elements in order
-        y = panelY + 30 - gui.commandScroll.getOffset();
         for (Toggle t : gui.Toggles) {
             t.draw(mouseX, mouseY, y, fontRenderer);
             y += 22;
