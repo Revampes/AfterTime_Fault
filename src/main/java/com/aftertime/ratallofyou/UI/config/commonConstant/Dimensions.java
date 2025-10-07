@@ -3,9 +3,6 @@ public final class Dimensions {
     public static final int GUI_WIDTH = 480;
     public static final int GUI_HEIGHT = 295; // Increased from 300 to 400 to show footer completely
     public static final int SCROLLBAR_WIDTH = 6;
-    public static final int MIN_SCROLLBAR_HEIGHT = 20;
-    public static final int TEXT_PADDING = 10;
-    public static final int LINE_HEIGHT = 9;
     public static final int MODULE_LIST_X = 120;
     // Keep the module list width the same so the right-side panel anchor doesn't shift
     public static final int MODULE_LIST_WIDTH = 270;
