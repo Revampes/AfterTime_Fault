@@ -86,11 +86,12 @@ public class drawInlineSettingsBox {
             y += 50;
         }
 
-        // Draw dropdown base buttons (without expanded options)
-        int ydd = y;
+        // Record baseline for the inline dropdown overlay and draw bases
+        int baseY = y;
+        gui.inlineDropdownBaseY = baseY;
         for (MethodDropdown dd : gui.methodDropdowns) {
-            dd.drawBase(mouseX, mouseY, ydd, fontRenderer);
-            ydd += 22;
+            dd.drawBase(mouseX, mouseY, baseY, fontRenderer);
+            baseY += 22;
         }
     }
 }

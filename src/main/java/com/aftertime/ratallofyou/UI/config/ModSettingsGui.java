@@ -67,6 +67,9 @@ public class ModSettingsGui extends GuiScreen {
     // Fast Hotkey inline key-capture index
     public int fhkKeyCaptureIndex = -1;
 
+    // Tracks dropdown baseline for inline mode so overlays can align exactly
+    public int inlineDropdownBaseY = -1;
+
     @Override
     public void initGui() {
         this.guiLeft = (this.width - Dimensions.GUI_WIDTH) / 2;
@@ -102,6 +105,8 @@ public class ModSettingsGui extends GuiScreen {
         drawModules(mouseX, mouseY);
         drawScrollbars();
         drawCommandPanel(mouseX, mouseY);
+        // Draw expanded dropdowns last as overlays so they aren't occluded
+        drawDropdownOverlays(mouseX, mouseY);
 
         // Draw tooltips and error messages last (on top of everything)
         drawTooltipsAndErrors(mouseX, mouseY);
@@ -164,12 +169,13 @@ public class ModSettingsGui extends GuiScreen {
             }
         }
 
-        // Inline box consumes inner clicks
+        // Inline box consumes inner clicks; if a dropdown is open, allow overlay clicks even outside the box
         if (showCommandSettings && optionsInline && SelectedModule != null) {
             InlineArea ia = getInlineAreaForSelected();
-            if (ia != null && mouseX >= ia.contentX && mouseX <= ia.contentX + ia.contentW && mouseY >= ia.boxY && mouseY <= ia.boxY + ia.boxH) {
-                handleInlineOptionClicks(mouseX, mouseY, ia);
-                return;
+            if (ia != null) {
+                boolean inBox = mouseX >= ia.contentX && mouseX <= ia.contentX + ia.contentW && mouseY >= ia.boxY && mouseY <= ia.boxY + ia.boxH;
+                if (inBox) { handleInlineOptionClicks(mouseX, mouseY, ia); return; }
+                if (anyInlineDropdownOpen()) { handleInlineOptionClicks(mouseX, mouseY, ia); return; }
             }
         }
 
@@ -390,24 +396,20 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     public boolean handleDropdownClicks(int mouseX, int mouseY) {
-        dropdownClicksHandler.handleDropdownClicks(mouseX, mouseY);
-        return false;
+        return dropdownClicksHandler.handleDropdownClicks(mouseX, mouseY);
     }
 
 
     public boolean handleLabelledInputClicks(int mouseX, int mouseY) {
-        labelledInputClicksHandler.handleLabelledInputClicks(mouseX, mouseY);
-        return false;
+        return labelledInputClicksHandler.handleLabelledInputClicks(mouseX, mouseY);
     }
 
     public boolean handleColorInputClicks(int mouseX, int mouseY) {
-        colorInputClicksHandler.handleColorInputClicks(mouseX, mouseY);
-        return false;
+        return colorInputClicksHandler.handleColorInputClicks(mouseX, mouseY);
     }
 
     public boolean handleButtonClicks(int mouseX, int mouseY) {
-        buttonClicksHandler.handleButtonClicks(mouseX, mouseY);
-        return false;
+        return buttonClicksHandler.handleButtonClicks(mouseX, mouseY);
     }
 
     private void handleScrollbarDrag(int mouseX, int mouseY) {
@@ -644,5 +646,37 @@ public class ModSettingsGui extends GuiScreen {
 
     // New: unfocus Hotbar Swap inputs -> delegate to panel
     public void unfocusAllHotbarInputs() { hotbarPanel.unfocusAllInputs(); }
-}
 
+    private boolean anyInlineDropdownOpen() {
+        for (MethodDropdown dd : methodDropdowns) if (dd.isOpen) return true;
+        return false;
+    }
+
+    // Draws open dropdowns on top for both side panel and inline modes
+    private void drawDropdownOverlays(int mouseX, int mouseY) {
+        if (!showCommandSettings || SelectedModule == null) return;
+        net.minecraft.client.gui.FontRenderer fr = getFontRendererObj();
+        // Side panel overlays: compute baseline same as panel
+        if (useSidePanelForSelected && !optionsInline) {
+            int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
+            for (Toggle ignored : Toggles) y += 22;
+            for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
+            for (ColorInput ignored : ColorInputs) y += 50;
+            for (MethodDropdown dd : methodDropdowns) {
+                if (dd.isOpen) dd.drawExpandedOptions(mouseX, mouseY, y, fr);
+                y += 22;
+            }
+        }
+        // Inline overlays: use the recorded baseline to ensure exact alignment
+        if (optionsInline) {
+            int baseY = inlineDropdownBaseY;
+            if (baseY >= 0) {
+                int y = baseY;
+                for (MethodDropdown dd : methodDropdowns) {
+                    if (dd.isOpen) dd.drawExpandedOptions(mouseX, mouseY, y, fr);
+                    y += 22;
+                }
+            }
+        }
+    }
+}

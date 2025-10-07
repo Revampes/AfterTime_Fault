@@ -76,12 +76,11 @@ public class drawCommandPanel {
             ci.draw(mouseX, mouseY, y, fontRenderer);
             y += 50;
         }
+        // Draw dropdown bases only; expanded options are handled by a late overlay pass
+        int yBase = y;
         for (com.aftertime.ratallofyou.UI.config.OptionElements.MethodDropdown dd : gui.methodDropdowns) {
-            dd.drawBase(mouseX, mouseY, y, fontRenderer);
-            if (dd.isOpen) {
-                dd.drawExpandedOptions(mouseX, mouseY, y, fontRenderer);
-            }
-            y += 22;
+            dd.drawBase(mouseX, mouseY, yBase, fontRenderer);
+            yBase += 22;
         }
         int contentHeight = 0; if (gui.useSidePanelForSelected && "Fast Hotkey".equals(gui.SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += gui.Toggles.size() * 22; for (LabelledInput li : gui.labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += gui.ColorInputs.size() * 50; contentHeight += gui.methodDropdowns.size() * 22;
