@@ -523,7 +523,7 @@ public class ModSettingsGui extends GuiScreen {
 
     public void Add_SubSetting_DarkMode(Integer y) {
         for (java.util.Map.Entry<String, com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?>> e : AllConfig.INSTANCE.DARKMODE_CONFIGS.entrySet()) {
-            AddEntryAsOption(e, y, 15);
+            AddEntryAsOption(e, y, 16);
         }
     }
 
@@ -531,7 +531,7 @@ public class ModSettingsGui extends GuiScreen {
         PropertyRef ref = new PropertyRef(ConfigType, entry.getKey()); Type type = entry.getValue().type; Object data = entry.getValue().Data;
         int xPos, width; if (optionsInline && !useSidePanelForSelected) { int listX = guiLeft + 120; int listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH; int boxX = listX + 4; int boxW = listW - 8; int padding = 6; xPos = boxX + padding; width = (listW - 8) - padding * 2; } else { xPos = guiLeft + Dimensions.COMMAND_PANEL_X + 5; width = Dimensions.COMMAND_PANEL_WIDTH - 10; }
         // Titles above inputs for Terminal, FastHotkey, and Auto Fish
-        boolean isVerticalAbove = (ConfigType == 4 || ConfigType == 6 || ConfigType == 10);
+        boolean isVerticalAbove = true;
         if (type.equals(String.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
         else if (type.equals(Boolean.class)) {
             // Try to create a special checkbox first

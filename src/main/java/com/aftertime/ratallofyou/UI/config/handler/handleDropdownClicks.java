@@ -16,25 +16,30 @@ public class handleDropdownClicks {
 
     public boolean handleDropdownClicks(int mouseX, int mouseY) {
         if (gui.SelectedModule == null) return false;
-        int y = gui.guiTop + Dimensions.COMMAND_PANEL_Y + 30 - gui.commandScroll.getOffset();
+        int y = gui.guiTop + com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions.COMMAND_PANEL_Y + 30 - gui.commandScroll.getOffset();
         for (Toggle ignored : gui.Toggles) y += 22;
         for (LabelledInput li : gui.labelledInputs) y += li.getVerticalSpace();
         for (ColorInput ignored : gui.ColorInputs) y += 50;
         for (MethodDropdown dd : gui.methodDropdowns) {
             int bx = dd.x + 100, bw = dd.width - 100, bh = dd.height;
-            boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= y && mouseY <= y + bh;
+            int by = y; // Use calculated yPos for dropdown
+            // Debug output for troubleshooting
+            System.out.println("Dropdown: " + dd.name + " at x=" + bx + ", y=" + by + ", w=" + bw + ", h=" + bh + ", mouseX=" + mouseX + ", mouseY=" + mouseY);
+            boolean inBase = mouseX >= bx && mouseX <= bx + bw && mouseY >= by && mouseY <= by + bh;
             if (inBase) {
                 for (MethodDropdown other : gui.methodDropdowns) other.isOpen = false;
                 dd.isOpen = !dd.isOpen;
-                return true; // Make sure this returns true so the UI updates
+                System.out.println("Dropdown base clicked: " + dd.name + ", now isOpen=" + dd.isOpen);
+                return true;
             }
             if (dd.isOpen) {
                 for (int i = 0; i < dd.methods.length; i++) {
-                    int optionY = y + bh + (i * bh);
+                    int optionY = by + bh + (i * bh);
                     boolean inOpt = mouseX >= bx && mouseX <= bx + bw && mouseY >= optionY && mouseY <= optionY + bh;
                     if (inOpt) {
                         dd.selectMethod(i);
                         dd.isOpen = false;
+                        System.out.println("Dropdown option clicked: " + dd.name + ", selected=" + dd.methods[i]);
                         return true;
                     }
                 }

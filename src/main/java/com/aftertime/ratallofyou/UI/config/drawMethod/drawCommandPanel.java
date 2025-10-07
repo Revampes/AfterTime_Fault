@@ -2,7 +2,9 @@ package com.aftertime.ratallofyou.UI.config.drawMethod;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
+import com.aftertime.ratallofyou.UI.config.OptionElements.ColorInput;
 import com.aftertime.ratallofyou.UI.config.OptionElements.LabelledInput;
+import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import net.minecraft.client.gui.FontRenderer;
@@ -59,6 +61,27 @@ public class drawCommandPanel {
             case "DarkMode": gui.Add_SubSetting_DarkMode(y); break;
             case "Custom Cape": gui.Add_SubSetting_CustomCape(y); break;
             case "Mark Location": gui.Add_SubSetting_MarkLocation(y); break;
+        }
+        // Draw all UI elements in order
+        y = panelY + 30 - gui.commandScroll.getOffset();
+        for (Toggle t : gui.Toggles) {
+            t.draw(mouseX, mouseY, y, fontRenderer);
+            y += 22;
+        }
+        for (LabelledInput li : gui.labelledInputs) {
+            li.draw(mouseX, mouseY, y, fontRenderer);
+            y += li.getVerticalSpace();
+        }
+        for (ColorInput ci : gui.ColorInputs) {
+            ci.draw(mouseX, mouseY, y, fontRenderer);
+            y += 50;
+        }
+        for (com.aftertime.ratallofyou.UI.config.OptionElements.MethodDropdown dd : gui.methodDropdowns) {
+            dd.drawBase(mouseX, mouseY, y, fontRenderer);
+            if (dd.isOpen) {
+                dd.drawExpandedOptions(mouseX, mouseY, y, fontRenderer);
+            }
+            y += 22;
         }
         int contentHeight = 0; if (gui.useSidePanelForSelected && "Fast Hotkey".equals(gui.SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
         contentHeight += gui.Toggles.size() * 22; for (LabelledInput li : gui.labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += gui.ColorInputs.size() * 50; contentHeight += gui.methodDropdowns.size() * 22;
