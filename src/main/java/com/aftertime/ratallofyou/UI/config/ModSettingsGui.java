@@ -1,22 +1,15 @@
 package com.aftertime.ratallofyou.UI.config;
 
-import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.UI.config.ConfigData.*;
 import com.aftertime.ratallofyou.UI.config.OptionElements.*;
-import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.UI.config.drawMethod.*;
 import com.aftertime.ratallofyou.UI.config.handler.*;
 import com.aftertime.ratallofyou.UI.utils.InlineArea;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
-import com.aftertime.ratallofyou.UI.config.ScrollManager;
-import com.aftertime.ratallofyou.UI.config.SimpleTextField;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.input.Keyboard; // Added for key code names and capture
 
 import java.awt.*;
@@ -97,18 +90,12 @@ public class ModSettingsGui extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawBackground();
-
-        // Call super.drawScreen() first so default button rendering happens before our custom drawing
         super.drawScreen(mouseX, mouseY, partialTicks);
-
         drawCategories();
         drawModules(mouseX, mouseY);
         drawScrollbars();
         drawCommandPanel(mouseX, mouseY);
-        // Draw expanded dropdowns last as overlays so they aren't occluded
         drawDropdownOverlays(mouseX, mouseY);
-
-        // Draw tooltips and error messages last (on top of everything)
         drawTooltipsAndErrors(mouseX, mouseY);
     }
 
@@ -236,6 +223,7 @@ public class ModSettingsGui extends GuiScreen {
     private final drawFastHotKeyDetailPanel fastHotKeyDetailPanelDrawer = new drawFastHotKeyDetailPanel(this);
     private final drawTooltipsAndErrors tooltipsAndErrorsDrawer = new drawTooltipsAndErrors(this);
     private final drawTooltip tooltipDrawer = new drawTooltip(this);
+    private final drawDropdownOverlays dropdownOverlaysDrawer = new drawDropdownOverlays(this);
 
     private void drawBackground() {
         backgroundDrawer.drawBackground();
@@ -277,6 +265,10 @@ public class ModSettingsGui extends GuiScreen {
 
     public void drawTooltip(String text, int mouseX, int mouseY) {
         tooltipDrawer.drawTooltip(text, mouseX, mouseY);
+    }
+
+    private void drawDropdownOverlays(int mouseX, int mouseY) {
+        dropdownOverlaysDrawer.drawDropdownOverlays(mouseX, mouseY);
     }
 
     // Helper: Title for command panel
@@ -650,33 +642,5 @@ public class ModSettingsGui extends GuiScreen {
     private boolean anyInlineDropdownOpen() {
         for (MethodDropdown dd : methodDropdowns) if (dd.isOpen) return true;
         return false;
-    }
-
-    // Draws open dropdowns on top for both side panel and inline modes
-    private void drawDropdownOverlays(int mouseX, int mouseY) {
-        if (!showCommandSettings || SelectedModule == null) return;
-        net.minecraft.client.gui.FontRenderer fr = getFontRendererObj();
-        // Side panel overlays: compute baseline same as panel
-        if (useSidePanelForSelected && !optionsInline) {
-            int y = guiTop + Dimensions.COMMAND_PANEL_Y + 30 - commandScroll.getOffset();
-            for (Toggle ignored : Toggles) y += 22;
-            for (LabelledInput li : labelledInputs) y += li.getVerticalSpace();
-            for (ColorInput ignored : ColorInputs) y += 50;
-            for (MethodDropdown dd : methodDropdowns) {
-                if (dd.isOpen) dd.drawExpandedOptions(mouseX, mouseY, y, fr);
-                y += 22;
-            }
-        }
-        // Inline overlays: use the recorded baseline to ensure exact alignment
-        if (optionsInline) {
-            int baseY = inlineDropdownBaseY;
-            if (baseY >= 0) {
-                int y = baseY;
-                for (MethodDropdown dd : methodDropdowns) {
-                    if (dd.isOpen) dd.drawExpandedOptions(mouseX, mouseY, y, fr);
-                    y += 22;
-                }
-            }
-        }
     }
 }
