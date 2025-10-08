@@ -1,11 +1,14 @@
 package com.aftertime.ratallofyou.UI.config;
 
+import com.aftertime.ratallofyou.UI.buildMethod.buildCategoryButtons;
+import com.aftertime.ratallofyou.UI.buildMethod.buildModuleButtons;
 import com.aftertime.ratallofyou.UI.config.ConfigData.*;
 import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.UI.config.drawMethod.*;
 import com.aftertime.ratallofyou.UI.config.handler.*;
 import com.aftertime.ratallofyou.UI.utils.InlineArea;
+import com.aftertime.ratallofyou.UI.utils.isFhkKeyDuplicate;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
 import com.aftertime.ratallofyou.UI.config.OptionElements.Toggle;
 import net.minecraft.client.gui.GuiButton;
@@ -89,14 +92,8 @@ public class ModSettingsGui extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        drawBackground();
         super.drawScreen(mouseX, mouseY, partialTicks);
-        drawCategories();
-        drawModules(mouseX, mouseY);
-        drawScrollbars();
-        drawCommandPanel(mouseX, mouseY);
-        drawDropdownOverlays(mouseX, mouseY);
-        drawTooltipsAndErrors(mouseX, mouseY);
+        screenDrawer.drawScreen(mouseX, mouseY, partialTicks);
     }
 
     @Override
@@ -224,6 +221,7 @@ public class ModSettingsGui extends GuiScreen {
     private final drawTooltipsAndErrors tooltipsAndErrorsDrawer = new drawTooltipsAndErrors(this);
     private final drawTooltip tooltipDrawer = new drawTooltip(this);
     private final drawDropdownOverlays dropdownOverlaysDrawer = new drawDropdownOverlays(this);
+    private final drawScreen screenDrawer = new drawScreen(this);
 
     private final handleInlineOptionClicks inlineOptionClicksHandler = new handleInlineOptionClicks(this);
     private final handleFastHotKeyClicks fastHotKeyClicksHandler = new handleFastHotKeyClicks(this);
@@ -245,23 +243,26 @@ public class ModSettingsGui extends GuiScreen {
     private final handleAllInputTyping allInputTypingHandler = new handleAllInputTyping(this);
     private final handleMouseInput mouseInputHandler = new handleMouseInput(this);
 
-    private void drawBackground() {
+    private final buildCategoryButtons categoryButtonsBuilder = new buildCategoryButtons(this);
+    private final buildModuleButtons moduleButtonsBuilder = new buildModuleButtons(this);
+
+    public void drawBackground() {
         backgroundDrawer.drawBackground();
     }
 
-    private void drawCategories() {
+    public void drawCategories() {
         categoryDrawer.drawCategories();
     }
 
-    private void drawModules(int mouseX, int mouseY) {
+    public void drawModules(int mouseX, int mouseY) {
         moduleDrawer.drawModules(mouseX, mouseY);
     }
 
-    private void drawScrollbars() {
+    public void drawScrollbars() {
         scrollbarDrawer.drawScrollbars();
     }
 
-    private void drawCommandPanel(int mouseX, int mouseY) {
+    public void drawCommandPanel(int mouseX, int mouseY) {
         commandPanelDrawer.drawCommandPanel(mouseX, mouseY);
     }
 
@@ -279,7 +280,7 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     // Draw tooltips and error messages
-    private void drawTooltipsAndErrors(int mouseX, int mouseY) {
+    public void drawTooltipsAndErrors(int mouseX, int mouseY) {
         tooltipsAndErrorsDrawer.drawTooltipsAndErrors(mouseX, mouseY);
     }
 
@@ -287,7 +288,7 @@ public class ModSettingsGui extends GuiScreen {
         tooltipDrawer.drawTooltip(text, mouseX, mouseY);
     }
 
-    private void drawDropdownOverlays(int mouseX, int mouseY) {
+    public void drawDropdownOverlays(int mouseX, int mouseY) {
         dropdownOverlaysDrawer.drawDropdownOverlays(mouseX, mouseY);
     }
 
@@ -318,7 +319,7 @@ public class ModSettingsGui extends GuiScreen {
         return ia;
     }
 
-    private int computeInlineContentHeight() {
+    public int computeInlineContentHeight() {
         if (SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
             int h = 12 + 22; // create
             int rowH = 16; int gap = 4; h += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (rowH + gap));
@@ -418,29 +419,15 @@ public class ModSettingsGui extends GuiScreen {
         mouseInputHandler.handleMouseInput();
     }
 
-    // Build UI lists
     private void buildCategoryButtons() {
-        categoryButtons.clear();
-        int y = guiTop + 30; int x = guiLeft + 10;
-        for (int i = 0; i < AllConfig.INSTANCE.Categories.size(); i++) {
-            GuiButton b = new GuiButton(1000 + i, x, y, 95, 18, AllConfig.INSTANCE.Categories.get(i));
-            categoryButtons.add(b);
-            y += 20;
-        }
+        categoryButtonsBuilder.buildCategoryButtons();
     }
 
     public void buildModuleButtons() {
-        moduleButtons.clear(); int listX = guiLeft + 120; int listY = guiTop + 28; int listW = Dimensions.GUI_WIDTH - 120 - 10 - Dimensions.SCROLLBAR_WIDTH; int y = listY - mainScroll.getOffset(); int rowH = 20; int usedHeight = 0;
-        for (BaseConfig<?> mi : AllConfig.INSTANCE.MODULES.values()) {
-            ModuleInfo info = (ModuleInfo) mi; if (!info.category.equals(selectedCategory)) continue;
-            boolean hasSettings = hasSettings(info); moduleButtons.add(new ModuleButton(listX + 4, y, listW - 8, rowH - 2, info, hasSettings));
-            int inc = rowH; if (showCommandSettings && optionsInline && SelectedModule == info) { inc += 20 + computeInlineContentHeight() + 8; }
-            y += inc; usedHeight += inc;
-        }
-        int totalHeight = usedHeight; int viewH = Dimensions.GUI_HEIGHT - 70; mainScroll.update(totalHeight, viewH); mainScroll.updateScrollbarPosition(listX + listW - 2, listY, viewH);
+        moduleButtonsBuilder.buildModuleButtons();
     }
 
-    private boolean hasSettings(ModuleInfo module) {
+    public boolean hasSettings(ModuleInfo module) {
         if (module == null) return false;
         return module.configGroupIndex != null; // Generic: has a config group => has settings
     }
@@ -510,15 +497,10 @@ public class ModSettingsGui extends GuiScreen {
         for (FastHotkeyEntry e : AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES) fastRows.add(new FastRow(detailBaseX, detailInputW, e));
     }
 
+    private final isFhkKeyDuplicate checkFhkDuplicate = new isFhkKeyDuplicate(this);
+
     public boolean isFhkKeyDuplicate(int keyCode, int exceptIndex) {
-        if (keyCode <= 0) return false;
-        List<FastHotkeyPreset> list = AllConfig.INSTANCE.FHK_PRESETS;
-        for (int i = 0; i < list.size(); i++) {
-            if (i == exceptIndex) continue;
-            FastHotkeyPreset p = list.get(i);
-            if (p.keyCode == keyCode) return true;
-        }
-        return false;
+        return checkFhkDuplicate.isFhkKeyDuplicate(keyCode, exceptIndex);
     }
 
     public void unfocusAllFastInputs() {
