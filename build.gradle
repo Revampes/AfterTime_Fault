@@ -16,7 +16,16 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "2.2"
+def getVersionFromFile() {
+    def versionFile = file('version.txt')
+    if (versionFile.exists()) {
+        return versionFile.text.trim()
+    } else {
+        return '0.1' // fallback version
+    }
+}
+
+version = getVersionFromFile()
 group= "com.aftertime.ratallofyou"
 archivesBaseName = "ratallofyou"
 
@@ -34,7 +43,7 @@ minecraft {
 
 // Rest of your build.gradle remains the same...
 task copyMod(type: Copy) {
-    from("$buildDir/libs/ratallofyou-2.2.jar")
+    from("$buildDir/libs/${archivesBaseName}-${version}.jar")
     into "C:\\Users\\user\\AppData\\Roaming\\PrismLauncher\\instances\\1.8.9(1)\\minecraft\\mods"
 }
 
@@ -71,3 +80,22 @@ repositories {
 
 // Removed Kotlin stdlib dependency and kotlin compile task configuration
 // All Kotlin sources are currently ignored by the build (no plugin).
+
+task bumpVersion(type: Exec) {
+    description = 'Bump version in version.txt based on latest commit message.'
+    group = 'versioning'
+    // Compile VersionBumper.java if needed
+    doFirst {
+        def src = "src/main/java/com/aftertime/ratallofyou/VersionBumper.java"
+        def outDir = "build/versionBumper"
+        mkdir outDir
+        exec {
+            commandLine 'javac', '-d', outDir, src
+        }
+    }
+    // Run VersionBumper
+    commandLine 'java', '-cp', 'build/versionBumper', 'com.aftertime.ratallofyou.VersionBumper'
+}
+
+// Ensure bumpVersion runs before build
+preBuild.dependsOn bumpVersion

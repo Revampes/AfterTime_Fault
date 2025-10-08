@@ -59,10 +59,9 @@ public class Miniboss {
     }
 
     private Entity getMobEntity(EntityArmorStand armorStand) {
-        // Expand search area significantly - look in a 4x4x4 area around the armor stand
         for (Object entity : mc.theWorld.getEntitiesWithinAABBExcludingEntity(
                 armorStand,
-                armorStand.getEntityBoundingBox().expand(2, 2, 2))) {
+                armorStand.getEntityBoundingBox().expand(0.5, 0.5, 0.5))) {
             if (entity instanceof Entity &&
                     !(entity instanceof EntityArmorStand) &&
                     !(entity instanceof EntityWither && ((Entity) entity).isInvisible()) &&
@@ -70,6 +69,6 @@ public class Miniboss {
                 return (Entity) entity;
             }
         }
-        return null;
+        return armorStand;
     }
 }

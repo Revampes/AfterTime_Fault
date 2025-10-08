@@ -43,13 +43,9 @@ public class F7GhostBlocks {
         MinecraftForge.EVENT_BUS.register(new F7GhostBlocks());
     }
 
-    private boolean isModuleEnabled() {
-        return BooleanSettings.isEnabled("dungeons_sweatmode");
-    }
-
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START || !isModuleEnabled() || !(DungeonUtils.isInDungeonFloor() == 7)) {
+        if (event.phase != TickEvent.Phase.START || !BooleanSettings.isEnabled("dungeons_sweatmode") || !(DungeonUtils.isInDungeonFloor() == 7)) {
             return;
         }
 
