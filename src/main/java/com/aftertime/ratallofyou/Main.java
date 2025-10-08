@@ -37,7 +37,7 @@ import com.aftertime.ratallofyou.modules.debugdata.DebugDataTicker;
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
     public static final String MODID = "ratallofyou";
-    public static final String VERSION = "2.2";
+    public static final String VERSION = "2.3";
     public static Minecraft mc = Minecraft.getMinecraft();
 
     // Small helper to reduce repetitive register calls

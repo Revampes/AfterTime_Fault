@@ -98,4 +98,25 @@ task bumpVersion(type: Exec) {
 }
 
 // Ensure bumpVersion runs before build
-preBuild.dependsOn bumpVersion
+build.dependsOn bumpVersion
+
+def generatedSrcRoot = "$buildDir/generated/sources/version"
+def generatedPkgDir = "$generatedSrcRoot/com/aftertime/ratallofyou"
+task generateVersionInfo {
+    description = 'Generate VersionInfo.java with the current version.'
+    doLast {
+        def dir = file(generatedPkgDir)
+        dir.mkdirs()
+        def versionInfoFile = new File(dir, 'VersionInfo.java')
+        versionInfoFile.text = """
+package com.aftertime.ratallofyou;
+
+public class VersionInfo {
+    public static final String VERSION = \"${version}\";
+}
+"""
+    }
+}
+
+compileJava.dependsOn generateVersionInfo
+sourceSets.main.java.srcDirs += generatedSrcRoot

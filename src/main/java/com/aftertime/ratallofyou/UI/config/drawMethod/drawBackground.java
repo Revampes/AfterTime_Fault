@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.UI.config.drawMethod;
 import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Colors;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
+import com.aftertime.ratallofyou.getVersionFromtxt;
 import net.minecraft.client.gui.FontRenderer;
 
 public class drawBackground {
@@ -20,7 +21,7 @@ public class drawBackground {
         gui.drawRect(gui.guiLeft + 115, gui.guiTop + 25, gui.guiLeft + Dimensions.GUI_WIDTH - 5, gui.guiTop + Dimensions.GUI_HEIGHT - 5, Colors.CATEGORY);
 
         // Enhanced footer with version, author, and instructions
-        String versionText = "§7Version v2.2 §8| §7Created by AfterTime";
+        String versionText = "§7Version v" + getVersionFromtxt.getVersion() + " §8| §7Created by AfterTime";
         String instructionText = "§8Left Click: Toggle | Right Click: Settings | Hover: Description";
         gui.drawCenteredString(fontRenderer, versionText, gui.width / 2, gui.guiTop + Dimensions.GUI_HEIGHT - 30, Colors.VERSION);
         gui.drawCenteredString(fontRenderer, instructionText, gui.width / 2, gui.guiTop + Dimensions.GUI_HEIGHT - 18, Colors.VERSION);
