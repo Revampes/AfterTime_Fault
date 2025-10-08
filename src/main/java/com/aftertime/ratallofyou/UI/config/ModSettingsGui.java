@@ -7,6 +7,8 @@ import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.UI.config.drawMethod.*;
 import com.aftertime.ratallofyou.UI.config.handler.*;
+import com.aftertime.ratallofyou.UI.event.computeInlineContentHeight;
+import com.aftertime.ratallofyou.UI.init.initializeCommandToggles;
 import com.aftertime.ratallofyou.UI.utils.InlineArea;
 import com.aftertime.ratallofyou.UI.utils.isFhkKeyDuplicate;
 import com.aftertime.ratallofyou.modules.dungeon.terminals.TerminalSettingsApplier;
@@ -246,6 +248,10 @@ public class ModSettingsGui extends GuiScreen {
     private final buildCategoryButtons categoryButtonsBuilder = new buildCategoryButtons(this);
     private final buildModuleButtons moduleButtonsBuilder = new buildModuleButtons(this);
 
+    private final computeInlineContentHeight inlineContentHeightComputer = new computeInlineContentHeight(this);
+
+    private final initializeCommandToggles commandTogglesinitializer = new initializeCommandToggles(this);
+
     public void drawBackground() {
         backgroundDrawer.drawBackground();
     }
@@ -320,22 +326,7 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     public int computeInlineContentHeight() {
-        if (SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) {
-            int h = 12 + 22; // create
-            int rowH = 16; int gap = 4; h += 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (rowH + gap));
-            h += 6; // separator
-            h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
-        }
-        // New: Hotbar Swap rows height delegated to panel
-        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
-            // compute inline content width (same as AddEntryAsOption inline branch)
-            int listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH; int contentW = (listW - 8) - 6 * 2;
-            int h = hotbarPanel.computeSectionHeight(contentW);
-            // plus generic options (toggles/inputs)
-            h += Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22;
-            return h + 6;
-        }
-        int h = Toggles.size() * 22; for (LabelledInput li : labelledInputs) h += li.getVerticalSpace(); h += ColorInputs.size() * 50; h += methodDropdowns.size() * 22; return h + 6;
+        return inlineContentHeightComputer.computeInlineContentHeight();
     }
 
     public void handleInlineOptionClicks(int mouseX, int mouseY, InlineArea ia) {
@@ -433,31 +424,10 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     public void initializeCommandToggles() {
-        Toggles.clear(); labelledInputs.clear(); methodDropdowns.clear(); ColorInputs.clear(); if (SelectedModule == null) return;
-        Integer y = guiTop + Dimensions.COMMAND_PANEL_Y + 30;
-        // Generic: populate from the module's declared config group
-        Integer group = SelectedModule.configGroupIndex;
-        if (group != null) {
-            Map<String, BaseConfig<?>> groupMap = AllConfig.INSTANCE.ALLCONFIGS.get(group);
-            if (groupMap != null) {
-                for (Map.Entry<String, BaseConfig<?>> e : groupMap.entrySet()) {
-                    AddEntryAsOption(e, y, group);
-                }
-            }
-        }
-        // Special per-panel upkeep (no UI injection): keep Hotbar Swap rows in sync
-        if (SelectedModule != null && "Hotbar Swap".equals(SelectedModule.name)) {
-            hotbarPanel.rebuildRows();
-        }
-        int contentHeight = 0; if (useSidePanelForSelected && SelectedModule != null && "Fast Hotkey".equals(SelectedModule.name)) contentHeight += 12 + 22 + 12 + (AllConfig.INSTANCE.FHK_PRESETS.size() * (16 + 4));
-        contentHeight += Toggles.size() * 22; for (LabelledInput li : labelledInputs) contentHeight += li.getVerticalSpace(); contentHeight += ColorInputs.size() * 50; contentHeight += methodDropdowns.size() * 22;
-        int panelViewHeight = Dimensions.GUI_HEIGHT - 60 - 25;
-        if (useSidePanelForSelected) {
-            commandScroll.update(contentHeight, panelViewHeight); commandScroll.updateScrollbarPosition(guiLeft + Dimensions.COMMAND_PANEL_X + Dimensions.COMMAND_PANEL_WIDTH - Dimensions.SCROLLBAR_WIDTH - 2, guiTop + Dimensions.COMMAND_PANEL_Y + 25, panelViewHeight);
-        }
+        commandTogglesinitializer.initializeCommandToggles();
     }
 
-    private void AddEntryAsOption(Map.Entry<String, BaseConfig<?>> entry, Integer y, int ConfigType) {
+    public void AddEntryAsOption(Map.Entry<String, BaseConfig<?>> entry, Integer y, int ConfigType) {
         PropertyRef ref = new PropertyRef(ConfigType, entry.getKey()); Type type = entry.getValue().type; Object data = entry.getValue().Data;
         int xPos, width; if (optionsInline && !useSidePanelForSelected) { int listX = guiLeft + 120; int listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH; int boxX = listX + 4; int boxW = listW - 8; int padding = 6; xPos = boxX + padding; width = (listW - 8) - padding * 2; } else { xPos = guiLeft + Dimensions.COMMAND_PANEL_X + 5; width = Dimensions.COMMAND_PANEL_WIDTH - 10; }
         // Titles above inputs for Terminal, FastHotkey, and Auto Fish
