@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraft.client.Minecraft;
@@ -12,14 +11,14 @@ public class DarkMode {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
     private boolean isEnabled() {
-        return BooleanSettings.isEnabled("render_darkmode");
+        return ModConfig.enableDarkMode;
     }
 
     private int getOpacity() {
-        Object value = AllConfig.INSTANCE.DARKMODE_CONFIGS.get("darkmode_getopacity").Data;
-        if (value instanceof Integer) return (Integer) value;
-        try { return Integer.parseInt(String.valueOf(value)); } catch (Exception ignored) {}
-        return 128;
+        int value = ModConfig.darkModeOpacity;
+        if (value < 0) value = 0;
+        if (value > 255) value = 255;
+        return value;
     }
 
     @SubscribeEvent

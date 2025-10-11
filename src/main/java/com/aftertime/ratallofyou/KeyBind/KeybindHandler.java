@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.KeyBind;
 
 import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
+import com.aftertime.ratallofyou.UI.newui.NewModGUI;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;
 import net.minecraft.client.settings.KeyBinding;
@@ -18,7 +19,7 @@ public class KeybindHandler {
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
         if (configGuiKey.isPressed()) {
-            Minecraft.getMinecraft().displayGuiScreen(new ModSettingsGui());
+            Minecraft.getMinecraft().displayGuiScreen(new NewModGUI());
         }
     }
 }

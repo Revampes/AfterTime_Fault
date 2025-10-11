@@ -44,7 +44,7 @@ minecraft {
 // Rest of your build.gradle remains the same...
 task copyMod(type: Copy) {
     from("$buildDir/libs/${archivesBaseName}-${version}.jar")
-    into "C:\\Users\\user\\AppData\\Roaming\\PrismLauncher\\instances\\1.8.9(1)\\minecraft\\mods"
+    into "C:\\Users\\user\\AppData\\Roaming\\.minecraft\\mods"
 }
 
 build.finalizedBy copyMod

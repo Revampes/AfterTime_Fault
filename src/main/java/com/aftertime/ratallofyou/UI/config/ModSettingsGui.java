@@ -7,6 +7,7 @@ import com.aftertime.ratallofyou.UI.config.OptionElements.*;
 import com.aftertime.ratallofyou.UI.config.commonConstant.Dimensions;
 import com.aftertime.ratallofyou.UI.config.drawMethod.*;
 import com.aftertime.ratallofyou.UI.config.handler.*;
+import com.aftertime.ratallofyou.UI.event.AddEntryAsOption;
 import com.aftertime.ratallofyou.UI.event.computeInlineContentHeight;
 import com.aftertime.ratallofyou.UI.init.initializeCommandToggles;
 import com.aftertime.ratallofyou.UI.utils.InlineArea;
@@ -26,6 +27,7 @@ import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
 import com.aftertime.ratallofyou.UI.config.panels.HotbarSwapPanel;
+import scala.xml.dtd.impl.Base;
 
 public class ModSettingsGui extends GuiScreen {
     // Fields
@@ -252,6 +254,8 @@ public class ModSettingsGui extends GuiScreen {
 
     private final initializeCommandToggles commandTogglesinitializer = new initializeCommandToggles(this);
 
+    private final AddEntryAsOption entryAsOptionAdder = new AddEntryAsOption(this);
+
     public void drawBackground() {
         backgroundDrawer.drawBackground();
     }
@@ -428,36 +432,7 @@ public class ModSettingsGui extends GuiScreen {
     }
 
     public void AddEntryAsOption(Map.Entry<String, BaseConfig<?>> entry, Integer y, int ConfigType) {
-        PropertyRef ref = new PropertyRef(ConfigType, entry.getKey()); Type type = entry.getValue().type; Object data = entry.getValue().Data;
-        int xPos, width; if (optionsInline && !useSidePanelForSelected) { int listX = guiLeft + 120; int listW = Dimensions.GUI_WIDTH - 120 - Dimensions.SCROLLBAR_WIDTH; int boxX = listX + 4; int boxW = listW - 8; int padding = 6; xPos = boxX + padding; width = (listW - 8) - padding * 2; } else { xPos = guiLeft + Dimensions.COMMAND_PANEL_X + 5; width = Dimensions.COMMAND_PANEL_WIDTH - 10; }
-        // Titles above inputs for Terminal, FastHotkey, and Auto Fish
-        boolean isVerticalAbove = true;
-        if (type.equals(String.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
-        else if (type.equals(Boolean.class)) {
-            // Try to create a special checkbox first
-            SpecialCheckbox specialCheckbox = SpecialCheckboxFactory.createSpecialCheckbox(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16);
-            if (specialCheckbox != null) {
-                Toggles.add(specialCheckbox);
-            } else {
-                // Use normal toggle
-                Toggles.add(new Toggle(ref, entry.getValue().name, entry.getValue().description, (Boolean) data, xPos, y, width, 16));
-            }
-        }
-        else if (type.equals(Integer.class)) {
-            String display = String.valueOf(data);
-            // Special-case: show key name for Auto Fish hotkey input
-            if (ConfigType == 10 && "autofish_hotkey".equals(entry.getKey())) {
-                int code = 0; try { code = (data instanceof Integer) ? (Integer) data : Integer.parseInt(String.valueOf(data)); } catch (Exception ignored) {}
-                String name = (code <= 0) ? "Unbound" : Keyboard.getKeyName(code);
-                if (name == null || name.trim().isEmpty() || "NONE".equalsIgnoreCase(name)) name = "Unbound";
-                display = name;
-            }
-            labelledInputs.add(new LabelledInput(ref, entry.getValue().name, display, xPos, y, width, 16, isVerticalAbove));
-        }
-        else if (type.equals(Float.class)) labelledInputs.add(new LabelledInput(ref, entry.getValue().name, String.valueOf(data), xPos, y, width, 16, isVerticalAbove));
-        else if (type.equals(DataType_DropDown.class)) { DataType_DropDown dd = (DataType_DropDown) data; methodDropdowns.add(new MethodDropdown(ref, entry.getValue().name, dd.selectedIndex, xPos, y, width, 16, dd.options)); }
-        else if (type.equals(Color.class)) ColorInputs.add(new ColorInput(ref, entry.getValue().name, (Color) data, xPos, y, width, 18));
-        else System.err.println("Unsupported config type: " + type);
+        entryAsOptionAdder.AddEntryAsOption(entry, y, ConfigType);
     }
 
     public void rebuildFastHotkeyRowsForDetail() {
