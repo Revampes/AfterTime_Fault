@@ -1,9 +1,5 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
-import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
 import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import net.minecraft.client.Minecraft;
@@ -63,15 +59,14 @@ public class PosionArrow {
         if (!isEnabled()) return;
         if (mc.thePlayer == null) return;
 
-        UIPosition pos = getPos();
         float scale = getScale();
 
         GlStateManager.pushMatrix();
         try {
             ScaledResolution sr = new ScaledResolution(mc);
             // Clamp position lightly to screen to avoid off-screen draw
-            int x = Math.max(0, Math.min(pos.x, sr.getScaledWidth() - 4));
-            int y = Math.max(0, Math.min(pos.y, sr.getScaledHeight() - 4));
+            int x = Math.max(0, Math.min(ModConfig.arrowpoisonX, sr.getScaledWidth() - 4));
+            int y = Math.max(0, Math.min(ModConfig.arrowpoisonY, sr.getScaledHeight() - 4));
 
             GlStateManager.translate(x, y, 0);
             GlStateManager.scale(scale, scale, 1.0f);
@@ -110,17 +105,8 @@ public class PosionArrow {
         return ModConfig.enableKuudraArrowPoison;
     }
 
-    private UIPosition getPos() {
-        @SuppressWarnings("unchecked") BaseConfig<UIPosition> cfg = (BaseConfig<UIPosition>) AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_pos");
-        return cfg != null && cfg.Data != null ? cfg.Data : new UIPosition(200, 200);
-    }
-
     private float getScale() {
-        BaseConfig<?> base = AllConfig.INSTANCE.Pos_CONFIGS.get("arrowpoison_scale");
-        Object o = (base != null) ? base.Data : null;
-        if (o instanceof Float) return (Float) o;
-        if (o instanceof Double) return ((Double) o).floatValue();
-        if (o instanceof Integer) return ((Integer) o).floatValue();
-        return 1.0f;
+        float v = ModConfig.arrowpoisonScale;
+        return v <= 0 ? 1.0f : v;
     }
 }

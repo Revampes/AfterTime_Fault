@@ -1,10 +1,8 @@
 package com.aftertime.ratallofyou.UI.newui.layout;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
-import com.aftertime.ratallofyou.UI.config.ConfigIO;
 import com.aftertime.ratallofyou.UI.newui.util.TextRender;
+import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
@@ -18,19 +16,18 @@ import java.util.*;
 public class NewUILayout extends GuiScreen {
     private static GuiScreen previous;
 
+    private static class Pos { int x, y; Pos(int x, int y){ this.x=x; this.y=y; } }
+
     private static class HudItem {
-        final String key; // pos key, e.g., "p3ticktimer_pos"
+        final String key; // logical key, e.g., "p3ticktimer"
         final String label;
-        UIPosition pos;
+        Pos pos;
         int width;
         int height;
         int anchorX;
         int anchorY;
         boolean selected = false;
-
-        HudItem(String key, String label, UIPosition pos) {
-            this.key = key; this.label = label; this.pos = pos;
-        }
+        HudItem(String key, String label, Pos pos) { this.key = key; this.label = label; this.pos = pos; }
     }
 
     private final List<HudItem> items = new ArrayList<HudItem>();
@@ -56,75 +53,69 @@ public class NewUILayout extends GuiScreen {
 
     private void loadItems() {
         items.clear();
-        for (Map.Entry<String, BaseConfig<?>> en : AllConfig.INSTANCE.Pos_CONFIGS.entrySet()) {
-            BaseConfig<?> base = en.getValue();
-            if (!(base.Data instanceof UIPosition)) continue;
-            String key = en.getKey();
-            UIPosition p = (UIPosition) base.Data;
-            String label = base.name != null ? base.name : key;
-            HudItem item = new HudItem(key, label, p);
-            computeBox(item);
-            items.add(item);
-        }
+        // Build from ModConfig fields
+        items.add(new HudItem("p3ticktimer", "P3 Tick Timer", new Pos(ModConfig.p3ticktimerX, ModConfig.p3ticktimerY)));
+        items.add(new HudItem("bonzo", "Bonzo", new Pos(ModConfig.bonzoX, ModConfig.bonzoY)));
+        items.add(new HudItem("spirit", "Spirit", new Pos(ModConfig.spiritX, ModConfig.spiritY)));
+        items.add(new HudItem("phoenix", "Phoenix", new Pos(ModConfig.phoenixX, ModConfig.phoenixY)));
+        items.add(new HudItem("proc", "Proc", new Pos(ModConfig.procX, ModConfig.procY)));
+        // New HUD items
+        items.add(new HudItem("fluxflare", "Flux/Flare", new Pos(ModConfig.flarefluxX, ModConfig.flarefluxY)));
+        items.add(new HudItem("arrowpoison", "Arrow Poison", new Pos(ModConfig.arrowpoisonX, ModConfig.arrowpoisonY)));
+        items.add(new HudItem("autofish", "AutoFish Timer", new Pos(ModConfig.autofishTimerX, ModConfig.autofishTimerY)));
+        items.add(new HudItem("searchbar", "Search Bar", new Pos(ModConfig.searchbarX, ModConfig.searchbarY)));
+        for (HudItem item : items) computeBox(item);
         // Stable order
         Collections.sort(items, new Comparator<HudItem>() { public int compare(HudItem a, HudItem b) { return a.key.compareToIgnoreCase(b.key); }});
     }
 
     private float getScaleFor(String key) {
-        if ("p3ticktimer_pos".equals(key)) return getScaledFloat("p3ticktimer_scale");
-        if ("bonzo_pos".equals(key) || "spirit_pos".equals(key) || "phoenix_pos".equals(key) || "proc_pos".equals(key)) return getScaledFloat("invincible_scale");
-        if ("arrowpoison_pos".equals(key)) return getScaledFloat("arrowpoison_scale");
-        if ("flareflux_pos".equals(key)) return getScaledFloat("flareflux_scale");
-        return 1.0f;
-    }
-
-    private int getInt(String key, int def) {
-        BaseConfig<?> c = AllConfig.INSTANCE.Pos_CONFIGS.get(key);
-        if (c == null || c.Data == null) return def;
-        Object o = c.Data;
-        if (o instanceof Integer) return (Integer) o;
-        if (o instanceof Float) return Math.round((Float) o);
-        if (o instanceof Double) return (int) Math.round((Double) o);
-        return def;
-    }
-
-    private float getScaledFloat(String key) {
-        BaseConfig<?> c = AllConfig.INSTANCE.Pos_CONFIGS.get(key);
-        if (c == null || c.Data == null) return 1.0f;
-        Object o = c.Data;
-        if (o instanceof Float) return (Float) o;
-        if (o instanceof Double) return ((Double) o).floatValue();
-        if (o instanceof Integer) return ((Integer) o).floatValue();
+        if ("p3ticktimer".equals(key)) return ModConfig.p3ticktimerScale <= 0 ? 1.0f : ModConfig.p3ticktimerScale;
+        if ("bonzo".equals(key) || "spirit".equals(key) || "phoenix".equals(key) || "proc".equals(key)) return ModConfig.invincibleScale <= 0 ? 1.0f : ModConfig.invincibleScale;
+        if ("fluxflare".equals(key)) return ModConfig.flarefluxScale <= 0 ? 1.0f : ModConfig.flarefluxScale;
+        if ("arrowpoison".equals(key)) return ModConfig.arrowpoisonScale <= 0 ? 1.0f : ModConfig.arrowpoisonScale;
         return 1.0f;
     }
 
     private void computeBox(HudItem it) {
-        // Compute box similar to renderer metrics, but independent of old UI
         int fh = TextRender.height(fontRendererObj);
         float s = getScaleFor(it.key);
         int width = 40, height = 16, ax = 0, ay = 0;
-        if ("searchbar_pos".equals(it.key)) {
-            int w = getInt("searchbar_width", 192);
-            int h = getInt("searchbar_height", 16);
-            width = w; height = h; ax = 0; ay = 0;
-        } else if ("p3ticktimer_pos".equals(it.key)) {
+        if ("p3ticktimer".equals(it.key)) {
             int w = Math.max(30, Math.round(TextRender.width(fontRendererObj, "00.00") * s));
-            width = w; height = Math.max(fh, Math.round(fh * s)); ax = width / 2;
-        } else if ("bonzo_pos".equals(it.key) || "spirit_pos".equals(it.key) || "phoenix_pos".equals(it.key) || "proc_pos".equals(it.key)) {
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = width / 2; ay = 0;
+        } else if ("bonzo".equals(it.key)) {
             String sample = "Bonzo: READY";
             int w = Math.max(10, Math.round(TextRender.width(fontRendererObj, sample) * s));
-            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0;
-        } else if ("arrowpoison_pos".equals(it.key)) {
-            int textMax = Math.max(TextRender.width(fontRendererObj, "Twilight: 000000"), TextRender.width(fontRendererObj, "Toxic: 000000"));
-            int baseW = 16 + 4 + textMax;
-            int baseH = 34;
-            width = Math.max(24, Math.round(baseW * s)); height = Math.max(20, Math.round(baseH * s));
-        } else if ("flareflux_pos".equals(it.key)) {
-            int baseW = TextRender.width(fontRendererObj, "Flux/Flare") + 12;
-            int baseH = fh + 4; width = Math.max(30, Math.round(baseW * s)); height = Math.max(fh, Math.round(baseH * s));
-        } else {
-            // Generic fallback
-            width = Math.max(40, Math.round(80 * s)); height = Math.max(16, Math.round(16 * s));
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0; ay = 0;
+        } else if ("spirit".equals(it.key)) {
+            String sample = "Spirit: READY";
+            int w = Math.max(10, Math.round(TextRender.width(fontRendererObj, sample) * s));
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0; ay = 0;
+        } else if ("phoenix".equals(it.key)) {
+            String sample = "Phoenix: READY";
+            int w = Math.max(10, Math.round(TextRender.width(fontRendererObj, sample) * s));
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0; ay = 0;
+        } else if ("proc".equals(it.key)) {
+            String sample = "Phoenix Procced";
+            int w = Math.max(10, Math.round(TextRender.width(fontRendererObj, sample) * s));
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0; ay = 0;
+        } else if ("fluxflare".equals(it.key)) {
+            String sample = "Plasmaflux 12s";
+            int w = Math.max(10, Math.round(TextRender.width(fontRendererObj, sample) * s));
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0; ay = 0;
+        } else if ("arrowpoison".equals(it.key)) {
+            String sample = "Toxic: 64";
+            int w = Math.max(60, Math.round(TextRender.width(fontRendererObj, sample) * s));
+            width = w; height = Math.max(fh * 2 + 4, Math.round(fh * s) * 2 + 4); ax = 0; ay = 0;
+        } else if ("autofish".equals(it.key)) {
+            String sample = "Hook: 3.2s";
+            int w = Math.max(40, Math.round(TextRender.width(fontRendererObj, sample) * s));
+            width = w; height = Math.max(fh, Math.round(fh * s)); ax = 0; ay = 0;
+        } else if ("searchbar".equals(it.key)) {
+            int w = Math.max(50, ModConfig.searchbarWidth);
+            int h = Math.max(12, ModConfig.searchbarHeight);
+            width = w; height = h; ax = 0; ay = 0;
         }
         it.width = width; it.height = height; it.anchorX = ax; it.anchorY = ay;
     }
@@ -165,7 +156,6 @@ public class NewUILayout extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         if (mouseButton != 0) return;
-        // Select / start dragging
         HudItem hit = hitTest(mouseX, mouseY);
         if (hit != null) {
             for (HudItem it : items) it.selected = false;
@@ -182,14 +172,12 @@ public class NewUILayout extends GuiScreen {
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
         super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
         if (dragging != null && clickedMouseButton == 0) {
-            // Update position with snap to center lines
             ScaledResolution sr = new ScaledResolution(mc);
             int nx = mouseX - dragOffsetX + dragging.anchorX;
             int ny = mouseY - dragOffsetY + dragging.anchorY;
             int snap = 6;
             if (Math.abs(nx - sr.getScaledWidth() / 2) <= snap) nx = sr.getScaledWidth() / 2;
             if (Math.abs(ny - sr.getScaledHeight() / 2) <= snap) ny = sr.getScaledHeight() / 2;
-            // clamp
             nx = Math.max(0, Math.min(nx, sr.getScaledWidth()));
             ny = Math.max(0, Math.min(ny, sr.getScaledHeight()));
             dragging.pos.x = nx;
@@ -227,27 +215,35 @@ public class NewUILayout extends GuiScreen {
 
     private void savePositions() {
         for (HudItem it : items) {
-            BaseConfig<?> base = AllConfig.INSTANCE.Pos_CONFIGS.get(it.key);
-            if (base != null) {
-                @SuppressWarnings("unchecked")
-                BaseConfig<Object> cfgObj = (BaseConfig<Object>) base;
-                cfgObj.Data = it.pos;
-            }
+            if ("p3ticktimer".equals(it.key)) { ModConfig.p3ticktimerX = it.pos.x; ModConfig.p3ticktimerY = it.pos.y; }
+            else if ("bonzo".equals(it.key)) { ModConfig.bonzoX = it.pos.x; ModConfig.bonzoY = it.pos.y; }
+            else if ("spirit".equals(it.key)) { ModConfig.spiritX = it.pos.x; ModConfig.spiritY = it.pos.y; }
+            else if ("phoenix".equals(it.key)) { ModConfig.phoenixX = it.pos.x; ModConfig.phoenixY = it.pos.y; }
+            else if ("proc".equals(it.key)) { ModConfig.procX = it.pos.x; ModConfig.procY = it.pos.y; }
+            else if ("fluxflare".equals(it.key)) { ModConfig.flarefluxX = it.pos.x; ModConfig.flarefluxY = it.pos.y; }
+            else if ("arrowpoison".equals(it.key)) { ModConfig.arrowpoisonX = it.pos.x; ModConfig.arrowpoisonY = it.pos.y; }
+            else if ("autofish".equals(it.key)) { ModConfig.autofishTimerX = it.pos.x; ModConfig.autofishTimerY = it.pos.y; }
+            else if ("searchbar".equals(it.key)) { ModConfig.searchbarX = it.pos.x; ModConfig.searchbarY = it.pos.y; }
         }
-        // Persist to disk
-        ConfigIO.INSTANCE.SaveProperties();
+        // Persist to disk via new config system
+        ModConfigIO.save();
     }
 
     private void resetPositions() {
-        // Build a fresh AllConfig to read original default UIPosition values
-        AllConfig defaults = new AllConfig();
+        ScaledResolution sr = new ScaledResolution(mc);
+        int cx = sr.getScaledWidth() / 2;
+        int cy = sr.getScaledHeight() / 2;
         for (HudItem it : items) {
-            BaseConfig<?> defBase = defaults.Pos_CONFIGS.get(it.key);
-            if (defBase != null && defBase.Data instanceof UIPosition) {
-                UIPosition defPos = (UIPosition) defBase.Data;
-                it.pos = new UIPosition(defPos.x, defPos.y);
-                computeBox(it);
-            }
+            if ("p3ticktimer".equals(it.key)) { it.pos = new Pos(cx, cy); }
+            else if ("bonzo".equals(it.key)) { it.pos = new Pos(20, 20); }
+            else if ("spirit".equals(it.key)) { it.pos = new Pos(20, 36); }
+            else if ("phoenix".equals(it.key)) { it.pos = new Pos(20, 52); }
+            else if ("proc".equals(it.key)) { it.pos = new Pos(20, 68); }
+            else if ("fluxflare".equals(it.key)) { it.pos = new Pos(220, 220); }
+            else if ("arrowpoison".equals(it.key)) { it.pos = new Pos(200, 200); }
+            else if ("autofish".equals(it.key)) { it.pos = new Pos(5, 5); }
+            else if ("searchbar".equals(it.key)) { it.pos = new Pos(200, 200); }
+            computeBox(it);
         }
     }
 }

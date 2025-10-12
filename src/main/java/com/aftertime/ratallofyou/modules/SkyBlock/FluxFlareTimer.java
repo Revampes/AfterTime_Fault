@@ -1,8 +1,5 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
 import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -92,12 +89,11 @@ public class FluxFlareTimer {
         if (!isEnabled()) return;
         if (hudText == null || hudText.isEmpty()) return;
 
-        UIPosition pos = getPos();
         float s = getScale();
 
         ScaledResolution sr = new ScaledResolution(mc);
-        int x = Math.max(0, Math.min(pos.x, sr.getScaledWidth() - 2));
-        int y = Math.max(0, Math.min(pos.y, sr.getScaledHeight() - 2));
+        int x = Math.max(0, Math.min(ModConfig.flarefluxX, sr.getScaledWidth() - 2));
+        int y = Math.max(0, Math.min(ModConfig.flarefluxY, sr.getScaledHeight() - 2));
 
         net.minecraft.client.renderer.GlStateManager.pushMatrix();
         try {
@@ -113,17 +109,8 @@ public class FluxFlareTimer {
         return ModConfig.enableFluxFlareTimer;
     }
 
-    private UIPosition getPos() {
-        @SuppressWarnings("unchecked") BaseConfig<UIPosition> cfg = (BaseConfig<UIPosition>) AllConfig.INSTANCE.Pos_CONFIGS.get("flareflux_pos");
-        return (cfg != null && cfg.Data != null) ? cfg.Data : new UIPosition(220, 220);
-    }
-
     private float getScale() {
-        BaseConfig<?> base = AllConfig.INSTANCE.Pos_CONFIGS.get("flareflux_scale");
-        Object o = base != null ? base.Data : null;
-        if (o instanceof Float) return (Float) o;
-        if (o instanceof Double) return ((Double) o).floatValue();
-        if (o instanceof Integer) return ((Integer) o).floatValue();
-        return 1.0f;
+        float v = ModConfig.flarefluxScale;
+        return v <= 0 ? 1.0f : v;
     }
 }

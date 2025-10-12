@@ -28,7 +28,10 @@ public class NewModGUI extends GuiScreen {
             CategoryPanel panel = entry.getValue();
             int x = padding + i * (categoryWidth + padding);
             int y = padding;
-            int height = this.height - padding * 2;
+            // Auto-size height to content, clamped to available space
+            int preferred = panel.getPreferredHeight();
+            int maxH = this.height - padding * 2;
+            int height = Math.min(preferred, maxH);
             panel.setBounds(x, y, categoryWidth, height);
             categories.add(panel);
             i++;
@@ -37,8 +40,21 @@ public class NewModGUI extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        drawDefaultBackground();
+        // Remove dark fullscreen background; draw nothing behind UI for a clean look over world
+        // (Intentionally not calling drawDefaultBackground())
 
+        // Ensure category panel heights track dynamic content (expanded modules)
+        for (int i = 0; i < categories.size(); i++) {
+            CategoryPanel panel = categories.get(i);
+            int x = padding + i * (categoryWidth + padding);
+            int y = padding;
+            int preferred = panel.getPreferredHeight();
+            int maxH = this.height - padding * 2;
+            int h = Math.min(preferred, maxH);
+            panel.setBounds(x, y, categoryWidth, h);
+        }
+
+        // Draw base content
         for (CategoryPanel category : categories) {
             category.draw(mouseX, mouseY);
         }

@@ -1,6 +1,5 @@
 package com.aftertime.ratallofyou.KeyBind;
 
-import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
 import com.aftertime.ratallofyou.UI.newui.NewModGUI;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;

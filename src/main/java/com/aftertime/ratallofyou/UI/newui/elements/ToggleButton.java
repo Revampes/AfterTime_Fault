@@ -23,7 +23,7 @@ public class ToggleButton extends UIElement {
 
         hovered = isMouseOver(mouseX, mouseY);
 
-        // Draw button background - Aqua blue when enabled, grey when disabled
+        // Draw button background - Aqua blue when enabled, grey when disabled (no border)
         int color;
         if (toggled) {
             color = hovered ? 0xFF20B2AA : 0xFF008080; // Aqua colors - darker on hover
@@ -33,14 +33,7 @@ public class ToggleButton extends UIElement {
 
         Gui.drawRect(x, y, x + width, y + height, color);
 
-        // Draw border
-        int borderColor = hovered ? 0xFFFFFF00 : 0xFF000000;
-        Gui.drawRect(x, y, x + width, y + 1, borderColor);
-        Gui.drawRect(x, y + height - 1, x + width, y + height, borderColor);
-        Gui.drawRect(x, y, x + 1, y + height, borderColor);
-        Gui.drawRect(x + width - 1, y, x + width, y + height, borderColor);
-
-        // Draw label (scaled)
+        // Draw label centered
         int textColor = toggled ? 0xFFFFFFFF : 0xFFCCCCCC; // White when enabled, light grey when disabled
         int th = TextRender.height(fontRenderer);
         int textX = x + (width - TextRender.width(fontRenderer, label)) / 2;

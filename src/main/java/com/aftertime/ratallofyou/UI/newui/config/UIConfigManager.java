@@ -15,7 +15,7 @@ public class UIConfigManager {
     public static Map<String, CategoryPanel> createUICategories() {
         // Define your desired category order here
         List<String> categoryOrder = Arrays.asList(
-                "Render", "Dungeon", "SkyBlock", "Kuudra", "Slayer", "Fishing", "Performance", "Layout"
+                "Render", "Dungeon", "SkyBlock", "Kuudra", "Combat", "Layout"
         );
         Map<String, CategoryPanel> categories = new LinkedHashMap<>();
 

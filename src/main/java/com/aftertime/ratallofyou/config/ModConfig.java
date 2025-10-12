@@ -35,6 +35,13 @@ public class ModConfig {
     )
     public static int customCapeFrameDelay = 5; // ticks between frames for animated GIF
 
+    @NormalButton(
+            key = "render-custom-cape",
+            title = "Reload Cape",
+            action = "com.aftertime.ratallofyou.modules.render.CustomCape#reloadCape"
+    )
+    public static boolean reloadCape = false;
+
     // Etherwarp Overlay
     @ToggleButton(
             key = "render-etherwarpoverlay",
@@ -146,20 +153,55 @@ public class ModConfig {
     )
     public static String markLocationKeyBind = "U";
 
-    // Fishing Auto Fish
+    // Fishing Auto Fish (moved to Fishing category and expanded settings)
     @ToggleButton(
             key = "fishing-auto-fish",
             name = "Auto Fish",
             description = "Automatically reel and cast your rod",
-            category = "Fishing"
+            category = "SkyBlock"
     )
     public static boolean enabledAutoFish = false;
 
+    @CheckBox(key = "fishing-auto-fish", title = "Hold Sneak while fishing")
+    public static boolean autofishSneakHold = false;
+
+    @CheckBox(key = "fishing-auto-fish", title = "Throw if no hook out")
+    public static boolean autofishThrowIfNoHook = true;
+
+    @Slider(key = "fishing-auto-fish", min = 0, max = 10)
+    public static int autofishThrowCooldownS = 2;
+
+    @CheckBox(key = "fishing-auto-fish", title = "Re-throw on timeout")
+    public static boolean autofishRethrow = true;
+
+    @Slider(key = "fishing-auto-fish", min = 1, max = 120)
+    public static int autofishRethrowTimeoutS = 25;
+
+    @CheckBox(key = "fishing-auto-fish", title = "Slug mode (timeout only)")
+    public static boolean autofishSlugMode = false;
+
+    @CheckBox(key = "fishing-auto-fish", title = "Show status messages")
+    public static boolean autofishMessages = false;
+
+    @CheckBox(key = "fishing-auto-fish", title = "Show timer HUD")
+    public static boolean autofishShowTimer = true;
+
+    // Timer HUD position (managed via Layout editor)
+    public static int autofishTimerX = 5;
+    public static int autofishTimerY = 5;
+
+    // AutoShift option (reuse existing but keep grouped in the same module)
     @CheckBox(
             key = "fishing-auto-fish",
-            title = "Enable auto shift"
+            title = "AutoShift (periodically tap shift)"
     )
     public static boolean enabledAutoShift = false;
+
+    @Slider(key = "fishing-auto-fish", min = 1, max = 120)
+    public static int autofishAutoShiftIntervalS = 15;
+
+    @KeyBindInput(key = "fishing-auto-fish", title = "Toggle Hotkey")
+    public static String autofishHotkeyName = "None"; // store LWJGL key name; "None" => unbound
 
     // === Fullbright ===
     @ToggleButton(
@@ -358,7 +400,7 @@ public class ModConfig {
         key = "performance-hidelightning",
         name = "Hide Lightning",
         description = "Hide lightning bolt entities to reduce visual noise",
-        category = "Performance"
+        category = "Render"
     )
     public static boolean enableHideLightning = false;
 
@@ -366,7 +408,7 @@ public class ModConfig {
         key = "performance-hideuselessmsg",
         name = "Hide Useless Messages",
         description = "Filter out common spammy chat messages",
-        category = "Performance"
+        category = "SkyBlock"
     )
     public static boolean enableHideUselessMessages = false;
 
@@ -690,7 +732,7 @@ public class ModConfig {
         key = "slayer-miniboss",
         name = "Slayer Miniboss ESP",
         description = "Outline nearby slayer miniboss mobs",
-        category = "Slayer"
+        category = "Combat"
     )
     public static boolean enableSlayerMiniboss = false;
 
@@ -873,9 +915,67 @@ public class ModConfig {
     @ToggleButton(
             key = "kuudra-build-piles",
             name = "Build Piles",
-            description = "Highlight all six build positions with beacon beam",
+            description = "Highlight build position with beacon beam",
             category = "Kuudra"
+
     )
     public static boolean enableBuildPiles = false;
-}
 
+    @ToggleButton(
+            key = "get-score-board-details",
+            name = "ScoreDebug",
+            description = "Get scoreboard informations",
+            category = "SkyBlock"
+
+    )
+    public static boolean enableScoreBoard = false;
+
+    @ToggleButton(
+            key = "get-tab-list-details",
+            name = "TabDebug",
+            description = "Get tab list informations",
+            category = "SkyBlock"
+
+    )
+    public static boolean enableTabList = false;
+
+    // Invincible timers HUD (Bonzo/Spirit/Phoenix/Proc) positions
+    public static int bonzoX = 200; public static int bonzoY = 200;
+    public static int spiritX = 200; public static int spiritY = 200;
+    public static int phoenixX = 200; public static int phoenixY = 200;
+    public static int procX = 200; public static int procY = 200;
+
+    // P3 Tick Timer position
+    public static int p3ticktimerX = 200;
+    public static int p3ticktimerY = 200;
+
+    @Slider(
+        key = "dungeon-p3ticktimer",
+        min = 0,
+        max = 3
+    )
+    public static float p3ticktimerScale = 1.0f;
+
+    @Slider(
+        key = "dungeon-invincibletimer",
+        min = 0,
+        max = 3
+    )
+    public static float invincibleScale = 1.0f;
+
+    // HUD: Search Bar position (GUI chest overlay)
+    public static int searchbarX = 200;
+    public static int searchbarY = 200;
+
+    // HUD: Flare/Flux timer position and scale
+    @Slider(key = "skyblock-fluxflare", min = 0, max = 3)
+    public static float flarefluxScale = 1.0f;
+    public static int flarefluxX = 220;
+    public static int flarefluxY = 220;
+
+    // HUD: Arrow Poison (Kuudra) position and scale
+    @Slider(key = "kuudra-arrowpoison", min = 0, max = 3)
+    public static float arrowpoisonScale = 1.0f;
+    public static int arrowpoisonX = 200;
+    public static int arrowpoisonY = 200;
+}

@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.Command;
 
-import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
+import com.aftertime.ratallofyou.UI.newui.NewModGUI;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -20,7 +20,7 @@ public class GuiOpenScheduler {
         pending = false;
         final Minecraft mc = Minecraft.getMinecraft();
         if (mc != null) {
-            mc.displayGuiScreen(new ModSettingsGui());
+            mc.displayGuiScreen(new NewModGUI());
         }
         MinecraftForge.EVENT_BUS.unregister(this);
     }

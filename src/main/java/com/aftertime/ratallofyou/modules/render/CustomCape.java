@@ -38,6 +38,30 @@ public class CustomCape {
         loadCapeFromFile();
     }
 
+    public static void reloadCape() {
+        final Minecraft mc = Minecraft.getMinecraft();
+        mc.addScheduledTask(() -> {
+            CustomCape inst = (instance != null) ? instance : new CustomCape();
+            inst.deleteOldTextures();
+            inst.reloadCape(); // reuse the existing instance method body
+            inst.printStatus();
+        });
+    }
+
+    private void deleteOldTextures() {
+        try {
+            for (ResourceLocation loc : capeLocations) {
+                try {
+                    mc.getTextureManager().deleteTexture(loc);
+                } catch (Throwable ignored) {}
+            }
+        } finally {
+            capeLocations.clear();
+            currentFrame = 0;
+            tickCounter = 0;
+        }
+    }
+
     public static CustomCape getInstance() {
         if (instance == null) {
             instance = new CustomCape();
@@ -222,20 +246,6 @@ public class CustomCape {
             currentFrame = (currentFrame + 1) % capeLocations.size();
             tickCounter = 0;
         }
-    }
-
-    /**
-     * Reloads the cape from file - useful for changing capes without restarting
-     */
-    public void reloadCape() {
-        System.out.println("[CustomCape] Reloading cape...");
-        // Clear existing cape data
-        capeLocations.clear();
-        currentFrame = 0;
-        tickCounter = 0;
-
-        // Reload from file
-        loadCapeFromFile();
     }
 
     public boolean hasCape() {

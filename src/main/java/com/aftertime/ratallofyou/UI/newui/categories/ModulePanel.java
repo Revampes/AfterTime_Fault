@@ -38,12 +38,7 @@ public class ModulePanel {
         // Draw toggle button
         toggleButton.draw(mouseX, mouseY);
 
-        // Draw description on hover
-        if (toggleButton.isMouseOver(mouseX, mouseY)) {
-            drawTooltip(mouseX, mouseY, description);
-        }
-
-        // Draw subsettings if expanded
+        // Subsettings when expanded
         if (expanded) {
             for (int i = 0; i < elements.size(); i++) {
                 UIElement element = elements.get(i);
@@ -54,6 +49,10 @@ public class ModulePanel {
 
     // Draw overlays after all normal elements to ensure they are on top
     public void drawOverlays(int mouseX, int mouseY) {
+        // Tooltip for the toggle button on hover (draw on top of everything)
+        if (toggleButton.isMouseOver(mouseX, mouseY)) {
+            drawTooltip(mouseX, mouseY, description);
+        }
         if (!expanded) return;
         for (UIElement element : elements) {
             element.drawOverlay(mouseX, mouseY);
@@ -63,8 +62,10 @@ public class ModulePanel {
     private void drawTooltip(int mouseX, int mouseY, String text) {
         int th = TextRender.height(toggleButton.fontRenderer);
         int tooltipWidth = TextRender.width(toggleButton.fontRenderer, text) + 8;
-        int tooltipX = Math.min(mouseX + 5, toggleButton.mc.currentScreen.width - tooltipWidth - 5);
-        int tooltipY = mouseY + 5;
+        int screenW = toggleButton.mc.currentScreen.width;
+        int screenH = toggleButton.mc.currentScreen.height;
+        int tooltipX = Math.min(mouseX + 5, screenW - tooltipWidth - 5);
+        int tooltipY = Math.min(mouseY + 5, screenH - th - 8 - 5);
         int tooltipH = th + 8;
 
         Gui.drawRect(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipH, 0xE0000000);

@@ -23,8 +23,8 @@ public class CategoryPanel {
     }
 
     public void draw(int mouseX, int mouseY) {
-        // Draw category background
-        Gui.drawRect(x, y, x + width, y + height, 0x80222222);
+        // Draw category background (opaque grey)
+        Gui.drawRect(x, y, x + width, y + height, 0xFF444444);
 
         // Draw category title (scaled)
         int titleW = TextRender.width(mc.fontRendererObj, categoryName);
@@ -39,7 +39,8 @@ public class CategoryPanel {
                 module.setBounds(x + 5, moduleY, width - 10);
                 module.draw(mouseX, mouseY);
             }
-            moduleY += module.getHeight() + 5;
+            // Remove gap between toggle buttons/modules
+            moduleY += module.getHeight();
         }
 
         // Draw scroll bar if needed
@@ -53,7 +54,7 @@ public class CategoryPanel {
             if (moduleY + module.getHeight() > y && moduleY < y + height) {
                 module.drawOverlays(mouseX, mouseY);
             }
-            moduleY += module.getHeight() + 5;
+            moduleY += module.getHeight();
         }
     }
 
@@ -79,7 +80,7 @@ public class CategoryPanel {
                     return true;
                 }
             }
-            moduleY += module.getHeight() + 5;
+            moduleY += module.getHeight();
         }
         return false;
     }
@@ -95,7 +96,7 @@ public class CategoryPanel {
                     break;
                 }
             }
-            moduleY += module.getHeight() + 5;
+            moduleY += module.getHeight();
         }
         return handled;
     }
@@ -120,7 +121,7 @@ public class CategoryPanel {
     private int getTotalHeight() {
         int total = 0;
         for (ModulePanel module : modules) {
-            total += module.getHeight() + 5;
+            total += module.getHeight();
         }
         return total;
     }
@@ -151,5 +152,10 @@ public class CategoryPanel {
             if (module.hasAnyOverlayOpen()) return true;
         }
         return false;
+    }
+
+    // New: preferred height based on content (title + modules)
+    public int getPreferredHeight() {
+        return 25 + getTotalHeight();
     }
 }

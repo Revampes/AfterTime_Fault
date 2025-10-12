@@ -1,6 +1,5 @@
 package com.aftertime.ratallofyou.Command;
 
-import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;

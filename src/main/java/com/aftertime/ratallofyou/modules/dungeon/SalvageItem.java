@@ -1,6 +1,5 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.TabUtils;

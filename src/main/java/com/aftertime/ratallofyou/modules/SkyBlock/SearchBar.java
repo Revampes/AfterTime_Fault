@@ -1,9 +1,5 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.UIHighlighter;
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
 import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -33,6 +29,9 @@ import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 import java.util.ArrayList;
 import java.util.List;
+
+// Lightweight local struct for position to avoid legacy config dependency
+class UIPosition { public int x; public int y; UIPosition(int x, int y){ this.x=x; this.y=y; } }
 
 public class SearchBar {
     private final Minecraft mc = Minecraft.getMinecraft();
@@ -77,16 +76,7 @@ public class SearchBar {
     }
 
     private UIPosition getPos() {
-        UIPosition p = (UIPosition) AllConfig.INSTANCE.Pos_CONFIGS.get("searchbar_pos").Data;
-        if (p == null) {
-            ScaledResolution res = new ScaledResolution(mc);
-            int WIDTH = getWidthCfg();
-            p = new UIPosition(res.getScaledWidth() / 2 - WIDTH / 2, (res.getScaledHeight() * 6) / 7);
-            @SuppressWarnings("unchecked")
-            BaseConfig<UIPosition> cfg = (BaseConfig<UIPosition>) AllConfig.INSTANCE.Pos_CONFIGS.get("searchbar_pos");
-            cfg.Data = p;
-        }
-        return p;
+        return new UIPosition(ModConfig.searchbarX, ModConfig.searchbarY);
     }
 
     private void ensureField() {
@@ -248,7 +238,6 @@ public class SearchBar {
     public void onMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
         if (!isEnabled()) return;
         if (!isInventoryGui(event.gui)) return;
-        if (UIHighlighter.isInMoveMode()) return;
         ensureField();
 
         if (!Mouse.getEventButtonState()) return;
@@ -290,7 +279,6 @@ public class SearchBar {
     public void onKeyInput(GuiScreenEvent.KeyboardInputEvent.Pre event) {
         if (!isEnabled()) return;
         if (mc.currentScreen == null) return;
-        if (UIHighlighter.isInMoveMode()) return;
         ensureField();
 
         int key = Keyboard.getEventKey();
@@ -303,7 +291,7 @@ public class SearchBar {
         char c = Keyboard.getEventCharacter();
         int invKey = getEffectiveInventoryKey();
 
-        // If our field is focused (regardless of the container type), handle keys here and consume them
+        // If our field is focused (regardless of the container type), handle keys here and consume
         if (textField != null && textField.isFocused()) {
             searchFocused = true;
             if (savedInvKey == null) disableInventoryKeybind();
@@ -458,11 +446,6 @@ public class SearchBar {
             int px = pos.x - mc.fontRendererObj.getStringWidth(preview) + WIDTH - 2;
             int py = pos.y + 4;
             mc.fontRendererObj.drawStringWithShadow(preview, px, py, 0xFFFFFFFF);
-        }
-
-        // In move mode, visualize bounds
-        if (UIHighlighter.isInMoveMode()) {
-            Gui.drawRect(pos.x - 1, pos.y - 1, pos.x + WIDTH + 1, pos.y + HEIGHT + 1, 0x60FFFF00);
         }
     }
 

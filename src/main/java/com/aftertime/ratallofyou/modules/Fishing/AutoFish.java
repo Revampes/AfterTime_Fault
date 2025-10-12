@@ -1,8 +1,5 @@
 package com.aftertime.ratallofyou.modules.Fishing;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SoundCategory;
 import net.minecraft.client.settings.KeyBinding;
@@ -18,6 +15,9 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
+
+import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 
 import java.util.List;
 import java.util.Random;
@@ -43,26 +43,31 @@ public class AutoFish {
 
     // Cached config helpers
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("fishing_autofish");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enabledAutoFish;
     }
 
-    private boolean cfgSneak() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_sneak"), false); }
-    private boolean cfgThrowIfNoHook() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_throw_hook"), true); }
-    private int cfgThrowCooldownTicks() { return getInt(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_throw_cooldown_s"), 2) * 20; }
-    private boolean cfgRethrow() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_rethrow"), true); }
-    private int cfgRethrowCooldownTicks() { return getInt(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_rethrow_cooldown_s"), 25) * 20; }
-    private boolean cfgSlug() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_slug_mode"), false); }
-    private boolean cfgMessage() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_message"), false); }
-    private boolean cfgShowTimer() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_timer"), true); }
-    private int cfgTimerX() { return getInt(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_timer_x"), 5); }
-    private int cfgTimerY() { return getInt(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_timer_y"), 5); }
-    private boolean cfgAutoShift() { return getBool(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_autoshift"), false); }
-    private int cfgAutoShiftIntervalS() { return Math.max(1, getInt(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_autoshift_interval_s"), 15)); }
-    private int cfgHotkey() { return getInt(AllConfig.INSTANCE.AUTOFISH_CONFIGS.get("autofish_hotkey"), 0); }
-
-    private static boolean getBool(BaseConfig<?> c, boolean def) { try { return c != null && Boolean.TRUE.equals(c.Data); } catch (Throwable ignored) { return def; } }
-    private static int getInt(BaseConfig<?> c, int def) { try { Object d = c.Data; return (d instanceof Integer) ? (Integer) d : def; } catch (Throwable ignored) { return def; } }
+    private boolean cfgSneak() { return ModConfig.autofishSneakHold; }
+    private boolean cfgThrowIfNoHook() { return ModConfig.autofishThrowIfNoHook; }
+    private int cfgThrowCooldownTicks() { return Math.max(0, ModConfig.autofishThrowCooldownS) * 20; }
+    private boolean cfgRethrow() { return ModConfig.autofishRethrow; }
+    private int cfgRethrowCooldownTicks() { return Math.max(1, ModConfig.autofishRethrowTimeoutS) * 20; }
+    private boolean cfgSlug() { return ModConfig.autofishSlugMode; }
+    private boolean cfgMessage() { return ModConfig.autofishMessages; }
+    private boolean cfgShowTimer() { return ModConfig.autofishShowTimer; }
+    private int cfgTimerX() { return ModConfig.autofishTimerX; }
+    private int cfgTimerY() { return ModConfig.autofishTimerY; }
+    private boolean cfgAutoShift() { return ModConfig.enabledAutoShift; }
+    private int cfgAutoShiftIntervalS() { return Math.max(1, ModConfig.autofishAutoShiftIntervalS); }
+    private int cfgHotkey() {
+        try {
+            String name = ModConfig.autofishHotkeyName;
+            if (name == null) return 0;
+            name = name.trim();
+            if (name.isEmpty() || name.equalsIgnoreCase("none")) return 0;
+            int code = Keyboard.getKeyIndex(name);
+            return Math.max(0, code);
+        } catch (Throwable ignored) { return 0; }
+    }
 
     // Lifecycle hooks
     @SubscribeEvent
@@ -97,12 +102,10 @@ public class AutoFish {
             if (!org.lwjgl.input.Keyboard.getEventKeyState()) return; // only on key down
             int key = org.lwjgl.input.Keyboard.getEventKey();
             if (key != bound) return;
-            // Fix: use the Fishing module key, not SkyBlock
-            ModuleInfo mod = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("fishing_autofish");
-            if (mod == null) return;
-            boolean newState = !Boolean.TRUE.equals(mod.Data);
-            mod.Data = newState;
+            boolean newState = !ModConfig.enabledAutoFish;
+            ModConfig.enabledAutoFish = newState;
             say("Toggle: " + (newState ? "Enabled" : "Disabled"));
+            ModConfigIO.save();
             if (!newState) {
                 // ensure we cleanup on manual disable
                 restoreSound();

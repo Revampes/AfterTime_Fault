@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.debugdata;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.TabUtils;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
@@ -42,5 +42,5 @@ public class GetScoreboardDetails {
             mc.thePlayer.addChatMessage(new ChatComponentText(msg));
         }
     }
-    public static boolean isEnabled() { return BooleanSettings.isEnabled("debugdata_getscoreboarddetails"); }
+    public static boolean isEnabled() { return ModConfig.enableScoreBoard; }
 }

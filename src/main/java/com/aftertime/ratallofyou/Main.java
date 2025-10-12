@@ -11,7 +11,6 @@ import com.aftertime.ratallofyou.modules.kuudra.PhaseOne.PearlLineUp.CalcPearlLi
 import com.aftertime.ratallofyou.modules.kuudra.PhaseTwo.*;
 import com.aftertime.ratallofyou.modules.render.*;
 import com.aftertime.ratallofyou.modules.dungeon.*;
-import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.modules.dungeon.StarMobHighlighter;
 import com.aftertime.ratallofyou.modules.slayer.Miniboss;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
@@ -85,10 +84,7 @@ public class Main {
                 new Miniboss(),
 
                 // Input/keybind listeners
-                new KeybindHandler(),
-
-                // UI
-                new UIHighlighter()
+                new KeybindHandler()
         );
 
         KeybindHandler.registerKeybinds();
