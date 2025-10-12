@@ -13,7 +13,11 @@ import java.util.*;
 public class UIConfigManager {
 
     public static Map<String, CategoryPanel> createUICategories() {
-        Map<String, CategoryPanel> categories = new HashMap<>();
+        // Define your desired category order here
+        List<String> categoryOrder = Arrays.asList(
+                "Render", "Dungeon", "SkyBlock", "Kuudra", "Slayer", "Fishing", "Performance", "Layout"
+        );
+        Map<String, CategoryPanel> categories = new LinkedHashMap<>();
 
         // Get all fields from ModConfig class
         Field[] fields = ModConfig.class.getDeclaredFields();
@@ -96,7 +100,20 @@ public class UIConfigManager {
             }
         }
 
-        return categories;
+        // --- Custom ordering logic ---
+        Map<String, CategoryPanel> orderedCategories = new LinkedHashMap<>();
+        for (String cat : categoryOrder) {
+            if (categories.containsKey(cat)) {
+                orderedCategories.put(cat, categories.get(cat));
+            }
+        }
+        // Add any categories not in the list at the end
+        for (Map.Entry<String, CategoryPanel> entry : categories.entrySet()) {
+            if (!orderedCategories.containsKey(entry.getKey())) {
+                orderedCategories.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return orderedCategories;
     }
 
     private static <T extends java.lang.annotation.Annotation>

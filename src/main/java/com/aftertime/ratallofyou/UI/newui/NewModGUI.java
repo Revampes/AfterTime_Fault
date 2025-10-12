@@ -11,7 +11,7 @@ import java.util.*;
 
 public class NewModGUI extends GuiScreen {
     private List<CategoryPanel> categories = new ArrayList<>();
-    private int categoryWidth = 80; // Reduced to fit more categories per row
+    private int categoryWidth = 100; // Reduced to fit more categories per row
     private int padding = 5;
     private Minecraft mc = Minecraft.getMinecraft();
 
@@ -22,19 +22,16 @@ public class NewModGUI extends GuiScreen {
         // Build categories dynamically from annotated ModConfig
         Map<String, CategoryPanel> categoryMap = UIConfigManager.createUICategories();
 
-        // Deterministic order: sort by name
-        List<String> names = new ArrayList<>(categoryMap.keySet());
-        Collections.sort(names);
-
-        // Layout categories horizontally
-        for (int i = 0; i < names.size(); i++) {
-            String name = names.get(i);
-            CategoryPanel panel = categoryMap.get(name);
+        // Respect insertion order from LinkedHashMap returned by UIConfigManager (custom order)
+        int i = 0;
+        for (Map.Entry<String, CategoryPanel> entry : categoryMap.entrySet()) {
+            CategoryPanel panel = entry.getValue();
             int x = padding + i * (categoryWidth + padding);
             int y = padding;
             int height = this.height - padding * 2;
             panel.setBounds(x, y, categoryWidth, height);
             categories.add(panel);
+            i++;
         }
     }
 

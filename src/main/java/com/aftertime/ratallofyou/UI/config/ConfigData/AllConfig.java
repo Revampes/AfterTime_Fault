@@ -42,7 +42,7 @@ public class AllConfig {
         put("dungeons_keyhighlighter",new ModuleInfo("Key Highlighter", "Highlights Key", "Dungeons", false));
         put("dungeons_starmobhighlighter",new ModuleInfo("Star Mob Highlighter", "Highlights starred mobs and Shadow Assassins", "Dungeons", false));
         put("dungeons_secretclicks",new ModuleInfo("Show Secret Clicks", "Highlights when you click on secrets", "Dungeons", false));
-        put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false, 4));
+        // put("dungeons_terminals",new ModuleInfo("Dungeon Terminals", "Custom GUI and solver for terminals", "Dungeons", false, 4));
         put("dungeons_watcherclear", new ModuleInfo("Watcher Clear", "Delay then countdown after Watcher opens blood", "Dungeons", false));
         put("dungeons_customleapmenu", new ModuleInfo("Custom Leap Menu (not working)", "Replace Spirit Leap GUI with a faster teammate list", "Dungeons", false));
         put("dungeons_healerwishalert", new ModuleInfo("Healer Wish Alert", "Alert when needed to wish", "Dungeons", false));
@@ -133,25 +133,8 @@ public class AllConfig {
 
     public final LinkedHashMap<String, BaseConfig<?>> TERMINAL_CONFIGS = new LinkedHashMap<String, BaseConfig<?>>()
     {{
-        put("terminal_high_ping_mode", new BaseConfig<>("Smooth Terminal", "Smooth Terminal GUI Especially for High Ping Users", false));
-        put("terminal_scale", new BaseConfig<>("Terminal Scale", "Scale factor for terminal display", 1.0f));
-        put("terminal_timeout_ms", new BaseConfig<>("Timeout (ms)", "Timeout in milliseconds for terminal operations", 500));
-        put("terminal_first_click_ms", new BaseConfig<>("First Click Delay (ms)", "Delay in milliseconds for first click", 0));
-        put("terminal_offset_x", new BaseConfig<>("X Offset", "Horizontal offset for terminal position", 0));
-        put("terminal_offset_y", new BaseConfig<>("Y Offset", "Vertical offset for terminal position", 0));
-        put("terminal_overlay_color", new BaseConfig<>("Overlay Color", "Color for terminal overlay (RGBA)", new Color(0, 255, 0, 255)));
-        put("terminal_background_color", new BaseConfig<>("Background Color", "Background color for terminal (RGBA)", new Color(0, 0, 0, 127)));
-        // New: optional rounded corners and high ping queue pacing
-        put("terminal_corner_radius_bg", new BaseConfig<>("BG Corner Radius", "Rounded corner radius for terminal background (px)", 1));
-        put("terminal_corner_radius_cell", new BaseConfig<>("Cell Corner Radius", "Rounded corner radius for cell highlights (px)", 1));
-        put("terminal_high_ping_interval_ms", new BaseConfig<>("High Ping Interval (ms)", "Spacing between queued clicks in Smooth Terminal mode", 120));
-        // Per-terminal toggles
-        put("terminal_enable_numbers", new BaseConfig<>("Enable Numbers", "Enable Numbers terminal helper GUI", true));
-        put("terminal_enable_starts_with", new BaseConfig<>("Enable Starts With", "Enable Starts With terminal helper GUI", true));
-        put("terminal_enable_colors", new BaseConfig<>("Enable Colors", "Enable Colors terminal helper GUI", true));
-        put("terminal_enable_red_green", new BaseConfig<>("Enable Red Green", "Enable Red Green terminal helper GUI", true));
-        put("terminal_enable_rubix", new BaseConfig<>("Enable Rubix", "Enable Rubix terminal helper GUI", true));
-        put("terminal_enable_melody", new BaseConfig<>("Enable Melody", "Enable Melody terminal helper GUI", true));
+        // All terminal settings migrated to ModConfig. This config group is now deprecated.
+        // (Old settings removed)
     }};
 
     public final LinkedHashMap<String,BaseConfig<?>> Pos_CONFIGS = new LinkedHashMap<String,BaseConfig<?>>()

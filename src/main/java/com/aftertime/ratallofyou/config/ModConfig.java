@@ -693,4 +693,189 @@ public class ModConfig {
         category = "Slayer"
     )
     public static boolean enableSlayerMiniboss = false;
+
+    // --- Dungeon Terminals Settings ---
+    @ToggleButton(
+        key = "dungeons-terminals",
+        name = "Dungeon Terminals",
+        description = "Custom GUI and solver for terminals",
+        category = "Dungeon"
+    )
+    public static boolean enableDungeonTerminals = true;
+
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Smooth Terminal (High Ping Mode)"
+    )
+    public static boolean terminalHighPingMode = false;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = 0,
+        max = 3
+    )
+    public static float terminalScale = 1.0f;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = 0,
+        max = 2000
+    )
+    public static int terminalTimeoutMs = 500;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = 0,
+        max = 500
+    )
+    public static int terminalFirstClickMs = 0;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = -500,
+        max = 500
+    )
+    public static int terminalOffsetX = 0;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = -500,
+        max = 500
+    )
+    public static int terminalOffsetY = 0;
+
+    @ColorPicker(
+        key = "dungeons-terminals",
+        title = "Overlay Color"
+    )
+    public static int terminalOverlayColor = 0x00FF00FF; // RGBA
+
+    @ColorPicker(
+        key = "dungeons-terminals",
+        title = "Background Color"
+    )
+    public static int terminalBackgroundColor = 0x0000007F; // RGBA
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = 0,
+        max = 20
+    )
+    public static int terminalCornerRadiusBg = 1;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = 0,
+        max = 20
+    )
+    public static int terminalCornerRadiusCell = 1;
+
+    @Slider(
+        key = "dungeons-terminals",
+        min = 0,
+        max = 1000
+    )
+    public static int terminalHighPingIntervalMs = 120;
+
+    // Per-terminal toggles
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Enable Numbers Terminal"
+    )
+    public static boolean terminalEnableNumbers = true;
+
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Enable Starts With Terminal"
+    )
+    public static boolean terminalEnableStartsWith = true;
+
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Enable Colors Terminal"
+    )
+    public static boolean terminalEnableColors = true;
+
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Enable Red Green Terminal"
+    )
+    public static boolean terminalEnableRedGreen = true;
+
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Enable Rubix Terminal"
+    )
+    public static boolean terminalEnableRubix = true;
+
+    @CheckBox(
+        key = "dungeons-terminals",
+        title = "Enable Melody Terminal"
+    )
+    public static boolean terminalEnableMelody = true;
+
+    @ToggleButton(
+            key = "kuudra-dynamic-pearl",
+            name = "Dynamic Pearl",
+            description = "Show pearl spot everywhere in kuudra",
+            category = "Kuudra"
+    )
+    public static boolean enableDynamicPearl = false;
+
+    @ToggleButton(
+            key = "kuudra-check-no-pre",
+            name = "Check No Pre",
+            description = "Send message in party chat when no supply at your current pre spot",
+            category = "Kuudra"
+    )
+    public static boolean enableCheckNoPre = false;
+
+    @ToggleButton(
+            key = "kuudra-crate-aura",
+            name = "Crate Aura",
+            description = "Automatically right click on supply",
+            category = "Kuudra"
+    )
+    public static boolean enableCrateAura = false;
+
+    @ToggleButton(
+            key = "kuudra-crate-beacon-beam",
+            name = "Crate Beam",
+            description = "Highlight supplies position with beacon beam",
+            category = "Kuudra"
+    )
+    public static boolean enableCrateBeaconBeam = false;
+
+    @ToggleButton(
+            key = "kuudra-box-crate",
+            name = "Box Crate",
+            description = "Highlight the hitbox of supply",
+            category = "Kuudra"
+    )
+    public static boolean enableBoxCrate = false;
+
+    @ToggleButton(
+            key = "kuudra-fixed-pos-pearl",
+            name = "Non-dynamic Pearl",
+            description = "Fixed position of pearl lineups",
+            category = "Kuudra"
+    )
+    public static boolean enableFixedPosPearl = false;
+
+    @ToggleButton(
+            key = "kuudra-builders-count",
+            name = "Builders Count",
+            description = "Show how many players are currently building during phase two",
+            category = "Kuudra"
+    )
+    public static boolean enableBuildersCount = false;
+
+    @ToggleButton(
+            key = "kuudra-build-piles",
+            name = "Build Piles",
+            description = "Highlight all six build positions with beacon beam",
+            category = "Kuudra"
+    )
+    public static boolean enableBuildPiles = false;
 }
+

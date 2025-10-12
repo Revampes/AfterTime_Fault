@@ -3,6 +3,7 @@ package com.aftertime.ratallofyou.modules.dungeon.terminals;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 
 import java.awt.*;
 import java.util.Map;
@@ -15,47 +16,30 @@ public final class TerminalSettingsApplier {
 
     public static void applyFromAllConfig() {
         try {
-            // Ensure common class is initialized (it force-loads terminal classes)
             Class.forName(TerminalGuiCommon.class.getName());
         } catch (Throwable ignored) {}
 
-        // Pull terminal group settings
-        Map<String, BaseConfig<?>> term = AllConfig.INSTANCE.TERMINAL_CONFIGS;
+        // Read from ModConfig instead of AllConfig
+        TerminalGuiCommon.Defaults.highPingMode = ModConfig.terminalHighPingMode;
+        TerminalGuiCommon.Defaults.timeoutMs = ModConfig.terminalTimeoutMs;
+        TerminalGuiCommon.Defaults.firstClickBlockMs = ModConfig.terminalFirstClickMs;
+        TerminalGuiCommon.Defaults.scale = ModConfig.terminalScale;
+        TerminalGuiCommon.Defaults.offsetX = ModConfig.terminalOffsetX;
+        TerminalGuiCommon.Defaults.offsetY = ModConfig.terminalOffsetY;
+        TerminalGuiCommon.Defaults.overlayColor = ModConfig.terminalOverlayColor;
+        TerminalGuiCommon.Defaults.backgroundColor = ModConfig.terminalBackgroundColor;
+        TerminalGuiCommon.Defaults.cornerRadiusBg = ModConfig.terminalCornerRadiusBg;
+        TerminalGuiCommon.Defaults.cornerRadiusCell = ModConfig.terminalCornerRadiusCell;
+        TerminalGuiCommon.Defaults.queueIntervalMs = ModConfig.terminalHighPingIntervalMs;
 
-        // Defaults mapping
-        TerminalGuiCommon.Defaults.highPingMode = getBool(term, "terminal_high_ping_mode", TerminalGuiCommon.Defaults.highPingMode);
-        TerminalGuiCommon.Defaults.timeoutMs = getInt(term, "terminal_timeout_ms", TerminalGuiCommon.Defaults.timeoutMs);
-        TerminalGuiCommon.Defaults.firstClickBlockMs = getInt(term, "terminal_first_click_ms", TerminalGuiCommon.Defaults.firstClickBlockMs);
-        TerminalGuiCommon.Defaults.scale = getFloat(term, "terminal_scale", TerminalGuiCommon.Defaults.scale);
-        TerminalGuiCommon.Defaults.offsetX = getInt(term, "terminal_offset_x", TerminalGuiCommon.Defaults.offsetX);
-        TerminalGuiCommon.Defaults.offsetY = getInt(term, "terminal_offset_y", TerminalGuiCommon.Defaults.offsetY);
-        Color overlay = getColor(term, "terminal_overlay_color", new Color(TerminalGuiCommon.Defaults.overlayColor, true));
-        TerminalGuiCommon.Defaults.overlayColor = overlay.getRGB();
-        Color bg = getColor(term, "terminal_background_color", new Color(TerminalGuiCommon.Defaults.backgroundColor, true));
-        TerminalGuiCommon.Defaults.backgroundColor = bg.getRGB();
-        // Optional rounded corner radii (pixels)
-        TerminalGuiCommon.Defaults.cornerRadiusBg = getInt(term, "terminal_corner_radius_bg", TerminalGuiCommon.Defaults.cornerRadiusBg);
-        TerminalGuiCommon.Defaults.cornerRadiusCell = getInt(term, "terminal_corner_radius_cell", TerminalGuiCommon.Defaults.cornerRadiusCell);
+        boolean masterOn = ModConfig.enableDungeonTerminals;
+        boolean enNumbers = masterOn && ModConfig.terminalEnableNumbers;
+        boolean enStarts = masterOn && ModConfig.terminalEnableStartsWith;
+        boolean enColors = masterOn && ModConfig.terminalEnableColors;
+        boolean enRedGreen = masterOn && ModConfig.terminalEnableRedGreen;
+        boolean enRubix = masterOn && ModConfig.terminalEnableRubix;
+        boolean enMelody = masterOn && ModConfig.terminalEnableMelody;
 
-        TerminalGuiCommon.Defaults.queueIntervalMs = getInt(term, "terminal_high_ping_interval_ms", TerminalGuiCommon.Defaults.queueIntervalMs);
-
-        // Master module toggle: if disabled, force-disable all terminal helpers
-        boolean masterOn = true;
-        BaseConfig<?> moduleCfg = AllConfig.INSTANCE.MODULES.get("dungeons_terminals");
-        if (moduleCfg instanceof ModuleInfo) {
-            Object v = moduleCfg.Data;
-            if (v instanceof Boolean) masterOn = (Boolean) v;
-        }
-
-        // Per-terminal enables (guarded by master)
-        boolean enNumbers = masterOn && getBool(term, "terminal_enable_numbers", true);
-        boolean enStarts = masterOn && getBool(term, "terminal_enable_starts_with", true);
-        boolean enColors = masterOn && getBool(term, "terminal_enable_colors", true);
-        boolean enRedGreen = masterOn && getBool(term, "terminal_enable_red_green", true);
-        boolean enRubix = masterOn && getBool(term, "terminal_enable_rubix", true);
-        boolean enMelody = masterOn && getBool(term, "terminal_enable_melody", true);
-
-        // Apply to runtime listeners
         try { numbers.setEnabled(enNumbers); } catch (Throwable ignored) {}
         try { startswith.setEnabled(enStarts); } catch (Throwable ignored) {}
         try { Colors.setEnabled(enColors); } catch (Throwable ignored) {}
