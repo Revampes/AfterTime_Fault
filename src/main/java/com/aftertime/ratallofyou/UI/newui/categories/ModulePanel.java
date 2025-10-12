@@ -5,6 +5,7 @@ import net.minecraft.client.gui.Gui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
 public class ModulePanel {
     private String moduleName;
@@ -51,13 +52,23 @@ public class ModulePanel {
         }
     }
 
+    // Draw overlays after all normal elements to ensure they are on top
+    public void drawOverlays(int mouseX, int mouseY) {
+        if (!expanded) return;
+        for (UIElement element : elements) {
+            element.drawOverlay(mouseX, mouseY);
+        }
+    }
+
     private void drawTooltip(int mouseX, int mouseY, String text) {
-        int tooltipWidth = toggleButton.fontRenderer.getStringWidth(text) + 8;
+        int th = TextRender.height(toggleButton.fontRenderer);
+        int tooltipWidth = TextRender.width(toggleButton.fontRenderer, text) + 8;
         int tooltipX = Math.min(mouseX + 5, toggleButton.mc.currentScreen.width - tooltipWidth - 5);
         int tooltipY = mouseY + 5;
+        int tooltipH = th + 8;
 
-        Gui.drawRect(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + 16, 0xE0000000);
-        toggleButton.fontRenderer.drawString(text, tooltipX + 4, tooltipY + 4, 0xFFFFFF);
+        Gui.drawRect(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipH, 0xE0000000);
+        TextRender.draw(toggleButton.fontRenderer, text, tooltipX + 4, tooltipY + (tooltipH - th) / 2, 0xFFFFFF);
     }
 
     public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
@@ -79,6 +90,22 @@ public class ModulePanel {
                     return true;
                 }
             }
+        }
+        return false;
+    }
+
+    // Handle clicks targeting overlays (e.g., dropdown lists, color popups)
+    public boolean mouseClickedOverlay(int mouseX, int mouseY, int mouseButton) {
+        if (!expanded) return false;
+        // Prefer elements with overlays open first
+        for (UIElement element : elements) {
+            if (element.hasOverlayOpen()) {
+                if (element.mouseClickedOverlay(mouseX, mouseY, mouseButton)) return true;
+            }
+        }
+        // Then allow elements to open overlays if click falls into their overlay activation areas
+        for (UIElement element : elements) {
+            if (element.mouseClickedOverlay(mouseX, mouseY, mouseButton)) return true;
         }
         return false;
     }
@@ -136,15 +163,25 @@ public class ModulePanel {
     }
 
     public void addColorPicker(String title, java.awt.Color initialColor, Runnable onChange) {
+        addColorPickerReturn(title, initialColor, onChange);
+    }
+
+    public ColorPicker addColorPickerReturn(String title, java.awt.Color initialColor, Runnable onChange) {
         ColorPicker colorPicker = new ColorPicker(0, 0, width - 10, 16, title, initialColor, onChange);
         elements.add(colorPicker);
         relayoutElements();
+        return colorPicker;
     }
 
     public void addTextInput(String placeholder, int maxLength, Runnable onChange) {
+        addTextInputReturn(placeholder, maxLength, onChange);
+    }
+
+    public TextInputField addTextInputReturn(String placeholder, int maxLength, Runnable onChange) {
         TextInputField textInput = new TextInputField(0, 0, width - 10, 16, placeholder, maxLength, onChange);
         elements.add(textInput);
         relayoutElements();
+        return textInput;
     }
 
     public void addKeyBindInput(String title, String initialKey, Runnable onChange) {
@@ -174,9 +211,14 @@ public class ModulePanel {
     }
 
     public void addDropdown(String title, String[] options, int initialIndex, Runnable onChange) {
+        addDropdownReturn(title, options, initialIndex, onChange);
+    }
+
+    public DropdownBox addDropdownReturn(String title, String[] options, int initialIndex, Runnable onChange) {
         DropdownBox dropdown = new DropdownBox(0, 0, width - 10, 16, title, options, initialIndex, onChange);
         elements.add(dropdown);
         relayoutElements();
+        return dropdown;
     }
 
     private void relayoutElements() {
@@ -208,10 +250,22 @@ public class ModulePanel {
         relayoutElements();
     }
 
+    public void closeOverlays() {
+        for (UIElement element : elements) {
+            if (element.hasOverlayOpen()) element.closeOverlay();
+        }
+    }
+
+    public boolean hasAnyOverlayOpen() {
+        for (UIElement element : elements) {
+            if (element.hasOverlayOpen()) return true;
+        }
+        return false;
+    }
+
     // Getters
     public boolean isExpanded() { return expanded; }
     public String getModuleName() { return moduleName; }
     public ToggleButton getToggleButton() { return toggleButton; }
     public boolean isEnabled() { return toggleButton.isToggled(); }
 }
-

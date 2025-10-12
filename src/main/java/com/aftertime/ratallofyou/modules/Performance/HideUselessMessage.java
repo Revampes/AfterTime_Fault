@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.Performance;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -44,8 +43,7 @@ public class HideUselessMessage {
     }
 
     private static boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("performance_hideuselessmsg");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableHideUselessMessages;
     }
 
     @SubscribeEvent

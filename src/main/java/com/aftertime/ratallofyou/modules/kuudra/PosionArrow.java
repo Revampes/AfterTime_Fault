@@ -4,6 +4,7 @@ import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -106,8 +107,7 @@ public class PosionArrow {
     }
 
     private boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_arrowpoison");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableKuudraArrowPoison;
     }
 
     private UIPosition getPos() {

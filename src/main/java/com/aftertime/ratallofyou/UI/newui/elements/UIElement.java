@@ -28,6 +28,18 @@ public abstract class UIElement {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
     }
 
+    // Default: no overlay drawing. Elements with popups/overlays can override.
+    public void drawOverlay(int mouseX, int mouseY) { /* no-op by default */ }
+
+    // Default: no overlay click handling. Elements with popups/overlays can override.
+    public boolean mouseClickedOverlay(int mouseX, int mouseY, int mouseButton) { return false; }
+
+    // Default: element has no overlay open
+    public boolean hasOverlayOpen() { return false; }
+
+    // Default: nothing to close
+    public void closeOverlay() { /* no-op */ }
+
     // Getters and setters
     public void setPosition(int x, int y) { this.x = x; this.y = y; }
     public void setSize(int width, int height) { this.width = width; this.height = height; }

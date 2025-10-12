@@ -1,12 +1,11 @@
 package com.aftertime.ratallofyou.modules.render;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.aftertime.ratallofyou.config.ModConfig;
 
 public class Fullbright {
     private static float originalGamma;
@@ -21,7 +20,7 @@ public class Fullbright {
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
 
-        boolean currentlyEnabled = isModuleEnabled();
+        boolean currentlyEnabled = ModConfig.enableFullbright;
         Minecraft mc = Minecraft.getMinecraft();
 
         if (currentlyEnabled) {
@@ -33,10 +32,5 @@ public class Fullbright {
             mc.gameSettings.gammaSetting = originalGamma;
             wasEnabled = false;
         }
-    }
-
-    private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("render_fullbright");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
     }
 }

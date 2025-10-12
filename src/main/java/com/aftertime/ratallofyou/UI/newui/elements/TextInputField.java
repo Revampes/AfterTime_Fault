@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.newui.elements;
 
 import net.minecraft.client.gui.Gui;
 import org.lwjgl.input.Keyboard;
+import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
 public class TextInputField extends UIElement {
     private String text;
@@ -43,22 +44,23 @@ public class TextInputField extends UIElement {
 
         // Calculate text position with cursor
         String textBeforeCursor = displayText.substring(0, Math.min(cursorPosition, displayText.length()));
-        int textWidth = fontRenderer.getStringWidth(textBeforeCursor);
+        int textWidth = TextRender.width(fontRenderer, textBeforeCursor);
         int textX = x + 4;
-        int textY = y + (height - 8) / 2;
+        int th = TextRender.height(fontRenderer);
+        int textY = y + (height - th) / 2;
 
         // Ensure text doesn't overflow
         String visibleText = displayText;
-        while (fontRenderer.getStringWidth(visibleText) > width - 8 && visibleText.length() > 0) {
+        while (TextRender.width(fontRenderer, visibleText) > width - 8 && visibleText.length() > 0) {
             visibleText = visibleText.substring(1);
         }
 
-        fontRenderer.drawString(visibleText, textX, textY, textColor);
+        TextRender.draw(fontRenderer, visibleText, textX, textY, textColor);
 
         // Draw cursor if focused
         if (focused && System.currentTimeMillis() % 1000 < 500) {
             int cursorX = textX + textWidth;
-            Gui.drawRect(cursorX, textY, cursorX + 1, textY + 8, 0xFFFFFFFF);
+            Gui.drawRect(cursorX, textY, cursorX + 1, textY + th, 0xFFFFFFFF);
         }
     }
 
@@ -116,4 +118,8 @@ public class TextInputField extends UIElement {
 
     public boolean isFocused() { return focused; }
     public void setFocused(boolean focused) { this.focused = focused; }
+
+    public void setOnChange(Runnable onChange) {
+        this.onChange = onChange;
+    }
 }

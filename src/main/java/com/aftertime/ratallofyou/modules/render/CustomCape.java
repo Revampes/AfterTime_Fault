@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.render;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -32,6 +33,8 @@ public class CustomCape {
     public CustomCape() {
         instance = this;
         capeLocations = new ArrayList<>();
+        // Load initial frame delay from ModConfig
+        frameDelay = Math.max(1, ModConfig.customCapeFrameDelay);
         loadCapeFromFile();
     }
 
@@ -43,11 +46,7 @@ public class CustomCape {
     }
 
     private boolean isEnabled() {
-        try {
-            return (Boolean) AllConfig.INSTANCE.MODULES.get("render_customcape").Data;
-        } catch (Exception e) {
-            return false;
-        }
+        return ModConfig.enableCustomCape;
     }
 
     /**
@@ -198,9 +197,25 @@ public class CustomCape {
      */
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !isEnabled() || !isAnimated || capeLocations.isEmpty()) {
+        if (event.phase != TickEvent.Phase.END) return;
+
+        // Keep frameDelay in sync with config
+        int desiredDelay = Math.max(1, ModConfig.customCapeFrameDelay);
+        if (desiredDelay != frameDelay) setFrameDelay(desiredDelay);
+
+        if (!isEnabled()) {
+            // If disabled, ensure counters reset so when re-enabled animation starts fresh
+            tickCounter = 0;
+            currentFrame = 0;
             return;
         }
+
+        // If enabled but nothing loaded yet, try to load
+        if (capeLocations.isEmpty()) {
+            loadCapeFromFile();
+        }
+
+        if (!isAnimated || capeLocations.isEmpty()) return;
 
         tickCounter++;
         if (tickCounter >= frameDelay) {

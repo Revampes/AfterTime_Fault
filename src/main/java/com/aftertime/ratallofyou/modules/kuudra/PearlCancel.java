@@ -1,8 +1,7 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -27,7 +26,6 @@ public class PearlCancel {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_pearlcancel");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableKuudraPearlCancel;
     }
 }

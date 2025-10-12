@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
@@ -45,7 +45,7 @@ public class F7GhostBlocks {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START || !BooleanSettings.isEnabled("dungeons_sweatmode") || !(DungeonUtils.isInDungeonFloor() == 7)) {
+        if (event.phase != TickEvent.Phase.START || !ModConfig.enableF7GhostBlocks || !(DungeonUtils.isInDungeonFloor() == 7)) {
             return;
         }
 
@@ -230,3 +230,4 @@ public class F7GhostBlocks {
         }
     }
 }
+

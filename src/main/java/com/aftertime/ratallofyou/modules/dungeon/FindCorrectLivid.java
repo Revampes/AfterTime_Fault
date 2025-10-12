@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.Utils;
@@ -35,7 +35,7 @@ public class FindCorrectLivid {
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if (!BooleanSettings.isEnabled("dungeons_findcorrectlivid")) return;
+        if (!ModConfig.enableFindCorrectLivid) return;
         tickAmount++;
         if (tickAmount % 10 == 0) {
             World world = Minecraft.getMinecraft().theWorld;
@@ -72,7 +72,7 @@ public class FindCorrectLivid {
 
     @SubscribeEvent
     public void onRenderEntity(RenderLivingEvent.Pre<EntityLivingBase> event) {
-        if (!BooleanSettings.isEnabled("dungeons_findcorrectlivid") || livid == null) return;
+        if (!ModConfig.enableFindCorrectLivid || livid == null) return;
 
         Entity entity = event.entity;
         if (entity instanceof EntityArmorStand && entity.hasCustomName()) {
@@ -84,23 +84,23 @@ public class FindCorrectLivid {
     }
 
     @SubscribeEvent
-    public void onWorldRender(RenderWorldLastEvent event) {
-        if (BooleanSettings.isEnabled("dungeons_findcorrectlivid") && livid != null) {
-            // Draw ESP box around the correct Livid entity using its bounding box and interpolated position
-            RenderUtils.drawEntityBox(livid, 1.0f, 0.0f, 0.0f, 1.0f, 2.0f, event.partialTicks);
-            // Draw a larger, fixed-size box aligned with the entity's bounding box
-            double[] interp = RenderUtils.getInterpolatedPosition(livid, event.partialTicks);
-            double x = interp[0];
-            double y = interp[1];
-            double z = interp[2];
-            double width = 0.6;
-            double height = 2.0;
-            AxisAlignedBB bigBox = new AxisAlignedBB(
-                x - width/2, y, z - width/2,
-                x + width/2, y + height, z + width/2
-            );
-            RenderUtils.drawEspBox(bigBox, 1.0f, 0.0f, 0.0f, 1.0f, 2.0f);
-        }
+    public void onRenderWorld(RenderWorldLastEvent event) {
+        if (!ModConfig.enableFindCorrectLivid || livid == null) return;
+
+        // Draw ESP box around the correct Livid entity using its bounding box and interpolated position
+        RenderUtils.drawEntityBox(livid, 1.0f, 0.0f, 0.0f, 1.0f, 2.0f, event.partialTicks);
+        // Draw a larger, fixed-size box aligned with the entity's bounding box
+        double[] interp = RenderUtils.getInterpolatedPosition(livid, event.partialTicks);
+        double x = interp[0];
+        double y = interp[1];
+        double z = interp[2];
+        double width = 0.6;
+        double height = 2.0;
+        AxisAlignedBB bigBox = new AxisAlignedBB(
+            x - width/2, y, z - width/2,
+            x + width/2, y + height, z + width/2
+        );
+        RenderUtils.drawEspBox(bigBox, 1.0f, 0.0f, 0.0f, 1.0f, 2.0f);
     }
 
     static String getTextFromValue(int value) {

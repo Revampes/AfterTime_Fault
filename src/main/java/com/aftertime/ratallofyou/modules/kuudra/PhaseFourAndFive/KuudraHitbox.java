@@ -1,5 +1,6 @@
 package com.aftertime.ratallofyou.modules.kuudra.PhaseFourAndFive;
 
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
@@ -24,7 +25,6 @@ public class KuudraHitbox {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_kuudrahitbox");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableKuudraHitbox;
     }
 }

@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.UI.newui.categories;
 
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
+import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +26,10 @@ public class CategoryPanel {
         // Draw category background
         Gui.drawRect(x, y, x + width, y + height, 0x80222222);
 
-        // Draw category title
-        int titleX = x + (width - mc.fontRendererObj.getStringWidth(categoryName)) / 2;
-        mc.fontRendererObj.drawString(categoryName, titleX, y + 5, 0xFFFFFF);
+        // Draw category title (scaled)
+        int titleW = TextRender.width(mc.fontRendererObj, categoryName);
+        int titleX = x + (width - titleW) / 2;
+        TextRender.draw(mc.fontRendererObj, categoryName, titleX, y + 5, 0xFFFFFF);
 
         // Draw modules
         int moduleY = y + 25 - scrollOffset;
@@ -43,6 +44,17 @@ public class CategoryPanel {
 
         // Draw scroll bar if needed
         drawScrollBar(mouseX, mouseY);
+    }
+
+    // New: draw overlays after normal content so they appear on top
+    public void drawOverlays(int mouseX, int mouseY) {
+        int moduleY = y + 25 - scrollOffset;
+        for (ModulePanel module : modules) {
+            if (moduleY + module.getHeight() > y && moduleY < y + height) {
+                module.drawOverlays(mouseX, mouseY);
+            }
+            moduleY += module.getHeight() + 5;
+        }
     }
 
     private void drawScrollBar(int mouseX, int mouseY) {
@@ -70,6 +82,22 @@ public class CategoryPanel {
             moduleY += module.getHeight() + 5;
         }
         return false;
+    }
+
+    // New: route overlay clicks before standard clicks, not constrained by panel bounds since overlays can extend
+    public boolean mouseClickedOverlay(int mouseX, int mouseY, int mouseButton) {
+        int moduleY = y + 25 - scrollOffset;
+        boolean handled = false;
+        for (ModulePanel module : modules) {
+            if (moduleY + module.getHeight() > y && moduleY < y + height) {
+                if (module.mouseClickedOverlay(mouseX, mouseY, mouseButton)) {
+                    handled = true;
+                    break;
+                }
+            }
+            moduleY += module.getHeight() + 5;
+        }
+        return handled;
     }
 
     public void mouseReleased(int mouseX, int mouseY, int mouseButton) {
@@ -115,5 +143,13 @@ public class CategoryPanel {
         this.y = y;
         this.width = width;
         this.height = height;
+    }
+
+    // New: check if any module has an overlay open
+    public boolean hasAnyOverlayOpen() {
+        for (ModulePanel module : modules) {
+            if (module.hasAnyOverlayOpen()) return true;
+        }
+        return false;
     }
 }

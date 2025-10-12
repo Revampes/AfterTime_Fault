@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.UIDragger;
 import com.aftertime.ratallofyou.UI.UIHighlighter;
+import com.aftertime.ratallofyou.config.ModConfig;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
@@ -157,6 +158,6 @@ public class P3TickTimer {
     }
 
     private boolean isModuleEnabled() {
-        return BooleanSettings.isEnabled("dungeons_phase3ticktimer");
+        return ModConfig.enableP3TickTimer;
     }
 }

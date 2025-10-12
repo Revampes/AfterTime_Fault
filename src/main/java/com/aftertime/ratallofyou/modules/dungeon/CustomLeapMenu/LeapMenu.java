@@ -1,12 +1,11 @@
 package com.aftertime.ratallofyou.modules.dungeon.CustomLeapMenu;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import com.aftertime.ratallofyou.utils.Utils;
 import com.aftertime.ratallofyou.utils.PlayerUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
@@ -41,7 +40,7 @@ public class LeapMenu {
 
     public LeapMenu() { MinecraftForge.EVENT_BUS.register(this); }
 
-    private static boolean isEnabled() { return BooleanSettings.isEnabled("dungeons_customleapmenu"); }
+    private static boolean isEnabled() { return ModConfig.enableCustomLeapMenu; }
 
     private static boolean isSpiritLeapOpen() {
         if (!isEnabled()) return false;

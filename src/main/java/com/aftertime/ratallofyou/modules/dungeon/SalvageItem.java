@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.TabUtils;
 import net.minecraft.client.gui.Gui;
@@ -25,7 +26,7 @@ public class SalvageItem {
 
     @SubscribeEvent
     public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
-        if (!BooleanSettings.isEnabled("dungeons_salvageitem") || !TabUtils.isInSkyblock() || !(event.gui instanceof GuiContainer) || DungeonUtils.isopenspiritleap()) {
+        if (!ModConfig.enableSalvageItem || !TabUtils.isInSkyblock() || !(event.gui instanceof GuiContainer) || DungeonUtils.isopenspiritleap()) {
             return;
         }
         // Recalculate highlights when GUI opens
@@ -34,7 +35,7 @@ public class SalvageItem {
 
     @SubscribeEvent
     public void onDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if (!BooleanSettings.isEnabled("dungeons_salvageitem") || !TabUtils.isInSkyblock() || !(event.gui instanceof GuiContainer) || DungeonUtils.isopenspiritleap()) {
+        if (!ModConfig.enableSalvageItem || !TabUtils.isInSkyblock() || !(event.gui instanceof GuiContainer) || DungeonUtils.isopenspiritleap()) {
             return;
         }
         // Recalculate highlights in case items changed

@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.newui.elements;
 
 import net.minecraft.client.gui.Gui;
 import org.lwjgl.input.Keyboard;
+import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
 public class KeyBindInput extends UIElement {
     private int keyCode;
@@ -31,7 +32,8 @@ public class KeyBindInput extends UIElement {
         hovered = isMouseOver(mouseX, mouseY);
 
         // Draw title ABOVE the keybind box
-        fontRenderer.drawString(title, x, y - 10, 0xFFFFFFFF);
+        int th = TextRender.height(fontRenderer);
+        TextRender.draw(fontRenderer, title, x, y - (th + 2), 0xFFFFFFFF);
 
         // Draw button background
         int bgColor;
@@ -55,9 +57,9 @@ public class KeyBindInput extends UIElement {
         // Draw key name
         String displayText = listening ? "Press a key..." : keyName;
         int textColor = listening ? 0xFF000000 : 0xFFFFFFFF;
-        int textX = x + (width - fontRenderer.getStringWidth(displayText)) / 2;
-        int textY = y + (height - 8) / 2;
-        fontRenderer.drawString(displayText, textX, textY, textColor);
+        int textX = x + (width - TextRender.width(fontRenderer, displayText)) / 2;
+        int textY = y + (height - th) / 2;
+        TextRender.draw(fontRenderer, displayText, textX, textY, textColor);
     }
 
     @Override

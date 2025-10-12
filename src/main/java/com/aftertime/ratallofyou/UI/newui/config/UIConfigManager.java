@@ -4,8 +4,10 @@ import com.aftertime.ratallofyou.UI.newui.annotations.*;
 import com.aftertime.ratallofyou.UI.newui.categories.CategoryPanel;
 import com.aftertime.ratallofyou.UI.newui.categories.ModulePanel;
 import com.aftertime.ratallofyou.config.ModConfig;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class UIConfigManager {
@@ -34,12 +36,13 @@ public class UIConfigManager {
             processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.KeyBindInput.class, moduleFields);
             processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.ColorPicker.class, moduleFields);
             processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.DropdownBox.class, moduleFields);
+            processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.TextInputField.class, moduleFields);
+            processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.NormalButton.class, moduleFields);
             // Add other annotation types as needed
         }
 
         // Create UI panels from annotated fields
         for (Map.Entry<String, List<Field>> entry : moduleFields.entrySet()) {
-            String key = entry.getKey();
             List<Field> fieldsForModule = entry.getValue();
 
             // Find the main toggle button for this module
@@ -74,6 +77,7 @@ public class UIConfigManager {
                     modulePanel.getToggleButton().setOnToggle(() -> {
                         try {
                             toggleField.setBoolean(null, modulePanel.isEnabled());
+                            ModConfigIO.save(); // persist + notify modules
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -123,6 +127,7 @@ public class UIConfigManager {
                         // Toggle boolean value in config
                         boolean now = field.getBoolean(null);
                         field.setBoolean(null, !now);
+                        ModConfigIO.save();
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
@@ -156,6 +161,7 @@ public class UIConfigManager {
                             // Fallback: store as int
                             field.set(null, Math.round(val));
                         }
+                        ModConfigIO.save();
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
@@ -184,10 +190,11 @@ public class UIConfigManager {
             if (colorPicker != null) {
                 int current = field.getInt(null);
                 java.awt.Color initialColor = new java.awt.Color(current, true);
-                modulePanel.addColorPicker(colorPicker.title(), initialColor, () -> {
+                com.aftertime.ratallofyou.UI.newui.elements.ColorPicker element = modulePanel.addColorPickerReturn(colorPicker.title(), initialColor, null);
+                element.setOnChange(() -> {
                     try {
-                        // For demo, just set to black (real implementation would read from the UI element)
-                        field.setInt(null, initialColor.getRGB());
+                        field.setInt(null, element.getColor().getRGB());
+                        ModConfigIO.save();
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
@@ -200,10 +207,11 @@ public class UIConfigManager {
                 String[] optionsArr = dropdown.options();
                 String[] options = (optionsArr == null || optionsArr.length == 0) ? new String[]{""} : optionsArr;
                 int current = field.getInt(null);
-                modulePanel.addDropdown(dropdown.title(), options, current, () -> {
+                com.aftertime.ratallofyou.UI.newui.elements.DropdownBox element = modulePanel.addDropdownReturn(dropdown.title(), options, current, null);
+                element.setOnChange(() -> {
                     try {
-                        // For demo, just set to 0 (real implementation would read from the UI element)
-                        field.setInt(null, 0);
+                        field.setInt(null, element.getSelectedIndex());
+                        ModConfigIO.save();
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
@@ -211,10 +219,64 @@ public class UIConfigManager {
                 return;
             }
 
+            com.aftertime.ratallofyou.UI.newui.annotations.TextInputField textInput = field.getAnnotation(com.aftertime.ratallofyou.UI.newui.annotations.TextInputField.class);
+            if (textInput != null) {
+                String current = String.valueOf(field.get(null));
+                final com.aftertime.ratallofyou.UI.newui.elements.TextInputField[] ref = new com.aftertime.ratallofyou.UI.newui.elements.TextInputField[1];
+                Runnable onChange = () -> {
+                    try {
+                        if (field.getType() == String.class && ref[0] != null) {
+                            field.set(null, ref[0].getText());
+                            ModConfigIO.save();
+                        }
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                };
+                com.aftertime.ratallofyou.UI.newui.elements.TextInputField element = modulePanel.addTextInputReturn(textInput.title(), textInput.maxLength(), onChange);
+                ref[0] = element;
+                element.setText(current == null ? "" : current);
+                return;
+            }
+
+            com.aftertime.ratallofyou.UI.newui.annotations.NormalButton normalButton = field.getAnnotation(com.aftertime.ratallofyou.UI.newui.annotations.NormalButton.class);
+            if (normalButton != null) {
+                String action = normalButton.action();
+                modulePanel.addNormalButton(normalButton.title(), () -> invokeAction(action));
+                return;
+            }
+
             // Add handling for other annotation types...
 
         } catch (IllegalAccessException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void invokeAction(String action) {
+        if (action == null || action.isEmpty()) return;
+        try {
+            if (action.contains("#")) {
+                String[] parts = action.split("#", 2);
+                Class<?> cls = Class.forName(parts[0]);
+                Method m = cls.getDeclaredMethod(parts[1]);
+                m.setAccessible(true);
+                m.invoke(null);
+                return;
+            }
+            // Simple built-ins
+            switch (action.toLowerCase()) {
+                case "save":
+                case "saveconfig":
+                    ModConfigIO.save();
+                    break;
+                case "reload":
+                case "reloadconfig":
+                    ModConfigIO.load();
+                    break;
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 

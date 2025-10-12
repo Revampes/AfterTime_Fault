@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import com.aftertime.ratallofyou.utils.PartyUtils; // New: party filter
 import net.minecraft.client.Minecraft;
@@ -29,28 +28,24 @@ public class NameTag {
     }
 
     private boolean isEnabled() {
-        // New toggle key under Render category
-        return BooleanSettings.isEnabled("render_nametag");
+        return ModConfig.enableNameTag;
     }
 
     private float getScale() {
         try {
-            Object val = AllConfig.INSTANCE.NAMETAG_CONFIGS.get("nametag_scale").Data;
-            if (val instanceof Float) {
-                float s = (Float) val;
-                if (Float.isNaN(s) || s <= 0f) return 0.002f;
-                // allow ultra small nametags; clamp to [0.0005, 1.0]
-                return Math.max(0.0005f, Math.min(s, 1.0f));
-            }
+            int percent = ModConfig.nametagScalePercent;
+            // Convert percent to a small scale factor; baseline at 0.02 for 20%
+            float s = Math.max(1, Math.min(100, percent)) / 1000f;
+            if (Float.isNaN(s) || s <= 0f) return 0.002f;
+            return s;
         } catch (Throwable ignored) { }
         return 0.002f;
     }
 
-    // New: Only-party toggle
+    // Only-party toggle from ModConfig
     private boolean onlyParty() {
         try {
-            Object v = AllConfig.INSTANCE.NAMETAG_CONFIGS.get("nametag_only_party").Data;
-            return v instanceof Boolean && (Boolean) v;
+            return ModConfig.nametagOnlyParty;
         } catch (Throwable ignored) { return false; }
     }
 
@@ -114,15 +109,14 @@ public class NameTag {
 
         float partial = event.partialTicks;
         float scale = getScale();
-        // strong reduction multiplier to ensure tiny on-screen text even if user scale is large
-        float effectiveScale = scale * 0.05f;
+        float effectiveScale = scale * 0.05f; // strong reduction multiplier for small on-screen text
         for (Object obj : mc.theWorld.playerEntities) {
             if (!(obj instanceof EntityPlayer)) continue;
             EntityPlayer p = (EntityPlayer) obj;
             if (!shouldRenderFor(p)) continue;
 
             double x = p.lastTickPosX + (p.posX - p.lastTickPosX) * partial;
-            double y = p.lastTickPosY + (p.posY - p.lastTickPosY) * partial + p.height + 0.4; // slightly lower constant offset
+            double y = p.lastTickPosY + (p.posY - p.lastTickPosY) * partial + p.height + 0.4;
             double z = p.lastTickPosZ + (p.posZ - p.lastTickPosZ) * partial;
 
             String text;

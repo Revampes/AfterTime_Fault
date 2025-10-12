@@ -33,6 +33,7 @@ import com.aftertime.ratallofyou.modules.Fishing.AutoFish;
 import com.aftertime.ratallofyou.modules.render.PlayerESP; // Register Player ESP
 import com.aftertime.ratallofyou.modules.render.CustomCape;
 import com.aftertime.ratallofyou.modules.debugdata.DebugDataTicker;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO; // Load new UI ModConfig
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main {
@@ -51,6 +52,8 @@ public class Main {
     public void preInit(FMLPreInitializationEvent event) {
         // Initialize and load all configs using the new config system
         ConfigIO.INSTANCE.InitializeConfigs();
+        // Load new UI ModConfig persisted values
+        ModConfigIO.load();
     }
 
     @Mod.EventHandler

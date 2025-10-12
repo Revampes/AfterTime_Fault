@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 
@@ -22,6 +22,6 @@ public class HealerWishAlert {
     }
 
     private boolean isModuleEnabled() {
-        return BooleanSettings.isEnabled("dungeons_healerwishalert");
+        return ModConfig.enableHealerWishAlert;
     }
 }

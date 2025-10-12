@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.UI.newui.elements;
 
 import net.minecraft.client.gui.Gui;
+import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
 public class CheckBox extends UIElement {
     private boolean checked;
@@ -35,9 +36,11 @@ public class CheckBox extends UIElement {
         Gui.drawRect(x, y, x + 1, y + height, 0xFF000000);
         Gui.drawRect(x + height - 1, y, x + height, y + height, 0xFF000000);
 
-        // Draw label
+        // Draw label (scaled)
         int textColor = hovered ? 0xFFFFFFAA : 0xFFFFFFFF;
-        fontRenderer.drawString(label, x + height + 5, y + (height - 8) / 2, textColor);
+        int th = TextRender.height(fontRenderer);
+        int textY = y + (height - th) / 2;
+        TextRender.draw(fontRenderer, label, x + height + 5, textY, textColor);
     }
 
     @Override

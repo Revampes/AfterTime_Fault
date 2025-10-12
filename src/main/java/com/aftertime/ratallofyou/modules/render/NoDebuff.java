@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
@@ -30,20 +29,16 @@ public class NoDebuff {
     }
 
     private static boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("render_nodebuff");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableNoDebuff;
     }
     private static boolean noBlindness() {
-        Boolean b = (Boolean) AllConfig.INSTANCE.NODEBUFF_CONFIGS.get("nodebuff_ignore_blindness").Data;
-        return Boolean.TRUE.equals(b);
+        return ModConfig.nodebuffIgnoreBlindness;
     }
     private static boolean noFire() {
-        Boolean b = (Boolean) AllConfig.INSTANCE.NODEBUFF_CONFIGS.get("nodebuff_remove_fire_overlay").Data;
-        return Boolean.TRUE.equals(b);
+        return ModConfig.nodebuffRemoveFireOverlay;
     }
     private static boolean clearLiquidVision() {
-        Boolean b = (Boolean) AllConfig.INSTANCE.NODEBUFF_CONFIGS.get("nodebuff_clear_liquid_vision").Data;
-        return Boolean.TRUE.equals(b);
+        return ModConfig.nodebuffClearLiquidVision;
     }
 
     @SubscribeEvent

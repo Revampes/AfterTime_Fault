@@ -1,9 +1,6 @@
 package com.aftertime.ratallofyou.modules.render;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-
-import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -310,44 +307,35 @@ public class EtherwarpOverlay {
         }
     }
 
-    // Config helpers
+    // Config helpers using new ModConfig
     private static boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("render_etherwarpoverlay");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableEtherwarpOverlay;
     }
 
     private static boolean etherwarpOverlayOnlySneak() {
-        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_only_show_when_sneak").Data;
-        return v instanceof Boolean ? (Boolean) v : true; // default true per AllConfig
+        return ModConfig.etherwarpOnlySneak;
     }
 
     private static boolean etherwarpSyncWithServer() {
-        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_sync_with_server").Data;
-        return v instanceof Boolean ? (Boolean) v : false;
+        return ModConfig.etherwarpSyncWithServer;
     }
 
     private static boolean etherwarpShowFailLocation() {
-        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_show_fail_location").Data;
-        return v instanceof Boolean ? (Boolean) v : true; // default true per AllConfig
+        return ModConfig.etherwarpShowFailLocation;
     }
 
     private static int etherwarpHighlightType() {
-        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_render_method").Data;
-        if (v instanceof DataType_DropDown) {
-            DataType_DropDown dd = (DataType_DropDown) v;
-            return Math.max(0, Math.min(2, dd.selectedIndex));
-        }
-        return 0; // Edges by default
+        int idx = ModConfig.etherwarpHighlightType;
+        if (idx < 0 || idx > 2) idx = 0;
+        return idx;
     }
 
     private static Color etherwarpOverlayColor() {
-        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_OverlayColor").Data;
-        return v instanceof Color ? (Color) v : new Color(0, 255, 0, 200);
+        return new Color(ModConfig.etherwarpOverlayColor, true);
     }
 
     private static Color etherwarpOverlayFailColor() {
-        Object v = AllConfig.INSTANCE.ETHERWARP_CONFIGS.get("etherwarp_OverlayFailColor").Data;
-        return v instanceof Color ? (Color) v : new Color(180, 0, 0, 200);
+        return new Color(ModConfig.etherwarpOverlayFailColor, true);
     }
 
     // Result container
@@ -362,3 +350,4 @@ public class EtherwarpOverlay {
         }
     }
 }
+

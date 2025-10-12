@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
 
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.utils.TabUtils;
@@ -169,7 +170,6 @@ public class RefillPearls {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_pearlrefill");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableKuudraPearlRefill;
     }
 }

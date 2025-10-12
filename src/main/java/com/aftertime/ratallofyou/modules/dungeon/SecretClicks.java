@@ -2,16 +2,20 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 
 import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
+import com.aftertime.ratallofyou.utils.TabUtils;
 import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -95,7 +99,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!BooleanSettings.isEnabled("dungeons_secretclicks") || !DungeonUtils.isInDungeon()) return;
+        if (!ModConfig.enableSecretClicks || !DungeonUtils.isInDungeon()) return;
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 
         BlockPos pos = event.pos;
@@ -122,7 +126,10 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!BooleanSettings.isEnabled("dungeons_secretclicks") || highlights.isEmpty() || event.isCanceled()) return;
+        if (!ModConfig.enableSecretClicks || !DungeonUtils.isInDungeon()) return;
+        highlightColor = new Color(ModConfig.secretClicksHighlightColor, true);
+
+        if (highlights.isEmpty() || event.isCanceled()) return;
 
         float r = highlightColor.getRed() / 255f;
         float g = highlightColor.getGreen() / 255f;
@@ -156,7 +163,17 @@ public class SecretClicks {
     }
 
     @SubscribeEvent
+    public void onDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
+        if (!ModConfig.enableSecretClicks || !TabUtils.isInSkyblock() || !(event.gui instanceof GuiContainer) || DungeonUtils.isopenspiritleap()) {
+            return;
+        }
+        // ... existing code ...
+    }
+
+    @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if (!ModConfig.enableSecretClicks) return;
+
         if (event.phase != TickEvent.Phase.END) return;
 
         World world = Minecraft.getMinecraft().theWorld;
@@ -208,3 +225,4 @@ public class SecretClicks {
         RenderUtils.renderBlockHitbox(pos, r, g, b, a, true, 2f, false);
     }
 }
+

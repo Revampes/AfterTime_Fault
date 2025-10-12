@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.newui.elements;
 
 import net.minecraft.client.gui.Gui;
 import java.util.function.Consumer;
+import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
 public class Slider extends UIElement {
     private float value;
@@ -37,11 +38,12 @@ public class Slider extends UIElement {
         int fillWidth = (int)(width * percentage);
         Gui.drawRect(x, y, x + fillWidth, y + height, 0xFF6666FF);
 
-        // Draw label and value
+        // Draw label and value (scaled)
         String displayText = label + ": " + (int)value;
-        int textX = x + (width - fontRenderer.getStringWidth(displayText)) / 2;
-        int textY = y + (height - 8) / 2;
-        fontRenderer.drawString(displayText, textX, textY, 0xFFFFFFFF);
+        int th = TextRender.height(fontRenderer);
+        int textX = x + (width - TextRender.width(fontRenderer, displayText)) / 2;
+        int textY = y + (height - th) / 2;
+        TextRender.draw(fontRenderer, displayText, textX, textY, 0xFFFFFFFF);
 
         // Draw handle
         int handleX = x + fillWidth - 2;

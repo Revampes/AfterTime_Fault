@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.modules.dungeon;
 
 
 import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
@@ -35,7 +36,7 @@ public class StarMobHighlighter {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!BooleanSettings.isEnabled("dungeons_starmobhighlighter") || mc.theWorld == null) return;
+        if (!ModConfig.enableStarMobHighlighter || mc.theWorld == null) return;
 
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {

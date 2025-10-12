@@ -1,15 +1,11 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.DataType_DropDown;
+import com.aftertime.ratallofyou.config.ModConfig;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -31,26 +27,36 @@ public class AutoSell {
         "healing viii splash potion", "healing 8 splash potion", "candycomb"
     };
 
+    private static AutoSell instance;
+    public static AutoSell getInstance() {
+        return instance;
+    }
+
     public AutoSell() {
+        instance = this;
         // Initialize executor but don't start scheduled task yet
         executor = Executors.newSingleThreadScheduledExecutor();
         startAutoSellLoop();
     }
 
     private void startAutoSellLoop() {
+        // Always stop previous executor
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
+        }
+        if (!ModConfig.enableAutoSell) {
+            return; // Disabled: do not schedule
         }
         executor = Executors.newSingleThreadScheduledExecutor();
 
         // Use config delay
-        int delay = getDelayFromConfig();
+        int delay = ModConfig.autoSellDelayMs;
         executor.scheduleWithFixedDelay(this::executeAutoSell, delay, delay, TimeUnit.MILLISECONDS);
     }
 
     private void executeAutoSell() {
         // Check if module is enabled
-        if (!BooleanSettings.isEnabled("dungeons_autosell")) return;
+        if (!ModConfig.enableAutoSell) return;
 
         // Get sell list from config
         List<String> sellList = getSellListFromConfig();
@@ -84,64 +90,28 @@ public class AutoSell {
     }
 
     private int getDelayFromConfig() {
-        try {
-            BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_delay_ms");
-            if (cfg != null && cfg.Data instanceof Integer) {
-                return (Integer) cfg.Data;
-            }
-        } catch (Exception e) {
-            // Fallback to default
-        }
-        return 100; // Default delay
+        return ModConfig.autoSellDelayMs;
     }
 
     private int getClickTypeFromConfig() {
-        try {
-            BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_click_type");
-            if (cfg != null && cfg.Data instanceof DataType_DropDown) {
-                DataType_DropDown dropdown = (DataType_DropDown) cfg.Data;
-                return dropdown.selectedIndex;
-            }
-        } catch (Exception e) {
-            // Fallback to default
-        }
-        return 0; // Default to Shift Click
+        return ModConfig.autoSellClickType;
     }
 
     private List<String> getSellListFromConfig() {
         List<String> result = new ArrayList<>();
-
-        try {
-            // Check if default items should be included
-            BaseConfig<?> useDefaultCfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_use_default_items");
-            boolean useDefault = true;
-            if (useDefaultCfg != null && useDefaultCfg.Data instanceof Boolean) {
-                useDefault = (Boolean) useDefaultCfg.Data;
-            }
-
-            if (useDefault) {
-                result.addAll(Arrays.asList(defaultItems));
-            }
-
-            // Add custom items
-            BaseConfig<?> customItemsCfg = AllConfig.INSTANCE.AUTOSELL_CONFIGS.get("autosell_custom_items");
-            if (customItemsCfg != null && customItemsCfg.Data instanceof String) {
-                String customItems = (String) customItemsCfg.Data;
-                if (!customItems.trim().isEmpty()) {
-                    String[] items = customItems.split(",");
-                    for (String item : items) {
-                        String trimmed = item.trim();
-                        if (!trimmed.isEmpty()) {
-                            result.add(trimmed.toLowerCase());
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Fallback to default items
+        if (ModConfig.autoSellUseDefaultItems) {
             result.addAll(Arrays.asList(defaultItems));
         }
-
+        String customItems = ModConfig.autoSellCustomItems;
+        if (customItems != null && !customItems.trim().isEmpty()) {
+            String[] items = customItems.split(",");
+            for (String item : items) {
+                String trimmed = item.trim();
+                if (!trimmed.isEmpty()) {
+                    result.add(trimmed.toLowerCase());
+                }
+            }
+        }
         return result;
     }
 

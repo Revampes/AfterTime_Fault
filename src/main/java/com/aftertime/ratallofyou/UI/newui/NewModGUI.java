@@ -4,13 +4,14 @@ import com.aftertime.ratallofyou.UI.newui.categories.CategoryPanel;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.Minecraft;
 import com.aftertime.ratallofyou.UI.newui.config.UIConfigManager;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 
 import java.io.IOException;
 import java.util.*;
 
 public class NewModGUI extends GuiScreen {
     private List<CategoryPanel> categories = new ArrayList<>();
-    private int categoryWidth = 140; // Reduced from 200 to fit more categories
+    private int categoryWidth = 80; // Reduced to fit more categories per row
     private int padding = 5;
     private Minecraft mc = Minecraft.getMinecraft();
 
@@ -45,11 +46,23 @@ public class NewModGUI extends GuiScreen {
             category.draw(mouseX, mouseY);
         }
 
+        // Draw overlays on top after all base content
+        for (CategoryPanel category : categories) {
+            category.drawOverlays(mouseX, mouseY);
+        }
+
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        // Route overlay clicks first so popups capture input and close properly
+        for (CategoryPanel category : categories) {
+            if (category.mouseClickedOverlay(mouseX, mouseY, mouseButton)) {
+                return;
+            }
+        }
+
         for (CategoryPanel category : categories) {
             if (category.mouseClicked(mouseX, mouseY, mouseButton)) {
                 return;
@@ -82,6 +95,13 @@ public class NewModGUI extends GuiScreen {
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
 
+        // If any overlay is open, avoid scrolling to prevent UI from jumping while interacting
+        boolean anyOverlayOpen = false;
+        for (CategoryPanel category : categories) {
+            if (category.hasAnyOverlayOpen()) { anyOverlayOpen = true; break; }
+        }
+        if (anyOverlayOpen) return;
+
         int scroll = org.lwjgl.input.Mouse.getEventDWheel();
         if (scroll != 0) {
             int mouseX = org.lwjgl.input.Mouse.getEventX() * this.width / this.mc.displayWidth;
@@ -99,5 +119,12 @@ public class NewModGUI extends GuiScreen {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
+    }
+
+    @Override
+    public void onGuiClosed() {
+        // Persist ModConfig when leaving the new UI
+        ModConfigIO.save();
+        super.onGuiClosed();
     }
 }

@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.modules.kuudra.PhaseOne;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.client.Minecraft;
@@ -96,8 +97,7 @@ public class CratePriority {
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_cratepriority");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableKuudraCratePriority;
     }
 
     private void showTitle(String title) {
