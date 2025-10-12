@@ -111,11 +111,6 @@ public class ConfigIO {
         properties.setProperty(Key + "_index", Integer.toString(selectedIndex));
     }
 
-    public void SetDropDownSelect(String Key, int selectedIndex) {
-        properties.setProperty(Key + "_index", Integer.toString(selectedIndex));
-
-    }
-
     public void SetUIPosition(String Key, int x, int y) {
         properties.setProperty(Key, x + "," + y);
 
