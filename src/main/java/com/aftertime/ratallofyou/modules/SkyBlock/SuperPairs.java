@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -12,7 +11,6 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -309,7 +307,6 @@ public class SuperPairs {
     }
 
     private boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_superpairs");
-        return cfg != null && (Boolean) cfg.Data;
+        return ModConfig.enableSuperPairs;
     }
 }

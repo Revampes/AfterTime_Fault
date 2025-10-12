@@ -435,6 +435,42 @@ public class ModConfig {
     )
     public static boolean enableKuudraArrowPoison = false;
 
+    // New: Kuudra Chest Open Notice + options
+    @ToggleButton(
+        key = "kuudra-chestopennotice",
+        name = "Chest Open Notice",
+        description = "Auto-open Paid Chest, announce loot, and optionally requeue",
+        category = "Kuudra"
+    )
+    public static boolean enableKuudraChestOpenNotice = false;
+
+    @CheckBox(
+        key = "kuudra-chestopennotice",
+        title = "Auto open Paid Chest"
+    )
+    public static boolean kuudraAutoOpenChest = false;
+
+    @CheckBox(
+        key = "kuudra-chestopennotice",
+        title = "Auto /instancerequeue at 4/4"
+    )
+    public static boolean kuudraAutoRequeue = false;
+
+    @TextInputField(
+        key = "kuudra-chestopennotice",
+        title = "Chest Tag (party announce)"
+    )
+    public static String kuudraChestTag = "IQ";
+
+    // New: Kuudra Block Useless Perks
+    @ToggleButton(
+        key = "kuudra-blockuselessperks",
+        name = "Block Useless Perks",
+        description = "Hide commonly useless perks in Kuudra Perk Menu",
+        category = "Kuudra"
+    )
+    public static boolean enableKuudraBlockUselessPerks = false;
+
     // === Layout ===
     @ToggleButton(
         key = "layout-hud",
@@ -450,4 +486,211 @@ public class ModConfig {
         action = "com.aftertime.ratallofyou.UI.newui.layout.NewUILayout#open"
     )
     public static boolean openHudLayoutButton = false;
+
+    // ===================== SkyBlock Modules (new) =====================
+
+    // Auto Sprint
+    @ToggleButton(
+        key = "skyblock-autosprint",
+        name = "Auto Sprint",
+        description = "Hold sprint automatically; press sprint key to toggle temp disable",
+        category = "SkyBlock"
+    )
+    public static boolean enableAutoSprint = false;
+
+    // Auto Experiment
+    @ToggleButton(
+        key = "skyblock-autoexperiment",
+        name = "Auto Experiment",
+        description = "Assist Chronomatron/Ultrasequencer clicks",
+        category = "SkyBlock"
+    )
+    public static boolean enableAutoExperiment = false;
+
+    @Slider(
+        key = "skyblock-autoexperiment",
+        min = 60,
+        max = 1000
+    )
+    public static int autoExperimentDelayMs = 120;
+
+    @CheckBox(
+        key = "skyblock-autoexperiment",
+        title = "Auto exit after long sequences"
+    )
+    public static boolean autoExperimentAutoExit = false;
+
+    @CheckBox(
+        key = "skyblock-autoexperiment",
+        title = "Debug chat"
+    )
+    public static boolean autoExperimentDebug = false;
+
+    // Chat Commands
+    @ToggleButton(
+        key = "skyblock-chatcommands",
+        name = "Chat Commands",
+        description = "Enable party chat command helpers (!warp, !pt, etc.)",
+        category = "SkyBlock"
+    )
+    public static boolean enableChatCommands = false;
+
+    @CheckBox(key = "skyblock-chatcommands", title = "Coords (!coords)")
+    public static boolean chatCmdCoords = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Boop (!boop)")
+    public static boolean chatCmdBoop = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Coin Flip (!cf)")
+    public static boolean chatCmdCoinFlip = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "8 Ball (!8ball)")
+    public static boolean chatCmd8Ball = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Dice (!dice)")
+    public static boolean chatCmdDice = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "TPS (!tps)")
+    public static boolean chatCmdTps = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Warp (leader) (!warp)")
+    public static boolean chatCmdWarp = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Warp+Transfer (leader) (!wt)")
+    public static boolean chatCmdWarpTransfer = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Allinvite toggle (leader)")
+    public static boolean chatCmdAllInvite = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Party Transfer (leader) (!pt)")
+    public static boolean chatCmdPartyTransfer = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Downtime tracker (!dt)")
+    public static boolean chatCmdDowntime = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Queue instance (leader)")
+    public static boolean chatCmdQueueInstance = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Demote (leader)")
+    public static boolean chatCmdDemote = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Promote (leader)")
+    public static boolean chatCmdPromote = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Disband (leader)")
+    public static boolean chatCmdDisband = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "PT and Warp (!ptw)")
+    public static boolean chatCmdPtAndWarp = true;
+
+    // Flux Flare Timer HUD
+    @ToggleButton(
+        key = "skyblock-fluxflare",
+        name = "Flux/Flare HUD",
+        description = "Show nearby Flux or Flare time/label",
+        category = "SkyBlock"
+    )
+    public static boolean enableFluxFlareTimer = false;
+
+    // Search Bar in inventory chests
+    @ToggleButton(
+        key = "skyblock-searchbar",
+        name = "Chest Search Bar",
+        description = "Filter chest inventory by name/lore; type math to calc",
+        category = "SkyBlock"
+    )
+    public static boolean enableSearchBar = false;
+
+    @Slider(key = "skyblock-searchbar", min = 120, max = 320)
+    public static int searchbarWidth = 192;
+    @Slider(key = "skyblock-searchbar", min = 12, max = 20)
+    public static int searchbarHeight = 16;
+
+    // SuperPairs helper overlay
+    @ToggleButton(
+        key = "skyblock-superpairs",
+        name = "Superpairs Helper",
+        description = "Track reveals and highlight pairs",
+        category = "SkyBlock"
+    )
+    public static boolean enableSuperPairs = false;
+
+    // Waypoint Grab from chat coords
+    @ToggleButton(
+        key = "skyblock-waypointgrab",
+        name = "Waypoint Grab",
+        description = "Render beam and box at party coords",
+        category = "SkyBlock"
+    )
+    public static boolean enableWaypointGrab = false;
+
+    // Storage Overview
+    @ToggleButton(
+        key = "skyblock-storageoverview",
+        name = "Storage Overview",
+        description = "Show Ender Chests and Backpacks overlay",
+        category = "SkyBlock"
+    )
+    public static boolean enableStorageOverview = false;
+
+    @CheckBox(
+        key = "skyblock-storageoverview",
+        title = "Show in inventory"
+    )
+    public static boolean storageOverviewShowInInventory = true;
+
+    // HotbarSwap (advanced)
+    @ToggleButton(
+        key = "skyblock-hotbarswap",
+        name = "Hotbar Swap",
+        description = "Swap items to preset hotbar layouts",
+        category = "SkyBlock"
+    )
+    public static boolean enableHotbarSwap = false;
+
+    @CheckBox(key = "skyblock-hotbarswap", title = "Enable Keybind Triggers")
+    public static boolean hotbarswapEnableKeybinds = true;
+    @CheckBox(key = "skyblock-hotbarswap", title = "Enable Chat Triggers")
+    public static boolean hotbarswapEnableChatTriggers = true;
+    @Slider(key = "skyblock-hotbarswap", min = 0, max = 20)
+    public static int hotbarswapBlockTicks = 10;
+
+    // Fast HotKey (radial menu)
+    @ToggleButton(
+        key = "skyblock-fasthotkey",
+        name = "Fast Hotkey",
+        description = "Radial quick-commands with hold-and-release",
+        category = "SkyBlock"
+    )
+    public static boolean enableFastHotKey = false;
+
+    @NormalButton(
+        key = "skyblock-fasthotkey",
+        title = "Open Fast Hotkey Editor",
+        action = "com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui#open"
+    )
+    public static boolean openFastHotKeyEditor = false;
+
+    @Slider(key = "skyblock-fasthotkey", min = 10, max = 400)
+    public static int fhkInnerRadius = 40;
+    @Slider(key = "skyblock-fasthotkey", min = 60, max = 600)
+    public static int fhkOuterRadius = 150;
+    @Slider(key = "skyblock-fasthotkey", min = 10, max = 2000)
+    public static int fhkOutlineProxRange = 120;
+
+    @ColorPicker(key = "skyblock-fasthotkey", title = "Inner Near Color")
+    public static int fhkInnerNearColor = new java.awt.Color(255,255,255,255).getRGB();
+    @ColorPicker(key = "skyblock-fasthotkey", title = "Inner Far Color")
+    public static int fhkInnerFarColor = new java.awt.Color(0,0,0,255).getRGB();
+    @ColorPicker(key = "skyblock-fasthotkey", title = "Outer Near Color")
+    public static int fhkOuterNearColor = new java.awt.Color(255,255,255,255).getRGB();
+    @ColorPicker(key = "skyblock-fasthotkey", title = "Outer Far Color")
+    public static int fhkOuterFarColor = new java.awt.Color(0,0,0,255).getRGB();
+
+    @CheckBox(key = "skyblock-fasthotkey", title = "Show Direction Arrow")
+    public static boolean fhkShowArrow = true;
+
+    @Slider(key = "skyblock-fasthotkey", min = 20, max = 1000)
+    public static int fhkBgInfluenceRadius = 30; // px
+    @Slider(key = "skyblock-fasthotkey", min = 0, max = 60)
+    public static int fhkBgMaxExtend = 18; // px
+
+    @ColorPicker(key = "skyblock-fasthotkey", title = "Background Near Color")
+    public static int fhkBgNearColor = new java.awt.Color(128,128,128,255).getRGB();
+    @ColorPicker(key = "skyblock-fasthotkey", title = "Background Far Color")
+    public static int fhkBgFarColor = new java.awt.Color(128,128,128,255).getRGB();
+
+    // === Slayer ===
+    @ToggleButton(
+        key = "slayer-miniboss",
+        name = "Slayer Miniboss ESP",
+        description = "Outline nearby slayer miniboss mobs",
+        category = "Slayer"
+    )
+    public static boolean enableSlayerMiniboss = false;
 }

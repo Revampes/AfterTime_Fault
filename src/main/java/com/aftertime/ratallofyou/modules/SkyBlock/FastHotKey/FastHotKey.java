@@ -1,8 +1,6 @@
 package com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey;
 
-
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -29,14 +27,14 @@ public class FastHotKey {
         int key = Keyboard.getEventKey();
         if (key <= 0) return;
         // Find enabled preset with this key
-        java.util.List<FastHotkeyPreset> presets = AllConfig.INSTANCE.FHK_PRESETS;
+        java.util.List<FastHotkeyPreset> presets = com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_PRESETS;
         for (int i = 0; i < presets.size(); i++) {
             FastHotkeyPreset p = presets.get(i);
             if (!p.enabled) continue;
             if (p.keyCode == key) {
                 // Activate this preset and open GUI
                 if (!(Minecraft.getMinecraft().currentScreen instanceof FastHotKeyGui)) {
-                    AllConfig.INSTANCE.setActiveFhkPreset(i);
+                    com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.setActiveFhkPreset(i);
                     Minecraft.getMinecraft().displayGuiScreen(new FastHotKeyGui());
                     guiOpenedByHotkey = true;
                     openKeyCode = key;
@@ -74,7 +72,6 @@ public class FastHotKey {
     }
 
     private static boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_fasthotkey");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableFastHotKey;
     }
 }

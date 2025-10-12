@@ -13,6 +13,10 @@ public class ModConfigIO {
     private static final File CONFIG_DIR = new File("config/ratallofyou");
     private static final File CONFIG_FILE = new File(CONFIG_DIR, "newui-config.json");
 
+    // Keys for Fast Hotkey JSON section
+    private static final String FHK_PRESETS_KEY = "fhk_presets";
+    private static final String FHK_ACTIVE_KEY = "fhk_active_index";
+
     public static void load() {
         ensureDir();
         if (!CONFIG_FILE.exists()) {
@@ -46,6 +50,41 @@ public class ModConfigIO {
                     }
                 } catch (Throwable ignored) {}
             }
+            // Load Fast Hotkey presets if present
+            try {
+                if (obj.has(FHK_PRESETS_KEY)) {
+                    java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> list = new java.util.ArrayList<>();
+                    JsonArray arr = obj.getAsJsonArray(FHK_PRESETS_KEY);
+                    for (JsonElement el : arr) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject pObj = el.getAsJsonObject();
+                        String name = pObj.has("name") ? pObj.get("name").getAsString() : "Preset";
+                        com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p = new com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset(name);
+                        p.enabled = pObj.has("enabled") && pObj.get("enabled").getAsBoolean();
+                        p.keyCode = pObj.has("keyCode") ? pObj.get("keyCode").getAsInt() : 0;
+                        if (pObj.has("entries") && pObj.get("entries").isJsonArray()) {
+                            JsonArray eArr = pObj.getAsJsonArray("entries");
+                            int idx = 0;
+                            for (JsonElement ee : eArr) {
+                                if (!ee.isJsonObject()) continue;
+                                JsonObject eObj = ee.getAsJsonObject();
+                                String label = eObj.has("label") ? eObj.get("label").getAsString() : "";
+                                String cmd = eObj.has("command") ? eObj.get("command").getAsString() : "";
+                                p.entries.add(new com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry(label, cmd, idx++));
+                            }
+                        }
+                        list.add(p);
+                    }
+                    int active = obj.has(FHK_ACTIVE_KEY) ? obj.get(FHK_ACTIVE_KEY).getAsInt() : 0;
+                    com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_PRESETS = list;
+                    com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_ACTIVE_PRESET = Math.max(0, Math.min(active, Math.max(0, list.size() - 1)));
+                    if (!list.isEmpty()) {
+                        com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES = list.get(com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_ACTIVE_PRESET).entries;
+                    } else {
+                        com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES = new java.util.ArrayList<>();
+                    }
+                }
+            } catch (Throwable ignored) {}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,6 +115,31 @@ public class ModConfigIO {
                 }
             } catch (Throwable ignored) {}
         }
+        // Persist Fast Hotkey presets as part of main JSON
+        try {
+            JsonArray arr = new JsonArray();
+            java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> list = com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_PRESETS;
+            if (list != null) {
+                for (com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p : list) {
+                    JsonObject pObj = new JsonObject();
+                    pObj.addProperty("name", p.name == null ? "" : p.name);
+                    pObj.addProperty("enabled", p.enabled);
+                    pObj.addProperty("keyCode", p.keyCode);
+                    JsonArray eArr = new JsonArray();
+                    for (com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry e : p.entries) {
+                        JsonObject eObj = new JsonObject();
+                        eObj.addProperty("label", e.label == null ? "" : e.label);
+                        eObj.addProperty("command", e.command == null ? "" : e.command);
+                        eArr.add(eObj);
+                    }
+                    pObj.add("entries", eArr);
+                    arr.add(pObj);
+                }
+            }
+            obj.add(FHK_PRESETS_KEY, arr);
+            obj.addProperty(FHK_ACTIVE_KEY, com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+        } catch (Throwable ignored) {}
+
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(obj, writer);
@@ -85,6 +149,97 @@ public class ModConfigIO {
         // Notify AutoSell after saving config
         if (AutoSell.getInstance() != null) {
             AutoSell.getInstance().onConfigChanged();
+        }
+    }
+
+    // Direct helpers to read/write FHK without touching ModConfig fields
+    public static java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> loadFhkPresets() {
+        ensureDir();
+        java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> out = new java.util.ArrayList<>();
+        if (!CONFIG_FILE.exists()) return out;
+        try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            JsonElement rootEl = new JsonParser().parse(reader);
+            if (!rootEl.isJsonObject()) return out;
+            JsonObject obj = rootEl.getAsJsonObject();
+            if (!obj.has(FHK_PRESETS_KEY)) return out;
+            JsonArray arr = obj.getAsJsonArray(FHK_PRESETS_KEY);
+            for (JsonElement el : arr) {
+                if (!el.isJsonObject()) continue;
+                JsonObject pObj = el.getAsJsonObject();
+                String name = pObj.has("name") ? pObj.get("name").getAsString() : "Preset";
+                com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p = new com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset(name);
+                p.enabled = pObj.has("enabled") && pObj.get("enabled").getAsBoolean();
+                p.keyCode = pObj.has("keyCode") ? pObj.get("keyCode").getAsInt() : 0;
+                if (pObj.has("entries") && pObj.get("entries").isJsonArray()) {
+                    JsonArray eArr = pObj.getAsJsonArray("entries");
+                    int idx = 0;
+                    for (JsonElement ee : eArr) {
+                        if (!ee.isJsonObject()) continue;
+                        JsonObject eObj = ee.getAsJsonObject();
+                        String label = eObj.has("label") ? eObj.get("label").getAsString() : "";
+                        String cmd = eObj.has("command") ? eObj.get("command").getAsString() : "";
+                        p.entries.add(new com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry(label, cmd, idx++));
+                    }
+                }
+                out.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return out;
+    }
+
+    public static int loadFhkActiveIndex() {
+        ensureDir();
+        if (!CONFIG_FILE.exists()) return 0;
+        try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            JsonElement rootEl = new JsonParser().parse(reader);
+            if (!rootEl.isJsonObject()) return 0;
+            JsonObject obj = rootEl.getAsJsonObject();
+            if (obj.has(FHK_ACTIVE_KEY)) return obj.get(FHK_ACTIVE_KEY).getAsInt();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public static void saveFhkPresets(java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> presets, int activeIndex) {
+        ensureDir();
+        JsonObject obj;
+        // Try to merge with existing file content
+        try (Reader reader = new InputStreamReader(new FileInputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            JsonElement rootEl = new JsonParser().parse(reader);
+            obj = rootEl != null && rootEl.isJsonObject() ? rootEl.getAsJsonObject() : new JsonObject();
+        } catch (Exception ignored) { obj = new JsonObject(); }
+
+        // Write/update FHK section
+        JsonArray arr = new JsonArray();
+        if (presets != null) {
+            for (com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p : presets) {
+                JsonObject pObj = new JsonObject();
+                pObj.addProperty("name", p.name == null ? "" : p.name);
+                pObj.addProperty("enabled", p.enabled);
+                pObj.addProperty("keyCode", p.keyCode);
+                JsonArray eArr = new JsonArray();
+                for (com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry e : p.entries) {
+                    JsonObject eObj = new JsonObject();
+                    eObj.addProperty("label", e.label == null ? "" : e.label);
+                    eObj.addProperty("command", e.command == null ? "" : e.command);
+                    eArr.add(eObj);
+                }
+                pObj.add("entries", eArr);
+                arr.add(pObj);
+            }
+        }
+        obj.add(FHK_PRESETS_KEY, arr);
+        obj.addProperty(FHK_ACTIVE_KEY, Math.max(0, activeIndex));
+
+        // Save back to disk
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            gson.toJson(obj, writer);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

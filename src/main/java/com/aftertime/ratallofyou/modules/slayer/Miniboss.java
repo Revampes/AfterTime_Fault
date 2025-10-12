@@ -1,6 +1,6 @@
 package com.aftertime.ratallofyou.modules.slayer;
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -29,7 +29,7 @@ public class Miniboss {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent event) {
-        if (!BooleanSettings.isEnabled("slayer_miniboss") || mc.theWorld == null) return;
+        if (!ModConfig.enableSlayerMiniboss || mc.theWorld == null) return;
 
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {

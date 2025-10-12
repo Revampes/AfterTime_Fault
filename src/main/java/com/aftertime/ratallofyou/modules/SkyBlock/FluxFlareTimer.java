@@ -2,8 +2,8 @@ package com.aftertime.ratallofyou.modules.SkyBlock;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.entity.Entity;
@@ -72,7 +72,7 @@ public class FluxFlareTimer {
             double dz = mc.thePlayer.posZ - flareZ;
             double flareDist = Math.sqrt(dx*dx + dy*dy + dz*dz);
             if (flareDist < 40.0 && flareDist < bestDistance) {
-                bestLabel = "§cFlare §e" + remain + "s";
+                bestLabel = "\u00a7cFlare \u00a7e" + remain + "s";
                 bestDistance = flareDist;
             }
         }
@@ -110,8 +110,7 @@ public class FluxFlareTimer {
     }
 
     private boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_flareflux");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableFluxFlareTimer;
     }
 
     private UIPosition getPos() {

@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.config.OptionElements;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.PropertyRef;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 import net.minecraft.client.gui.FontRenderer;
 
 public abstract class Option<T> extends GuiElement {
@@ -36,11 +37,8 @@ public abstract class Option<T> extends GuiElement {
                         } else if ("command".equals(field)) {
                             e.command = String.valueOf(Data);
                         }
-                        // Persist presets (also mirrors legacy keys)
-                        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyPresets(
-                                AllConfig.INSTANCE.FHK_PRESETS,
-                                AllConfig.INSTANCE.FHK_ACTIVE_PRESET
-                        );
+                        // Persist presets via ModConfigIO (also mirrors active preset into legacy keys via loader consumers)
+                        ModConfigIO.saveFhkPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
                     }
                 } catch (NumberFormatException ignored) { }
             }

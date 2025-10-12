@@ -23,6 +23,7 @@ public class ConfigIO {
 
     public Properties properties;
     public Properties FastHotKeyProperties;
+
     public void InitializeConfigs() {
         Properties prop = LoadProperties(CONFIG_FILE);
         Properties fastHotKeyProp = LoadProperties(FastHotKey_FILE);
@@ -55,21 +56,21 @@ public class ConfigIO {
             SetUIPosition(Key, p.x, p.y);
         }
     }
-    public Object GetConfig(String Key,Type type)
-    {
-        if(type == Boolean.class) {
+
+    public Object GetConfig(String Key, Type type) {
+        if (type == Boolean.class) {
             return GetBool(Key);
-        } else if(type == String.class) {
+        } else if (type == String.class) {
             return GetString(Key);
-        } else if(type == Float.class) {
+        } else if (type == Float.class) {
             return GetFloat(Key);
-        } else if(type == Integer.class) {
+        } else if (type == Integer.class) {
             return GetInt(Key);
-        } else if(type == Color.class) {
+        } else if (type == Color.class) {
             return GetColor(Key);
-        } else if(type == DataType_DropDown.class) {
+        } else if (type == DataType_DropDown.class) {
             return GetDropDown(Key);
-        } else if(type == int[].class) {
+        } else if (type == int[].class) {
             return GetUIPosition(Key);
         } else if (type == UIPosition.class) {
             int[] xy = GetUIPosition(Key);
@@ -77,38 +78,46 @@ public class ConfigIO {
         }
         return null;
     }
+
     //Set Property Field
-    public void SetString( String Key, String value) {
-        properties.setProperty( Key, value);
+    public void SetString(String Key, String value) {
+        properties.setProperty(Key, value);
     }
+
     public void SetBool(String Key, boolean value) {
         String Value = Boolean.toString(value);
-        properties.setProperty(Key,Value);
+        properties.setProperty(Key, Value);
     }
+
     public void SetFloat(String Key, float value) {
         String Value = Float.toString(value);
-        properties.setProperty(Key,Value);
+        properties.setProperty(Key, Value);
     }
+
     public void SetInt(String Key, int value) {
         String Value = Integer.toString(value);
-        properties.setProperty(Key,Value);
+        properties.setProperty(Key, Value);
     }
+
     public void SetColor(String Key, Color value) {
         String Value = Integer.toString(value.getRGB());
-        properties.setProperty(Key,Value);
+        properties.setProperty(Key, Value);
     }
-    public void SetDropDown( String Key, DataType_DropDown dropdown) {
-        String options = String.join(",",dropdown.options);
+
+    public void SetDropDown(String Key, DataType_DropDown dropdown) {
+        String options = String.join(",", dropdown.options);
         int selectedIndex = dropdown.selectedIndex;
-        properties.setProperty( Key + "_options", options);
-        properties.setProperty( Key + "_index", Integer.toString(selectedIndex));
+        properties.setProperty(Key + "_options", options);
+        properties.setProperty(Key + "_index", Integer.toString(selectedIndex));
     }
-    public void SetDropDownSelect( String Key, int selectedIndex) {
-        properties.setProperty( Key + "_index", Integer.toString(selectedIndex));
+
+    public void SetDropDownSelect(String Key, int selectedIndex) {
+        properties.setProperty(Key + "_index", Integer.toString(selectedIndex));
 
     }
-    public void SetUIPosition( String Key,int x, int y) {
-        properties.setProperty( Key, x + "," + y);
+
+    public void SetUIPosition(String Key, int x, int y) {
+        properties.setProperty(Key, x + "," + y);
 
     }
 
@@ -116,13 +125,15 @@ public class ConfigIO {
     public String GetString(String Key) {
         return properties.getProperty(Key);
     }
+
     public Boolean GetBool(String Key) {
         String Value = properties.getProperty(Key);
         if (Value == null) return null;
         return Boolean.parseBoolean(Value);
     }
+
     public Float GetFloat(String Key) {
-        String Value = properties.getProperty( Key);
+        String Value = properties.getProperty(Key);
         if (Value == null) return null;
         try {
             return Float.parseFloat(Value);
@@ -131,9 +142,10 @@ public class ConfigIO {
             return null;
         }
     }
-    public DataType_DropDown GetDropDown( String Key) {
-        String options = properties.getProperty( Key + "_options");
-        String indexStr = properties.getProperty( Key + "_index");
+
+    public DataType_DropDown GetDropDown(String Key) {
+        String options = properties.getProperty(Key + "_options");
+        String indexStr = properties.getProperty(Key + "_index");
         if (options == null || indexStr == null) return null;
         String[] optionArray = options.split(",");
         int selectedIndex;
@@ -145,8 +157,9 @@ public class ConfigIO {
         }
         return new DataType_DropDown(selectedIndex, optionArray);
     }
-    public Integer GetInt( String Key) {
-        String Value = properties.getProperty( Key);
+
+    public Integer GetInt(String Key) {
+        String Value = properties.getProperty(Key);
         if (Value == null) return null;
         try {
             return Integer.parseInt(Value);
@@ -155,8 +168,9 @@ public class ConfigIO {
             return null;
         }
     }
-    public Color GetColor( String Key) {
-        String Value = properties.getProperty( Key);
+
+    public Color GetColor(String Key) {
+        String Value = properties.getProperty(Key);
         if (Value == null) return null;
         try {
             // Preserve alpha channel; stored value is ARGB from Color#getRGB()
@@ -170,17 +184,17 @@ public class ConfigIO {
     // Legacy single-list FHK API (kept for backward compatibility)
     public java.util.List<FastHotkeyEntry> LoadFastHotKeyEntries() {
         List<FastHotkeyEntry> entries = new ArrayList<>();
-        int length = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_length","0"));
-        for(int i = 0 ; i < length;i++)
-        {
+        int length = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_length", "0"));
+        for (int i = 0; i < length; i++) {
             String label = FastHotKeyProperties.getProperty("fhk_" + i + "_label");
             String command = FastHotKeyProperties.getProperty("fhk_" + i + "_command");
-                FastHotkeyEntry entry = new FastHotkeyEntry(label,command,i);
-                entries.add(entry);
+            FastHotkeyEntry entry = new FastHotkeyEntry(label, command, i);
+            entries.add(entry);
 
         }
         return entries;
     }
+
     public void SaveFastHotKeyEntries(List<FastHotkeyEntry> entries) {
         FastHotKeyProperties.setProperty("fhk_length", String.valueOf(entries.size()));
         for (int i = 0; i < entries.size(); i++) {
@@ -188,6 +202,8 @@ public class ConfigIO {
             FastHotKeyProperties.setProperty("fhk_" + i + "_label", entry.label);
             FastHotKeyProperties.setProperty("fhk_" + i + "_command", entry.command);
         }
+        // Flush to disk immediately for reliability when editing outside main settings GUI
+        storeSilently(FastHotKeyProperties, FastHotKey_FILE, "RatAllOfYou Fast Hotkey Configurations");
     }
 
     // New multi-preset FHK API
@@ -201,8 +217,13 @@ public class ConfigIO {
                 FastHotkeyPreset preset = new FastHotkeyPreset(name);
                 // New: enabled + keyCode
                 boolean enabled = Boolean.parseBoolean(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_enabled", "false"));
-                int keyCode = 0; try { keyCode = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_keycode", "0")); } catch (Exception ignored) {}
-                preset.enabled = enabled; preset.keyCode = keyCode;
+                int keyCode = 0;
+                try {
+                    keyCode = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_keycode", "0"));
+                } catch (Exception ignored) {
+                }
+                preset.enabled = enabled;
+                preset.keyCode = keyCode;
                 int len = Integer.parseInt(FastHotKeyProperties.getProperty("fhk_preset_" + p + "_length", "0"));
                 for (int i = 0; i < len; i++) {
                     String label = FastHotKeyProperties.getProperty("fhk_preset_" + p + "_" + i + "_label", "");
@@ -239,6 +260,9 @@ public class ConfigIO {
         if (!presets.isEmpty()) {
             List<FastHotkeyEntry> active = presets.get(activeIndex).entries;
             SaveFastHotKeyEntries(active);
+        } else {
+            // Ensure files are created/cleared
+            storeSilently(FastHotKeyProperties, FastHotKey_FILE, "RatAllOfYou Fast Hotkey Configurations");
         }
     }
 
@@ -252,8 +276,8 @@ public class ConfigIO {
         }
     }
 
-    public int[] GetUIPosition( String Key) {
-        String Value = properties.getProperty( Key);
+    public int[] GetUIPosition(String Key) {
+        String Value = properties.getProperty(Key);
         if (Value == null) return null;
         String[] parts = Value.split(",");
         if (parts.length != 2) return null;
@@ -266,7 +290,7 @@ public class ConfigIO {
             return null;
         }
     }
-   
+
 
     private Properties LoadProperties(File file) {
         Properties properties = new Properties();
@@ -283,15 +307,24 @@ public class ConfigIO {
         return properties;
     }
 
+    // Helper to store a properties file and swallow exceptions (logged)
+    private void storeSilently(Properties props, File file, String comments) {
+        try {
+            java.io.File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
+            props.store(new java.io.FileWriter(file), comments);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void SaveProperties() {
         try {
             AllConfig.INSTANCE.SaveToProperty();
             properties.store(new java.io.FileWriter(CONFIG_FILE), "RatAllOfYou Configurations");
             FastHotKeyProperties.store(new java.io.FileWriter(FastHotKey_FILE), "RatAllOfYou Fast Hotkey Configurations");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable ignored) {
+
         }
     }
-
 }

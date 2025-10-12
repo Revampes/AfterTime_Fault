@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.dungeon;
 
 
-import com.aftertime.ratallofyou.UI.Settings.BooleanSettings;
 import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.DungeonUtils;
 import com.aftertime.ratallofyou.utils.RenderUtils;
@@ -149,7 +148,7 @@ public class SecretClicks {
 
     @SubscribeEvent
     public void onChat(net.minecraftforge.client.event.ClientChatReceivedEvent event) {
-        if (!BooleanSettings.isEnabled("dungeons_secretclicks") || highlights.isEmpty()) return;
+        if (!ModConfig.enableSecretClicks || highlights.isEmpty()) return;
 
         if (event.message.getUnformattedText().equals("That chest is locked!")) {
             for (HighlightedBlock highlighted : highlights.values()) {

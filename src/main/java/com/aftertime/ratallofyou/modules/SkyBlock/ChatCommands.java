@@ -1,8 +1,7 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.PartyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
@@ -11,32 +10,35 @@ import net.minecraft.util.StringUtils;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 public class ChatCommands {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private static final Pattern PARTY_MSG_REGEX = Pattern.compile("^Party > (\\[[^]]*?])? ?(\\w{1,16})(?: [ቾ⚒])?: ?!(\\w+)(?: (.+))?$");
+    private static final Pattern PARTY_MSG_REGEX = Pattern.compile("^Party > (\\[[^]]*?])? ?(\\w{1,16})(?: [\u007e\u2692])?: ?!(\\w+)(?: (.+))?$");
 
-    // Command toggles
-    private final Boolean warp = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_warp").Data;
-    private final Boolean warptransfer = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_warp_transfer").Data;
-    private final Boolean coords = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_coords").Data;
-    private final Boolean allinvite = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_all_invite").Data;
-    private final Boolean boop = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_boop").Data;
-    private final Boolean cf = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_coin_flip").Data;
-    private final Boolean eightball = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_8ball").Data;
-    private final Boolean dice = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_dice").Data;
-    private final Boolean pt = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_party_transfer").Data;
-    private final Boolean tps = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_tps").Data;
-    private final Boolean dt = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_downtime").Data;
-    private final Boolean queInstance = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_queue_instance").Data;
-    private final Boolean demote = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_demote").Data;
-    private final Boolean promote = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_promote").Data;
-    private final Boolean disband = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_disband").Data;
-    private final Boolean ptandwarp = (Boolean) AllConfig.INSTANCE.COMMAND_CONFIGS.get("command_pt_warp").Data;
+    // Dynamic toggles (refreshed on each message)
+    private boolean warp, warptransfer, coords, allinvite, boop, cf, eightball, dice, pt, tps, dt, queInstance, demote, promote, disband, ptandwarp;
+
+    private void refreshToggles() {
+        this.warp = ModConfig.chatCmdWarp;
+        this.warptransfer = ModConfig.chatCmdWarpTransfer;
+        this.coords = ModConfig.chatCmdCoords;
+        this.allinvite = ModConfig.chatCmdAllInvite;
+        this.boop = ModConfig.chatCmdBoop;
+        this.cf = ModConfig.chatCmdCoinFlip;
+        this.eightball = ModConfig.chatCmd8Ball;
+        this.dice = ModConfig.chatCmdDice;
+        this.pt = ModConfig.chatCmdPartyTransfer;
+        this.tps = ModConfig.chatCmdTps;
+        this.dt = ModConfig.chatCmdDowntime;
+        this.queInstance = ModConfig.chatCmdQueueInstance;
+        this.demote = ModConfig.chatCmdDemote;
+        this.promote = ModConfig.chatCmdPromote;
+        this.disband = ModConfig.chatCmdDisband;
+        this.ptandwarp = ModConfig.chatCmdPtAndWarp;
+    }
 
     private final List<Pair> dtReason = new ArrayList<Pair>();
 
@@ -45,6 +47,7 @@ public class ChatCommands {
         if (!isModuleEnabled()) {
             return;
         }
+        refreshToggles();
 
         final String message = StringUtils.stripControlCodes(event.message.getUnformattedText());
 
@@ -103,6 +106,7 @@ public class ChatCommands {
             case "help":
             case "h":
                 List<String> availableCommands = new ArrayList<String>();
+                refreshToggles();
                 if (coords) availableCommands.add("coords/co");
                 if (boop) availableCommands.add("boop [player]");
                 if (cf) availableCommands.add("cf");
@@ -130,7 +134,7 @@ public class ChatCommands {
 
             case "coords":
             case "co":
-                if (coords) {
+                if (ModConfig.chatCmdCoords) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -141,7 +145,7 @@ public class ChatCommands {
                 break;
 
             case "boop":
-                if (boop && args != null) {
+                if (ModConfig.chatCmdBoop && args != null) {
                     final String finalArgsBoop = args;
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
@@ -153,7 +157,7 @@ public class ChatCommands {
                 break;
 
             case "cf":
-                if (cf) {
+                if (ModConfig.chatCmdCoinFlip) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -164,7 +168,7 @@ public class ChatCommands {
                 break;
 
             case "8ball":
-                if (eightball) {
+                if (ModConfig.chatCmd8Ball) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -175,7 +179,7 @@ public class ChatCommands {
                 break;
 
             case "dice":
-                if (dice) {
+                if (ModConfig.chatCmdDice) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -186,7 +190,7 @@ public class ChatCommands {
                 break;
 
             case "tps":
-                if (tps) {
+                if (ModConfig.chatCmdTps) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -198,7 +202,7 @@ public class ChatCommands {
 
             case "warp":
             case "w":
-                if (warp && PartyUtils.isLeader()) {
+                if (ModConfig.chatCmdWarp && PartyUtils.isLeader()) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -210,7 +214,7 @@ public class ChatCommands {
 
             case "warptransfer":
             case "wt":
-                if (warptransfer && PartyUtils.isLeader()) {
+                if (ModConfig.chatCmdWarpTransfer && PartyUtils.isLeader()) {
                     final String finalSenderWT = sender;
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
@@ -229,7 +233,7 @@ public class ChatCommands {
 
             case "allinvite":
             case "allinv":
-                if (allinvite && PartyUtils.isLeader()) {
+                if (ModConfig.chatCmdAllInvite && PartyUtils.isLeader()) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -242,7 +246,7 @@ public class ChatCommands {
             case "pt":
             case "ptme":
             case "transfer":
-                if (pt && PartyUtils.isLeader()) {
+                if (ModConfig.chatCmdPartyTransfer && PartyUtils.isLeader()) {
                     String target = args != null ? findPartyMember(args) : sender;
                     if (target == null) target = sender;
                     final String finalTargetPt = target;
@@ -257,7 +261,7 @@ public class ChatCommands {
 
             case "downtime":
             case "dt":
-                if (dt) {
+                if (ModConfig.chatCmdDowntime) {
                     final String finalArgsDt = args;
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
@@ -278,7 +282,7 @@ public class ChatCommands {
 
             case "undowntime":
             case "undt":
-                if (dt) {
+                if (ModConfig.chatCmdDowntime) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -302,7 +306,7 @@ public class ChatCommands {
                 break;
 
             case "demote":
-                if (demote && PartyUtils.isLeader() && args != null) {
+                if (ModConfig.chatCmdDemote && PartyUtils.isLeader() && args != null) {
                     String target = findPartyMember(args);
                     if (target != null) {
                         final String finalTargetDemote = target;
@@ -317,7 +321,7 @@ public class ChatCommands {
                 break;
 
             case "promote":
-                if (promote && PartyUtils.isLeader() && args != null) {
+                if (ModConfig.chatCmdPromote && PartyUtils.isLeader() && args != null) {
                     String target = findPartyMember(args);
                     if (target != null) {
                         final String finalTargetPromote = target;
@@ -332,7 +336,7 @@ public class ChatCommands {
                 break;
 
             case "disband":
-                if (disband && PartyUtils.isLeader()) {
+                if (ModConfig.chatCmdDisband && PartyUtils.isLeader()) {
                     runWithSelfDelay(sender, new Runnable() {
                         @Override
                         public void run() {
@@ -345,7 +349,7 @@ public class ChatCommands {
             case "ptw":
             case "tw":
                 // Null check Minecraft and player
-                if (mc == null || mc.thePlayer == null || !ptandwarp) {
+                if (mc == null || mc.thePlayer == null || !ModConfig.chatCmdPtAndWarp) {
                     return;
                 }
 
@@ -399,203 +403,114 @@ public class ChatCommands {
                                         }
                                     }, 2000);
                                 } else if (foundMember == null) {
-                                    partyMessage("Player not found in party: " + finalArgsPtw);
+                                    modMessage(EnumChatFormatting.RED + "Couldn't find player to transfer to!");
                                 }
                             }
                         } else {
-                            if (PartyUtils.isLeader()) {
-                                sendCommand("p warp");
-                            }
+                            // No args -> transfer to self then warp
+                            partyMessage("!ptme");
+                            new Timer().schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    if (mc != null && mc.thePlayer != null) {
+                                        sendCommand("p warp");
+                                    }
+                                }
+                            }, 2000);
                         }
                     }
                 };
-
                 runWithSelfDelay(sender, processPtw);
                 break;
-
-            default:
-                // Handle regex patterns for floor commands
-                if (command.matches("^[mf][1-7]$")) {
-                    if (queInstance && PartyUtils.isLeader()) {
-                        String floorType = command.substring(0, 1);
-                        String floorNum = command.substring(1);
-
-                        String[] numberWords = {"", "one", "two", "three", "four",
-                                "five", "six", "seven"};
-                        String floorWord = numberWords[Integer.parseInt(floorNum)];
-
-                        String dungeonCommand;
-                        if (floorType.equals("m")) {
-                            dungeonCommand = "joindungeon master_catacombs_floor_" + floorWord;
-                        } else {
-                            dungeonCommand = "joindungeon catacombs_floor_" + floorWord;
-                        }
-
-                        final String finalDungeonCommand = dungeonCommand;
-                        runWithSelfDelay(sender, new Runnable() {
-                            @Override
-                            public void run() {
-                                sendCommand(finalDungeonCommand);
-                            }
-                        });
-                    }
-                } else if (command.matches("^t[1-5]$")) {
-                    if (queInstance && PartyUtils.isLeader()) {
-                        String[] kuudraTiers = {
-                                "kuudra_normal",
-                                "kuudra_hot",
-                                "kuudra_burning",
-                                "kuudra_fiery",
-                                "kuudra_infernal"
-                        };
-
-                        int tierIndex = Integer.parseInt(command.substring(1)) - 1;
-                        final String finalJoinInstance = "joininstance " + kuudraTiers[tierIndex];
-                        runWithSelfDelay(sender, new Runnable() {
-                            @Override
-                            public void run() {
-                                sendCommand(finalJoinInstance);
-                            }
-                        });
-                    }
-                }
-                break;
-        }
-    }
-
-    private String findPartyMember(String partialName) {
-        for (String member : PartyUtils.getPartyMembers()) {
-            if (member.toLowerCase().startsWith(partialName.toLowerCase())) {
-                return member;
-            }
-        }
-        return null;
-    }
-
-    private void partyMessage(String message) {
-        sendCommand("pc " + message);
-    }
-
-    private void modMessage(String message) {
-        mc.thePlayer.addChatMessage(new ChatComponentText(message));
-    }
-
-    private void sendCommand(String command) {
-        mc.thePlayer.sendChatMessage("/" + command);
-    }
-
-    private String getPositionString() {
-        return String.format("x: %.1f, y: %.1f, z: %.1f",
-                mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ);
-    }
-
-    private String getRandomResponse() {
-        String[] responses = {
-                "It is certain", "It is decidedly so", "Without a doubt", "Yes definitely",
-                "You may rely on it", "As I see it, yes", "Most likely", "Outlook good",
-                "Yes", "Signs point to yes", "Reply hazy try again", "Ask again later",
-                "Better not tell you now", "Cannot predict now", "Concentrate and ask again",
-                "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good",
-                "Very doubtful"
-        };
-        return responses[new Random().nextInt(responses.length)];
-    }
-
-    private float getAverageTps() {
-        return 20.0f;
-    }
-
-    private String join(List<String> list, String delimiter) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            sb.append(list.get(i));
-            if (i < list.size() - 1) {
-                sb.append(delimiter);
-            }
-        }
-        return sb.toString();
-    }
-
-    public static class Pair {
-        private final Object first;
-        private final Object second;
-
-        public Pair(Object first, Object second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        public Object getFirst() {
-            return first;
-        }
-
-        public Object getSecond() {
-            return second;
         }
     }
 
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_partycommands");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableChatCommands;
     }
 
-    public static void setCommandEnabled(String commandName, boolean enabled) {
-        Properties props = new Properties();
-        File configFile = new File("config/ratallofyou_commands.cfg");
-
-        try {
-            if (configFile.exists()) {
-                props.load(new FileInputStream(configFile));
-            }
-
-            props.setProperty(commandName, String.valueOf(enabled));
-            props.store(new FileOutputStream(configFile), "Rat All Of You Command Settings");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private int getAverageTps() {
+        return 20;
     }
 
-    public static boolean isCommandEnabled(String commandName) {
-        Properties props = new Properties();
-        File configFile = new File("config/ratallofyou_commands.cfg");
-
-        try {
-            if (configFile.exists()) {
-                props.load(new FileInputStream(configFile));
-                return Boolean.parseBoolean(props.getProperty(commandName, "true"));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if ("pt".equals(commandName)) {
-            return false;
-        } else if ("demote".equals(commandName)) {
-            return false;
-        } else if ("promote".equals(commandName)) {
-            return false;
-        } else if ("disband".equals(commandName)) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    // Add helpers to conditionally delay when the sender is the local player
-    private boolean isSelf(String sender) {
-        return mc != null && mc.thePlayer != null && sender != null && sender.equalsIgnoreCase(mc.thePlayer.getName());
-    }
-
+    // Helpers
     private void runWithSelfDelay(String sender, Runnable action) {
-        if (isSelf(sender)) {
-            new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    action.run();
-                }
-            }, 1000);
-        } else {
-            action.run();
+        if (mc == null || mc.thePlayer == null) return;
+        long delay = sender.equalsIgnoreCase(mc.thePlayer.getName()) ? 0L : 350L;
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try { action.run(); } catch (Throwable ignored) {}
+            }
+        }, delay);
+    }
+
+    private void modMessage(String msg) {
+        if (mc != null && mc.thePlayer != null) {
+            mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "[RatAllOfYou] " + msg));
         }
+    }
+
+    private void partyMessage(String msg) { sendCommand("pc " + msg); }
+
+    private void sendCommand(String cmd) {
+        if (mc != null && mc.thePlayer != null) mc.thePlayer.sendChatMessage("/" + cmd);
+    }
+
+    private String getPositionString() {
+        if (mc == null || mc.thePlayer == null) return "x: 0, y: 0, z: 0";
+        int x = (int) Math.floor(mc.thePlayer.posX);
+        int y = (int) Math.floor(mc.thePlayer.posY);
+        int z = (int) Math.floor(mc.thePlayer.posZ);
+        return "x: " + x + ", y: " + y + ", z: " + z;
+    }
+
+    private String join(List<String> list, String sep) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0) sb.append(sep);
+            sb.append(list.get(i));
+        }
+        return sb.toString();
+    }
+
+    private String getRandomResponse() {
+        String[] responses = {
+                "It is certain.",
+                "Ask again later.",
+                "Better not tell you now.",
+                "Very doubtful.",
+                "Outlook good."
+        };
+        return responses[new Random().nextInt(responses.length)];
+    }
+
+    // Resolve a party member by exact or prefix match (case-insensitive); returns null if not found
+    private String findPartyMember(String input) {
+        if (input == null) return null;
+        String query = input.trim();
+        if (query.isEmpty()) return null;
+        String q = query.toLowerCase(java.util.Locale.ROOT);
+        java.util.List<String> party = PartyUtils.getPartyMembers();
+        if (party == null || party.isEmpty()) return null;
+        String exact = null;
+        String prefix = null;
+        for (String m : party) {
+            if (m == null || m.isEmpty()) continue;
+            String ml = m.toLowerCase(java.util.Locale.ROOT);
+            if (ml.equals(q)) { exact = m; break; }
+            if (prefix == null && ml.startsWith(q)) prefix = m;
+        }
+        if (exact != null) return exact;
+        if (prefix != null) return prefix;
+        return null;
+    }
+
+    // Simple pair holder
+    private static class Pair {
+        private final Object first; private final Object second;
+        Pair(Object a, Object b) { first = a; second = b; }
+        public Object getFirst() { return first; }
+        public Object getSecond() { return second; }
     }
 }

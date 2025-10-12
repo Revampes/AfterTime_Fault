@@ -1,8 +1,6 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
@@ -15,22 +13,19 @@ import org.lwjgl.input.Keyboard;
 public class MarkLocation {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
-    // Config helpers
     private boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_marklocation");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enabledMarkLocation;
     }
 
     private int cfgHotkey() {
-        return getInt(AllConfig.INSTANCE.MARKLOCATION_CONFIGS.get("marklocation_hotkey"), 0);
-    }
-
-    private static int getInt(BaseConfig<?> c, int def) {
+        // ModConfig.markLocationKeyBind is a key name like "U"; map to LWJGL code
+        String name = ModConfig.markLocationKeyBind == null ? "" : ModConfig.markLocationKeyBind.trim();
+        if (name.isEmpty()) return 0;
         try {
-            Object d = c.Data;
-            return (d instanceof Integer) ? (Integer) d : def;
+            int code = Keyboard.getKeyIndex(name.toUpperCase());
+            return code > 0 ? code : 0;
         } catch (Throwable ignored) {
-            return def;
+            return 0;
         }
     }
 
@@ -48,7 +43,7 @@ public class MarkLocation {
             int key = Keyboard.getEventKey();
             if (key != bound) return;
 
-            // Get the player's looking position (similar to EtherwarpOverlay)
+            // Get the player's looking position (raytrace)
             Vec3 lookingPos = getPlayerLookingPosition();
             if (lookingPos != null) {
                 sendLocationToPartyChat(lookingPos);
@@ -57,20 +52,20 @@ public class MarkLocation {
     }
 
     /**
-     * Get the position the player is looking at (similar to EtherwarpOverlay logic)
+     * Get the position the player is looking at
      */
     private Vec3 getPlayerLookingPosition() {
         if (mc.thePlayer == null || mc.theWorld == null) return null;
 
         // Use raytrace to find what block the player is looking at
-        MovingObjectPosition result = mc.thePlayer.rayTrace(61.0D, 1.0F); // 61 blocks like etherwarp
+        MovingObjectPosition result = mc.thePlayer.rayTrace(61.0D, 1.0F); // 61 blocks
 
         if (result != null && result.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
             BlockPos pos = result.getBlockPos();
             return new Vec3(pos.getX(), pos.getY(), pos.getZ());
         }
 
-        // Fallback: calculate position based on player's look direction (like EtherwarpOverlay)
+        // Fallback: calculate position based on player's look direction
         float x0 = (float) mc.thePlayer.posX;
         float y0 = (float) mc.thePlayer.posY + 1.54f; // eye height
         float z0 = (float) mc.thePlayer.posZ;
@@ -85,9 +80,6 @@ public class MarkLocation {
         return new Vec3(x1, y1, z1);
     }
 
-    /**
-     * Convert pitch/yaw to look vector (copied from EtherwarpOverlay)
-     */
     private static Vec3 fromPitchYaw(float pitch, float yaw) {
         float f = MathHelper.cos(-yaw * 0.017453292F - (float)Math.PI);
         float f1 = MathHelper.sin(-yaw * 0.017453292F - (float)Math.PI);
@@ -96,18 +88,13 @@ public class MarkLocation {
         return new Vec3((double)(f1 * f2), (double)f3, (double)(f * f2));
     }
 
-    /**
-     * Send the location to party chat
-     */
     private void sendLocationToPartyChat(Vec3 pos) {
         if (mc.thePlayer == null) return;
 
-        // Round coordinates to integers for cleaner output
         int x = MathHelper.floor_double(pos.xCoord);
         int y = MathHelper.floor_double(pos.yCoord);
         int z = MathHelper.floor_double(pos.zCoord);
 
-        // Send message to party chat
         String message = String.format("/pc x: %d, y: %d, z: %d", x, y, z);
         mc.thePlayer.sendChatMessage(message);
     }

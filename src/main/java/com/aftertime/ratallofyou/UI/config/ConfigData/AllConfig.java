@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.UI.config.ConfigData;
 
 
 import com.aftertime.ratallofyou.UI.config.ConfigIO;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 
 import java.awt.Color;
 import java.lang.reflect.Type;
@@ -333,20 +334,23 @@ public class AllConfig {
                 }
             }
         }
-        // Load FastHotkey Entries (backward compatible presets)
-        // Prefer new presets storage; fallback to legacy single list
-        List<FastHotkeyPreset> loaded = com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.LoadFastHotKeyPresets();
+        // Load FastHotkey Entries (prefer ModConfigIO presets)
+        List<FastHotkeyPreset> loaded = null;
+        try { loaded = ModConfigIO.loadFhkPresets(); } catch (Throwable ignored) {}
         if (loaded != null && !loaded.isEmpty()) {
             FHK_PRESETS = loaded;
-            FHK_ACTIVE_PRESET = Math.max(0, Math.min(com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.GetActiveFhkPresetIndex(loaded.size()), loaded.size() - 1));
+            int active = 0; try { active = ModConfigIO.loadFhkActiveIndex(); } catch (Throwable ignored) {}
+            FHK_ACTIVE_PRESET = Math.max(0, Math.min(active, FHK_PRESETS.size() - 1));
             FAST_HOTKEY_ENTRIES = FHK_PRESETS.get(FHK_ACTIVE_PRESET).entries;
         } else {
+            // Fallback to legacy storage then migrate into presets
             FAST_HOTKEY_ENTRIES = com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.LoadFastHotKeyEntries();
             FHK_PRESETS.clear();
             FastHotkeyPreset def = new FastHotkeyPreset("Default");
             def.entries.addAll(FAST_HOTKEY_ENTRIES);
             FHK_PRESETS.add(def);
             FHK_ACTIVE_PRESET = 0;
+            try { ModConfigIO.saveFhkPresets(FHK_PRESETS, FHK_ACTIVE_PRESET); } catch (Throwable ignored) {}
         }
 
     }
@@ -360,8 +364,8 @@ public class AllConfig {
                 com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SetConfig(key, config.Data);
             }
         }
-        // Persist Fast Hotkey presets and active pointer
-        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyPresets(FHK_PRESETS, FHK_ACTIVE_PRESET);
+        // Persist Fast Hotkey presets and active pointer via ModConfigIO
+        try { ModConfigIO.saveFhkPresets(FHK_PRESETS, FHK_ACTIVE_PRESET); } catch (Throwable ignored) {}
 
     }
 
@@ -372,6 +376,6 @@ public class AllConfig {
         FHK_ACTIVE_PRESET = clamped;
         FAST_HOTKEY_ENTRIES = FHK_PRESETS.get(FHK_ACTIVE_PRESET).entries;
         // save immediately to keep runtime in sync
-        com.aftertime.ratallofyou.UI.config.ConfigIO.INSTANCE.SaveFastHotKeyPresets(FHK_PRESETS, FHK_ACTIVE_PRESET);
+        try { ModConfigIO.saveFhkPresets(FHK_PRESETS, FHK_ACTIVE_PRESET); } catch (Throwable ignored) {}
     }
 }

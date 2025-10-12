@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.UI.config.handler;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset;
-import com.aftertime.ratallofyou.UI.config.ConfigIO;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
 import com.aftertime.ratallofyou.UI.config.OptionElements.FastRow;
 import org.lwjgl.input.Keyboard;
@@ -27,7 +27,7 @@ public class handleFastHotKeyTyping {
                         p.keyCode = keyCode;
                         // Auto-enable now that key is valid and unique
                         p.enabled = true;
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                        ModConfigIO.saveFhkPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
                         // Auto-select this preset as active
                         AllConfig.INSTANCE.setActiveFhkPreset(gui.fhkKeyCaptureIndex); gui.fhkSelectedPreset = gui.fhkKeyCaptureIndex; gui.rebuildFastHotkeyRowsForDetail();
                         gui.fhkKeyCaptureIndex = -1; return;

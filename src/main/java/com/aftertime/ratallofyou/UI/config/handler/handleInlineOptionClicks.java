@@ -2,7 +2,7 @@ package com.aftertime.ratallofyou.UI.config.handler;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset;
-import com.aftertime.ratallofyou.UI.config.ConfigIO;
+import com.aftertime.ratallofyou.UI.newui.config.ModConfigIO;
 import com.aftertime.ratallofyou.UI.config.ModSettingsGui;
 import com.aftertime.ratallofyou.UI.config.OptionElements.ColorInput;
 import com.aftertime.ratallofyou.UI.config.OptionElements.LabelledInput;
@@ -30,7 +30,7 @@ public class handleInlineOptionClicks {
                 int btnX = ia.contentX + ia.contentW - 60; if (mouseX >= btnX && mouseX <= btnX + 60 && mouseY >= y && mouseY <= y + 16) {
                     String name = gui.fhkPresetNameInput.text.trim(); if (!name.isEmpty()) {
                         boolean exists = false; for (FastHotkeyPreset p : AllConfig.INSTANCE.FHK_PRESETS) { if (p.name.equalsIgnoreCase(name)) { exists = true; break; } }
-                        if (!exists) { AllConfig.INSTANCE.FHK_PRESETS.add(new FastHotkeyPreset(name)); AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_PRESETS.size() - 1); gui.fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET; gui.fhkPresetNameInput.text = ""; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET); gui.rebuildFastHotkeyRowsForDetail(); }
+                        if (!exists) { AllConfig.INSTANCE.FHK_PRESETS.add(new FastHotkeyPreset(name)); AllConfig.INSTANCE.setActiveFhkPreset(AllConfig.INSTANCE.FHK_PRESETS.size() - 1); gui.fhkSelectedPreset = AllConfig.INSTANCE.FHK_ACTIVE_PRESET; gui.fhkPresetNameInput.text = ""; ModConfigIO.saveFhkPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET); gui.rebuildFastHotkeyRowsForDetail(); }
                     }
                     return;
                 }
@@ -57,9 +57,9 @@ public class handleInlineOptionClicks {
                     if (!p.enabled) {
                         if (p.keyCode <= 0) { gui.fhkKeyCaptureIndex = i; return; }
                         if (gui.isFhkKeyDuplicate(p.keyCode, i)) { return; }
-                        p.enabled = true; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                        p.enabled = true; ModConfigIO.saveFhkPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
                     } else {
-                        p.enabled = false; ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                        p.enabled = false; ModConfigIO.saveFhkPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
                     }
                     // Also select this preset for editing
                     AllConfig.INSTANCE.setActiveFhkPreset(i); gui.fhkSelectedPreset = i; gui.rebuildFastHotkeyRowsForDetail();
@@ -72,7 +72,7 @@ public class handleInlineOptionClicks {
                         int newActive = Math.max(0, Math.min(AllConfig.INSTANCE.FHK_ACTIVE_PRESET - (i <= AllConfig.INSTANCE.FHK_ACTIVE_PRESET ? 1 : 0), AllConfig.INSTANCE.FHK_PRESETS.size() - 1));
                         AllConfig.INSTANCE.setActiveFhkPreset(newActive);
                         gui.fhkSelectedPreset = -1; gui.fastRows.clear();
-                        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
+                        ModConfigIO.saveFhkPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
                     }
                     return;
                 }

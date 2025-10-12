@@ -1,8 +1,6 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.init.Blocks;
@@ -54,11 +52,14 @@ public class AutoExperiment {
             current = ExperimentType.CHRONOMATRON;
             debug("Started Chronomatron experiment");
         } else if (chestName.startsWith("Ultrasequencer (")) {
-            current = ExperimentType.ULTRASEQUENCER;
-            debug("Started Ultrasequencer experiment");
+            current = ExperimentType.ULTRTRASEQUENCER; // will be corrected below
         } else if (chestName.startsWith("Superpairs (")) {
             current = ExperimentType.SUPERPAIRS;
             debug("Started Superpairs experiment");
+        }
+        if (current == ExperimentType.ULTRTRASEQUENCER) {
+            current = ExperimentType.ULTRASEQUENCER;
+            debug("Started Ultrasequencer experiment");
         }
     }
 
@@ -213,26 +214,15 @@ public class AutoExperiment {
     }
 
     private boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_autoexperiment");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableAutoExperiment;
     }
 
     private boolean getAutoExit() {
-        BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.get("autoexperiment_auto_exit");
-        if (cfg == null || cfg.Data == null) return false;
-        Object v = cfg.Data;
-        if (v instanceof Boolean) return (Boolean) v;
-        if (v instanceof String) return Boolean.parseBoolean(((String) v).trim());
-        return false;
+        return ModConfig.autoExperimentAutoExit;
     }
 
     private boolean getDebug() {
-        BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.get("autoexperiment_debug");
-        if (cfg == null || cfg.Data == null) return false;
-        Object v = cfg.Data;
-        if (v instanceof Boolean) return (Boolean) v;
-        if (v instanceof String) return Boolean.parseBoolean(((String) v).trim());
-        return false;
+        return ModConfig.autoExperimentDebug;
     }
 
     private void debug(String msg) {
@@ -247,26 +237,19 @@ public class AutoExperiment {
     }
 
     private int getDelayMs() {
-        BaseConfig<?> cfg = AllConfig.INSTANCE.AUTOEXPERIMENT_CONFIGS.get("autoexperiment_delay_ms");
-        if (cfg == null || cfg.Data == null) return 120;
-        Object v = cfg.Data;
-        if (v instanceof Integer) return (Integer) v;
-        if (v instanceof Number) return ((Number) v).intValue();
-        if (v instanceof String) {
-            String s = ((String) v).trim().replace(",", "");
-            try {
-                return Integer.parseInt(s);
-            } catch (Exception ignored) {
-                return 300;
-            }
+        try {
+            int v = ModConfig.autoExperimentDelayMs;
+            return Math.max(60, Math.min(1000, v));
+        } catch (Throwable ignored) {
+            return 300;
         }
-        return 300;
     }
 
     enum ExperimentType {
         CHRONOMATRON,
         ULTRASEQUENCER,
         SUPERPAIRS,
+        ULTRTRASEQUENCER,
         NONE
     }
 }

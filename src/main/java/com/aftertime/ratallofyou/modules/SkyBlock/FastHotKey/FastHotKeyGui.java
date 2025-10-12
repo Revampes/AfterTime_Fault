@@ -1,7 +1,7 @@
 package com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.util.List;
 import java.awt.Color;
 
-// Added: allow direct triggering of HotbarSwap from commands
 import com.aftertime.ratallofyou.modules.SkyBlock.HotbarSwap;
-// Added: save presets when editing in-GUI
-import com.aftertime.ratallofyou.UI.config.ConfigIO;
 
 public class FastHotKeyGui extends GuiScreen {
     // Default radii (will be overridden by config each frame)
@@ -49,6 +46,12 @@ public class FastHotKeyGui extends GuiScreen {
     // Edit mode (add/delete inside the radial GUI)
     private boolean editMode = false;
 
+    // New: Preset side panel state (edit mode only)
+    private GuiTextField presetCreateField;
+    private boolean presetCreateFieldInit = false;
+    private int keyCapturePresetIndex = -1; // -1 = none; else waiting for key for this preset
+    private int selectedPresetIndex = -1; // mirrors store active index
+
     // Inline editor state
     private boolean editingEntry = false;
     private int editingIndex = -1;
@@ -57,17 +60,25 @@ public class FastHotKeyGui extends GuiScreen {
     private String originalLabel = "";
     private String originalCommand = "";
 
+    public static void open() {
+        Minecraft.getMinecraft().displayGuiScreen(new FastHotKeyGui());
+    }
+
     @Override
     public void initGui() {
         super.initGui();
         this.centerX = width / 2;
         this.centerY = height / 2;
-        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        // Use store-backed entries
+        List<FastHotkeyEntry> entries = FastHotkeyStore.getInstance().getActiveEntries();
         this.regionCount = Math.min(12, entries.size());
-        // Recreate text fields if already editing (handles resize)
+        // Initialize preset selection mirror
+        this.selectedPresetIndex = FastHotkeyStore.getInstance().getActiveIndex();
         if (editMode && editingEntry) {
             createOrLayoutTextFields();
         }
+        // Initialize create field bounds
+        presetCreateFieldInit = false;
     }
 
     @Override
@@ -81,24 +92,29 @@ public class FastHotKeyGui extends GuiScreen {
         centerY = height / 2;
 
         // Keep regionCount in sync with entries size (supports add/delete live)
-        List<FastHotkeyEntry> entriesForCount = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        List<FastHotkeyEntry> entriesForCount = FastHotkeyStore.getInstance().getActiveEntries();
         this.regionCount = Math.min(12, entriesForCount == null ? 0 : entriesForCount.size());
+
+        // Draw left preset panel when in edit mode (behind radial or as overlay)
+        if (editMode) {
+            drawPresetPanel(mouseX, mouseY);
+        }
 
         // Load configurable radii and colors
         int innerRadius = getSafeInnerRadius();
         int outerRadius = getSafeOuterRadius(innerRadius);
         int proxRange = getOutlineProxRange();
-        Color innerNear = getColorOrDefault("fhk_inner_near_color", new Color(255,255,255,255));
-        Color innerFar  = getColorOrDefault("fhk_inner_far_color",  new Color(0,0,0,255));
-        Color outerNear = getColorOrDefault("fhk_outer_near_color", new Color(255,255,255,255));
-        Color outerFar  = getColorOrDefault("fhk_outer_far_color",  new Color(0,0,0,255));
+        Color innerNear = argbToColor(ModConfig.fhkInnerNearColor, new Color(255,255,255,255));
+        Color innerFar  = argbToColor(ModConfig.fhkInnerFarColor,  new Color(0,0,0,255));
+        Color outerNear = argbToColor(ModConfig.fhkOuterNearColor, new Color(255,255,255,255));
+        Color outerFar  = argbToColor(ModConfig.fhkOuterFarColor,  new Color(0,0,0,255));
 
         // Background hover animation config
         int bgInfluence = getBgInfluenceRadius();
         float bgMaxExtend = getBgMaxExtend();
         // Defaults now 50% grey (uniform)
-        Color bgNear = getColorOrDefault("fhk_bg_near_color", new Color(128, 128, 128, 255));
-        Color bgFar  = getColorOrDefault("fhk_bg_far_color",  new Color(128, 128, 128, 255));
+        Color bgNear = argbToColor(ModConfig.fhkBgNearColor, new Color(128, 128, 128, 255));
+        Color bgFar  = argbToColor(ModConfig.fhkBgFarColor,  new Color(128, 128, 128, 255));
         // If user saved very bright colors for both, gently clamp to mid-grey but PRESERVE alpha
         if (isVeryBright(bgNear) && isVeryBright(bgFar)) {
             int preservedA = Math.min(bgNear.getAlpha(), bgFar.getAlpha());
@@ -136,7 +152,7 @@ public class FastHotKeyGui extends GuiScreen {
                 mouseX, mouseY, proxRange, outerNear, outerFar, bgInfluence, bgMaxExtend, hoveredIndex);
 
         // Labels (scaled to fit their wedge)
-        List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        List<FastHotkeyEntry> entries = FastHotkeyStore.getInstance().getActiveEntries();
         double sectorSize = 2 * Math.PI / regionCount;
         for (int i = 0; i < regionCount; i++) {
             double midAngle = Math.PI * 2 * i / regionCount + Math.PI / regionCount;
@@ -149,8 +165,7 @@ public class FastHotKeyGui extends GuiScreen {
         }
 
         // Direction arrow following mouse, positioned near inner radius
-        Object showArrowCfg = safeCfgGet("fhk_show_arrow");
-        boolean showArrow = !(showArrowCfg instanceof Boolean) || ((Boolean) showArrowCfg);
+        boolean showArrow = ModConfig.fhkShowArrow;
         if (showArrow) {
             double dx = mouseX - centerX;
             double dy = mouseY - centerY;
@@ -188,6 +203,76 @@ public class FastHotKeyGui extends GuiScreen {
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
+    // Draw the left-hand preset management panel (edit mode only)
+    private void drawPresetPanel(int mouseX, int mouseY) {
+        final int panelX = 8;
+        final int panelY = 8;
+        final int panelW = 260;
+        final int panelH = height - 16;
+        // Panel background and border
+        drawRect(panelX, panelY, panelX + panelW, panelY + panelH, 0xAA111111);
+        drawRect(panelX - 1, panelY - 1, panelX + panelW + 1, panelY + panelH + 1, 0xFF000000);
+        fontRendererObj.drawString("Presets", panelX + 6, panelY + 6, 0xFFFFFF);
+
+        int y = panelY + 22;
+        // Create new preset input and button
+        if (presetCreateField == null) {
+            presetCreateField = new GuiTextField(100, this.fontRendererObj, panelX + 6, y, panelW - 6 - 66, 16);
+            presetCreateField.setMaxStringLength(64);
+        } else if (!presetCreateFieldInit) {
+            presetCreateField.xPosition = panelX + 6;
+            presetCreateField.yPosition = y;
+            presetCreateField.width = panelW - 6 - 66;
+            presetCreateField.height = 16;
+            presetCreateFieldInit = true;
+        }
+        if (presetCreateField != null) presetCreateField.updateCursorCounter();
+        presetCreateField.drawTextBox();
+        int btnX = panelX + panelW - 60;
+        int btnY = y;
+        drawRect(btnX, btnY, btnX + 54, btnY + 16, 0xFF2E7D32);
+        drawCenteredString(fontRendererObj, "Create", btnX + 27, btnY + 3, 0xFFFFFFFF);
+        y += 22;
+
+        // Existing presets list
+        List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> presets = FastHotkeyStore.getInstance().getPresetsView();
+        int rowH = 16;
+        int gap = 4;
+        for (int i = 0; i < presets.size(); i++) {
+            com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p = presets.get(i);
+            int rowY = y;
+            // Row background highlight if selected
+            int bg = (i == selectedPresetIndex) ? 0x333388FF : 0x22000000;
+            drawRect(panelX + 2, rowY - 1, panelX + panelW - 2, rowY + rowH + 1, bg);
+
+            // Toggle box 14x14
+            int tSize = 14; int toggleX = panelX + 6; int toggleY = rowY + (rowH - tSize) / 2;
+            int toggleColor = p.enabled ? 0xFF2E7D32 : 0xFFC62828;
+            drawRect(toggleX, toggleY, toggleX + tSize, toggleY + tSize, toggleColor);
+
+            // Remove button (rightmost)
+            int rmW = 54; int rmX = panelX + panelW - rmW - 2; int rmY = rowY;
+            drawRect(rmX, rmY, rmX + rmW, rmY + rowH, 0xFFC62828);
+            drawCenteredString(fontRendererObj, "Remove", rmX + rmW / 2, rmY + 3, 0xFFFFFFFF);
+
+            // Keybind box 80px placed left of remove with 6px gap
+            int keyW = 80; int keyX = rmX - 6 - keyW; int keyY = rowY;
+            drawRect(keyX, keyY, keyX + keyW, keyY + rowH, 0xFF222222);
+            String keyLabel;
+            if (keyCapturePresetIndex == i) keyLabel = "Press a key...";
+            else keyLabel = (p.keyCode <= 0) ? "Unbound" : Keyboard.getKeyName(p.keyCode);
+            if (keyLabel == null || keyLabel.trim().isEmpty()) keyLabel = "Unknown";
+            fontRendererObj.drawString(keyLabel, keyX + 4, keyY + 4, 0xFFFFFFFF);
+
+            // Name area between toggle and key
+            int nameX = toggleX + tSize + 6; int nameW = Math.max(40, keyX - 6 - nameX);
+            String nm = p.name + (i == FastHotkeyStore.getInstance().getActiveIndex() ? "  (Active)" : "");
+            fontRendererObj.drawString(nm, nameX, rowY + 4, 0xFFFFFFFF);
+
+            y += rowH + gap;
+        }
+    }
+
     // Small edit-mode HUD and hints (bottom-left)
     private void drawEditHud() {
         int hudX = 6;
@@ -214,7 +299,7 @@ public class FastHotKeyGui extends GuiScreen {
         int outerRadius = getSafeOuterRadius(innerRadius);
         int region = getHoveredRegion(this.lastMouseX, this.lastMouseY, innerRadius, outerRadius);
         if (region != -1) {
-            List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+            List<FastHotkeyEntry> entries = FastHotkeyStore.getInstance().getActiveEntries();
             if (region < entries.size()) {
                 String cmd = entries.get(region).command;
                 if (cmd != null && !cmd.trim().isEmpty()) {
@@ -418,6 +503,47 @@ public class FastHotKeyGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        // Handle preset key capture first when in edit mode
+        if (editMode && keyCapturePresetIndex >= 0) {
+            if (keyCode == Keyboard.KEY_ESCAPE) {
+                // Clear binding and cancel capture
+                FastHotkeyStore.getInstance().setPresetKey(keyCapturePresetIndex, 0);
+                FastHotkeyStore.getInstance().setPresetEnabled(keyCapturePresetIndex, false);
+                syncAllConfigFromStore();
+                keyCapturePresetIndex = -1; return;
+            }
+            if (keyCode > 0) {
+                // Ignore NONE
+                String name = Keyboard.getKeyName(keyCode);
+                if (name != null && !name.trim().isEmpty() && !"NONE".equalsIgnoreCase(name)) {
+                    if (!isKeyDuplicate(keyCode, keyCapturePresetIndex)) {
+                        FastHotkeyStore.getInstance().setPresetKey(keyCapturePresetIndex, keyCode);
+                        FastHotkeyStore.getInstance().setPresetEnabled(keyCapturePresetIndex, true);
+                        // Select this preset as active for editing
+                        FastHotkeyStore.getInstance().setActiveIndex(keyCapturePresetIndex);
+                        selectedPresetIndex = keyCapturePresetIndex;
+                        syncAllConfigFromStore();
+                        keyCapturePresetIndex = -1; return;
+                    } else {
+                        // Duplicate: keep capturing
+                        return;
+                    }
+                } else {
+                    // Keep capturing until valid key
+                    return;
+                }
+            }
+        }
+
+        // When editing: route typing to Create field if focused (letters, backspace, etc.)
+        if (editMode && presetCreateField != null && presetCreateField.isFocused()) {
+            // ENTER -> create; ESC -> unfocus; otherwise pass to textbox
+            if (keyCode == Keyboard.KEY_RETURN) { handleCreatePreset(); return; }
+            if (keyCode == Keyboard.KEY_ESCAPE) { presetCreateField.setFocused(false); return; }
+            presetCreateField.textboxKeyTyped(typedChar, keyCode);
+            return;
+        }
+
         // Toggle edit mode (disabled while actively editing a slot)
         if (!editingEntry && keyCode == Keyboard.KEY_E) {
             editMode = !editMode;
@@ -448,7 +574,8 @@ public class FastHotKeyGui extends GuiScreen {
             return;
         }
         if (editMode) {
-            // Add new slot
+            // Create via Enter when create field is focused (handled above)
+            // Add new slot / Delete hovered
             if (keyCode == Keyboard.KEY_A || keyCode == Keyboard.KEY_INSERT) { addNewEntry(); return; }
             // Delete hovered
             if (keyCode == Keyboard.KEY_DELETE) {
@@ -468,6 +595,12 @@ public class FastHotKeyGui extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         // Edit-mode mouse actions
         if (editMode) {
+            // First: handle preset panel interactions
+            if (handlePresetPanelClick(mouseX, mouseY, mouseButton)) {
+                super.mouseClicked(mouseX, mouseY, mouseButton);
+                return;
+            }
+
             if (editingEntry) {
                 if (labelField != null) labelField.mouseClicked(mouseX, mouseY, mouseButton);
                 if (commandField != null) commandField.mouseClicked(mouseX, mouseY, mouseButton);
@@ -493,7 +626,7 @@ public class FastHotKeyGui extends GuiScreen {
             int outerRadius = getSafeOuterRadius(innerRadius);
             int region = getHoveredRegion(mouseX, mouseY, innerRadius, outerRadius);
             if (region != -1) {
-                List<FastHotkeyEntry> entries = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+                List<FastHotkeyEntry> entries = FastHotkeyStore.getInstance().getActiveEntries();
                 if (region < entries.size()) {
                     String cmd = entries.get(region).command;
                     if (cmd != null && !cmd.trim().isEmpty()) {
@@ -513,11 +646,116 @@ public class FastHotKeyGui extends GuiScreen {
         super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
+    // Handle clicks within the preset panel; returns true if consumed
+    private boolean handlePresetPanelClick(int mouseX, int mouseY, int mouseButton) {
+        final int panelX = 8;
+        final int panelY = 8;
+        final int panelW = 260;
+        final int panelH = height - 16;
+        boolean inPanel = mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= panelY && mouseY <= panelY + panelH;
+        if (!inPanel) return false;
+
+        int y = panelY + 22;
+        // Create field
+        if (presetCreateField != null) {
+            if (mouseY >= y && mouseY <= y + 16) {
+                if (mouseX >= presetCreateField.xPosition && mouseX <= presetCreateField.xPosition + presetCreateField.width) {
+                    presetCreateField.setFocused(true);
+                    keyCapturePresetIndex = -1;
+                    return true;
+                }
+                int btnX = panelX + panelW - 60; int btnY = y;
+                if (mouseX >= btnX && mouseX <= btnX + 54 && mouseY >= btnY && mouseY <= btnY + 16) {
+                    handleCreatePreset();
+                    return true;
+                }
+            }
+            presetCreateField.setFocused(false);
+        }
+        y += 22;
+
+        // Preset rows
+        List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> presets = FastHotkeyStore.getInstance().getPresetsView();
+        int rowH = 16; int gap = 4;
+        for (int i = 0; i < presets.size(); i++) {
+            com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p = presets.get(i);
+            int rowY = y;
+            int tSize = 14; int toggleX = panelX + 6; int toggleY = rowY + (rowH - tSize) / 2;
+            int rmW = 54; int rmX = panelX + panelW - rmW - 2; int rmY = rowY;
+            int keyW = 80; int keyX = rmX - 6 - keyW; int keyY = rowY;
+            int nameX = toggleX + tSize + 6; int nameW = Math.max(40, keyX - 6 - nameX);
+
+            boolean overToggle = mouseX >= toggleX && mouseX <= toggleX + tSize && mouseY >= toggleY && mouseY <= toggleY + tSize;
+            boolean overName = mouseX >= nameX && mouseX <= nameX + nameW && mouseY >= rowY && mouseY <= rowY + rowH;
+            boolean overKey = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= keyY && mouseY <= keyY + rowH;
+            boolean overRemove = mouseX >= rmX && mouseX <= rmX + rmW && mouseY >= rmY && mouseY <= rmY + rowH;
+
+            if (overToggle) {
+                if (!p.enabled) {
+                    if (p.keyCode <= 0) { keyCapturePresetIndex = i; return true; }
+                    if (isKeyDuplicate(p.keyCode, i)) { return true; }
+                    FastHotkeyStore.getInstance().setPresetEnabled(i, true);
+                } else {
+                    FastHotkeyStore.getInstance().setPresetEnabled(i, false);
+                }
+                syncAllConfigFromStore();
+                return true;
+            }
+            if (overName) {
+                FastHotkeyStore.getInstance().setActiveIndex(i);
+                selectedPresetIndex = i;
+                syncAllConfigFromStore();
+                return true;
+            }
+            if (overKey) { keyCapturePresetIndex = i; return true; }
+            if (overRemove) {
+                FastHotkeyStore.getInstance().removePreset(i);
+                selectedPresetIndex = FastHotkeyStore.getInstance().getActiveIndex();
+                syncAllConfigFromStore();
+                return true;
+            }
+
+            y += rowH + gap;
+        }
+        return true;
+    }
+
+    private void handleCreatePreset() {
+        String name = presetCreateField != null ? presetCreateField.getText() : null;
+        if (name == null) name = "";
+        name = name.trim();
+        if (name.isEmpty()) return;
+        int idx = FastHotkeyStore.getInstance().addPreset(name);
+        selectedPresetIndex = idx;
+        if (presetCreateField != null) { presetCreateField.setText(""); presetCreateField.setFocused(false); }
+        syncAllConfigFromStore();
+    }
+
+    private boolean isKeyDuplicate(int keyCode, int exceptIndex) {
+        if (keyCode <= 0) return false;
+        List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset> list = FastHotkeyStore.getInstance().getPresetsView();
+        for (int i = 0; i < list.size(); i++) {
+            if (i == exceptIndex) continue;
+            com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyPreset p = list.get(i);
+            if (p.keyCode == keyCode) return true;
+        }
+        return false;
+    }
+
+    private void syncAllConfigFromStore() {
+        // Keep AllConfig live structures in sync so hotkey triggers work immediately
+        try {
+            com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.FHK_PRESETS = new java.util.ArrayList<>(FastHotkeyStore.getInstance().getPresetsView());
+            int active = FastHotkeyStore.getInstance().getActiveIndex();
+            com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig.INSTANCE.setActiveFhkPreset(active);
+        } catch (Throwable ignored) {}
+    }
+
     // =============================
     // Inline editor helpers
     // =============================
     private void startEditingEntry(int idx) {
-        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        List<FastHotkeyEntry> list = FastHotkeyStore.getInstance().getActiveEntries();
         if (idx < 0 || idx >= list.size()) return;
         editingEntry = true;
         editingIndex = idx;
@@ -554,11 +792,10 @@ public class FastHotKeyGui extends GuiScreen {
     }
 
     private void saveEditingEntry() {
-        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
+        List<FastHotkeyEntry> list = FastHotkeyStore.getInstance().getActiveEntries();
         if (editingIndex < 0 || editingIndex >= list.size()) { cancelEditingEntry(); return; }
         String newLabel = labelField != null ? labelField.getText() : originalLabel;
         String newCommand = commandField != null ? commandField.getText() : originalCommand;
-        // Rebuild entries with updated values
         List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
             FastHotkeyEntry src = list.get(i);
@@ -587,49 +824,64 @@ public class FastHotKeyGui extends GuiScreen {
     // Helpers for config + outlines
     // =============================
     private int getSafeInnerRadius() {
-        Object v = safeCfgGet("fhk_inner_radius");
-        int r = (v instanceof Integer) ? (Integer) v : DEFAULT_INNER_RADIUS;
+        int r = ModConfig.fhkInnerRadius;
         return Math.max(10, Math.min(400, r));
     }
     private int getSafeOuterRadius(int innerRadius) {
-        Object v = safeCfgGet("fhk_outer_radius");
-        int r = (v instanceof Integer) ? (Integer) v : DEFAULT_OUTER_RADIUS;
+        int r = ModConfig.fhkOuterRadius;
         return Math.max(innerRadius + 10, Math.min(600, r));
     }
     private int getOutlineProxRange() {
-        Object v = safeCfgGet("fhk_outline_prox_range");
-        int r = (v instanceof Integer) ? (Integer) v : 120;
+        int r = ModConfig.fhkOutlineProxRange;
         return Math.max(10, Math.min(2000, r));
     }
-    private Color getColorOrDefault(String key, Color def) {
-        Object v = safeCfgGet(key);
-        return (v instanceof Color) ? (Color) v : def;
-    }
-    private Object safeCfgGet(String key) {
-        try {
-            Object entry = AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key);
-            // entry may be null or may not have a Data field accessible in this context
-            if (entry == null) return null;
-            try {
-                // Reflective safety not needed; directly access Data if possible
-                return AllConfig.INSTANCE.FASTHOTKEY_CONFIGS.get(key).Data;
-            } catch (Throwable t) {
-                return null;
-            }
-        } catch (Throwable t) {
-            return null;
-        }
-    }
-    // Background hover config
     private int getBgInfluenceRadius() {
-        Object v = safeCfgGet("fhk_bg_influence_radius");
-        int r = (v instanceof Integer) ? (Integer) v : DEFAULT_BG_INFLUENCE_RADIUS;
+        int r = ModConfig.fhkBgInfluenceRadius;
         return Math.max(20, Math.min(3000, r));
     }
     private float getBgMaxExtend() {
-        Object v = safeCfgGet("fhk_bg_max_extend");
-        float f = (v instanceof Number) ? ((Number) v).floatValue() : DEFAULT_BG_MAX_EXTEND;
+        float f = (float) ModConfig.fhkBgMaxExtend;
         return Math.max(0f, Math.min(60f, f));
+    }
+    private Color argbToColor(int argb, Color def) {
+        try { return new Color(argb, true); } catch (Throwable t) { return def; }
+    }
+
+    // =============================
+    // Editing helpers (add/delete) and persistence
+    // =============================
+    private void addNewEntry() {
+        List<FastHotkeyEntry> list = FastHotkeyStore.getInstance().getActiveEntries();
+        if (list.size() >= 12) return;
+        int idx = list.size();
+        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>(list);
+        rebuilt.add(new FastHotkeyEntry("", "", idx));
+        replacePresetEntries(rebuilt);
+    }
+
+    private void deleteEntryAt(int idx) {
+        if (editingEntry && idx >= 0) {
+            if (idx == editingIndex) {
+                cancelEditingEntry();
+            } else if (idx < editingIndex) {
+                editingIndex -= 1;
+            }
+        }
+        List<FastHotkeyEntry> list = FastHotkeyStore.getInstance().getActiveEntries();
+        if (idx < 0 || idx >= list.size()) return;
+        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (i == idx) continue;
+            FastHotkeyEntry src = list.get(i);
+            rebuilt.add(new FastHotkeyEntry(src.label, src.command, rebuilt.size()));
+        }
+        replacePresetEntries(rebuilt);
+    }
+
+    private void replacePresetEntries(List<FastHotkeyEntry> newEntries) {
+        // Replace entries in the active preset via the store and persist
+        FastHotkeyStore.getInstance().replaceActiveEntries(newEntries);
+        this.regionCount = Math.min(12, FastHotkeyStore.getInstance().getActiveEntries().size());
     }
 
     // New: Angular gradient outline with gaps preserved
@@ -791,16 +1043,18 @@ public class FastHotKeyGui extends GuiScreen {
 
             GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
             if (centerMode || colorsEffectivelySame(near, far)) {
-                // Uniform color, no extension in center mode; still respect per-edge trims for parallel gaps
+                // Uniform color case: still emit BOTH outer and inner vertices to form triangles
                 GL11.glColor4f(fr, fg, fb, fa);
                 for (int s = 0; s <= stepsPerSector; s++) {
                     double t = (double)s / (double)stepsPerSector;
-                    double oa = outerStart + t * (outerEnd - outerStart);
+                    // Use fixed trimmed angles; no dynamic extension in this branch
                     double ia = innerStart + t * (innerEnd - innerStart);
-                    float ix = (float)(cx + Math.cos(ia) * innerRadius);
-                    float iy = (float)(cy + Math.sin(ia) * innerRadius);
+                    double oa = outerStart + t * (outerEnd - outerStart);
                     float ox = (float)(cx + Math.cos(oa) * outerRadius);
                     float oy = (float)(cy + Math.sin(oa) * outerRadius);
+                    float ix = (float)(cx + Math.cos(ia) * innerRadius);
+                    float iy = (float)(cy + Math.sin(ia) * innerRadius);
+                    // Emit outer then inner for proper strip ordering
                     GL11.glVertex2f(ox, oy);
                     GL11.glVertex2f(ix, iy);
                 }
@@ -866,7 +1120,6 @@ public class FastHotKeyGui extends GuiScreen {
             GL11.glEnd();
         }
 
-        GlStateManager.enableCull();
         GlStateManager.depthMask(true);
         GlStateManager.enableDepth();
         GlStateManager.enableTexture2D();
@@ -899,58 +1152,5 @@ public class FastHotKeyGui extends GuiScreen {
     private float luminance(Color c) {
         if (c == null) return 0f;
         return (0.299f * c.getRed() + 0.587f * c.getGreen() + 0.114f * c.getBlue());
-    }
-
-    // =============================
-    // Editing helpers (add/delete) and persistence
-    // =============================
-    private void addNewEntry() {
-        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
-        if (list.size() >= 12) return;
-        int idx = list.size();
-        list.add(new FastHotkeyEntry("", "", idx));
-        // Reindex to be safe and persist
-        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            FastHotkeyEntry src = list.get(i);
-            rebuilt.add(new FastHotkeyEntry(src.label, src.command, i));
-        }
-        replacePresetEntries(rebuilt);
-    }
-
-    private void deleteEntryAt(int idx) {
-        // If deleting the one being edited or indices shift, exit/adjust editor
-        if (editingEntry && idx >= 0) {
-            if (idx == editingIndex) {
-                cancelEditingEntry();
-            } else if (idx < editingIndex) {
-                editingIndex -= 1;
-            }
-        }
-        List<FastHotkeyEntry> list = AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES;
-        if (idx < 0 || idx >= list.size()) return;
-        // Remove and reindex
-        List<FastHotkeyEntry> rebuilt = new java.util.ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            if (i == idx) continue;
-            FastHotkeyEntry src = list.get(i);
-            rebuilt.add(new FastHotkeyEntry(src.label, src.command, rebuilt.size()));
-        }
-        replacePresetEntries(rebuilt);
-    }
-
-    private void replacePresetEntries(List<FastHotkeyEntry> newEntries) {
-        // Replace the entries list in both the alias and the active preset, then save
-        AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.clear();
-        AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.addAll(newEntries);
-        try {
-            java.util.List<com.aftertime.ratallofyou.UI.config.ConfigData.FastHotkeyEntry> presetList = AllConfig.INSTANCE.FHK_PRESETS.get(AllConfig.INSTANCE.FHK_ACTIVE_PRESET).entries;
-            presetList.clear();
-            presetList.addAll(newEntries);
-        } catch (Throwable ignored) {}
-        // Persist to disk
-        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-        // Update cached region count
-        this.regionCount = Math.min(12, AllConfig.INSTANCE.FAST_HOTKEY_ENTRIES.size());
     }
 }

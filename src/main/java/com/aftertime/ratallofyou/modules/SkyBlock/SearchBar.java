@@ -2,9 +2,9 @@ package com.aftertime.ratallofyou.modules.SkyBlock;
 
 import com.aftertime.ratallofyou.UI.UIHighlighter;
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
 import com.aftertime.ratallofyou.UI.config.ConfigData.UIPosition;
 import com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -65,22 +65,15 @@ public class SearchBar {
     }
 
     private boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_searchbar");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableSearchBar;
     }
 
     private int getWidthCfg() {
-        BaseConfig<?> w = AllConfig.INSTANCE.Pos_CONFIGS.get("searchbar_width");
-        Object v = w != null ? w.Data : null;
-        if (v instanceof Integer) return (Integer) v;
-        return 192;
+        return ModConfig.searchbarWidth;
     }
 
     private int getHeightCfg() {
-        BaseConfig<?> h = AllConfig.INSTANCE.Pos_CONFIGS.get("searchbar_height");
-        Object v = h != null ? h.Data : null;
-        if (v instanceof Integer) return (Integer) v;
-        return 16;
+        return ModConfig.searchbarHeight;
     }
 
     private UIPosition getPos() {

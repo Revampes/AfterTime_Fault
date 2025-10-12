@@ -1,7 +1,6 @@
 package com.aftertime.ratallofyou.modules.kuudra;
 
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import com.aftertime.ratallofyou.utils.KuudraUtils;
 import com.aftertime.ratallofyou.utils.Utils;
 import net.minecraft.client.Minecraft;
@@ -29,7 +28,6 @@ public class ChestOpenNotice {
     // Auto-open state
     private long paidChestSeenAtMs = 0L;
     private boolean pendingAutoOpen = false;
-    private String lastContainerName = "";
     private long lastAnnounceMs = 0L;
     // Ensure we only announce once per seen Paid Chest
     private boolean announcedForThisChest = false;
@@ -47,7 +45,6 @@ public class ChestOpenNotice {
         playOpened = 0;
         pendingAutoOpen = false;
         paidChestSeenAtMs = 0L;
-        lastContainerName = "";
         lastAnnounceMs = 0L;
         announcedForThisChest = false;
         partyLootedPattern = null; patternForTag = null;
@@ -60,7 +57,6 @@ public class ChestOpenNotice {
         playOpened = 0;
         pendingAutoOpen = false;
         paidChestSeenAtMs = 0L;
-        lastContainerName = "";
         lastAnnounceMs = 0L;
         announcedForThisChest = false;
         partyLootedPattern = null; patternForTag = null;
@@ -85,28 +81,22 @@ public class ChestOpenNotice {
     }
 
     public boolean isModuleEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("kuudra_chestopennotice");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableKuudraChestOpenNotice;
     }
 
     private boolean isAutoOpenEnabled() {
-        com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.KUUDRA_CHESTOPEN_CONFIGS.get("kuudra_auto_openchest");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.kuudraAutoOpenChest;
     }
 
     private boolean isAutoRequeueEnabled() {
-        com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.KUUDRA_CHESTOPEN_CONFIGS.get("kuudra_auto_requeue");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.kuudraAutoRequeue;
     }
 
     private String getChestTag() {
-        try {
-            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.KUUDRA_CHESTOPEN_CONFIGS.get("kuudra_chest_tag");
-            String t = cfg != null ? String.valueOf(cfg.Data) : "IQ";
-            if (t == null) return "IQ";
-            String trimmed = t.trim();
-            return trimmed.isEmpty() ? "IQ" : trimmed;
-        } catch (Throwable ignored) { return "IQ"; }
+        String t = ModConfig.kuudraChestTag;
+        if (t == null) return "IQ";
+        String trimmed = t.trim();
+        return trimmed.isEmpty() ? "IQ" : trimmed;
     }
 
     private String buildAnnounceMessage() {
@@ -116,7 +106,6 @@ public class ChestOpenNotice {
     private Pattern getPartyLootedPattern() {
         String tag = getChestTag();
         if (partyLootedPattern == null || patternForTag == null || !patternForTag.equals(tag)) {
-            // Example: ^Party > .*? ?([^:]+): \[TAG\] Chest Looted$
             String regex = "^Party > .*? ?([^:]+): \\[" + Pattern.quote(tag) + "\\] Chest Looted$";
             partyLootedPattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             patternForTag = tag;
@@ -145,7 +134,6 @@ public class ChestOpenNotice {
             Container container = ((GuiChest) gui).inventorySlots;
             if (container instanceof ContainerChest) {
                 String name = ((ContainerChest) container).getLowerChestInventory().getDisplayName().getUnformattedText();
-                lastContainerName = name;
                 if ("Paid Chest".equalsIgnoreCase(name)) {
                     paidChestSeenAtMs = System.currentTimeMillis();
                     pendingAutoOpen = true;
@@ -229,9 +217,9 @@ public class ChestOpenNotice {
         playOpened++;
 
         if (playOpened < 4) {
-            sendClientMessage("§5" + user + " §8(§7" + playOpened + "§8/§74§8)");
+            sendClientMessage("\u00a75" + user + " \u00a78(\u00a77" + playOpened + "\u00a78/\u00a774\u00a78)");
         } else if (playOpened == 4) {
-            sendClientMessage("§5" + user + " §8(§a" + playOpened + "§8/§a4§8)");
+            sendClientMessage("\u00a75" + user + " \u00a78(\u00a7a" + playOpened + "\u00a78/\u00a7a4\u00a78)");
             if (isAutoRequeueEnabled()) sendChatCommand("/instancerequeue");
         }
     }

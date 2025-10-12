@@ -1,6 +1,7 @@
 package com.aftertime.ratallofyou.modules.SkyBlock;
 
 import com.aftertime.ratallofyou.utils.HotbarSwapUtils;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -15,16 +16,13 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
+import net.minecraftforge.client.ClientCommandHandler; // Added import for client command registration
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-// New imports
 import org.lwjgl.input.Keyboard;
-import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
-// Register client-side commands for preset triggers like "/kuudra1"
-import net.minecraftforge.client.ClientCommandHandler;
 
 /**
  * HotbarSwap: Port of the ChatTriggers HotbarSwapper.js to Forge 1.8.9 Java.
@@ -59,47 +57,24 @@ public class HotbarSwap {
         INSTANCE = this;
         loadFromDisk();
         indexTriggers();
-        // Commands are deprecated for this feature; do not register.
-        // registerCommands();
     }
 
     /* ===================== Config helpers ===================== */
     private boolean isModuleEnabled() {
-        try {
-            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.MODULES.get("skyblock_hotbarswap");
-            if (cfg instanceof com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) {
-                return (Boolean) ((com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo) cfg).Data;
-            }
-        } catch (Throwable ignored) {}
-        return false;
+        return ModConfig.enableHotbarSwap;
     }
 
     private boolean isKeybindsEnabled() {
-        try {
-            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.get("hotbarswap_enable_keybinds");
-            if (cfg != null && cfg.Data instanceof Boolean) return (Boolean) cfg.Data;
-        } catch (Throwable ignored) {}
-        return true;
+        return ModConfig.hotbarswapEnableKeybinds;
     }
 
     private boolean isChatTriggersEnabled() {
-        try {
-            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.get("hotbarswap_enable_chat_triggers");
-            if (cfg != null && cfg.Data instanceof Boolean) return (Boolean) cfg.Data;
-        } catch (Throwable ignored) {}
-        return true;
+        return ModConfig.hotbarswapEnableChatTriggers;
     }
 
     private int getBlockTicks() {
-        try {
-            com.aftertime.ratallofyou.UI.config.ConfigData.BaseConfig<?> cfg = AllConfig.INSTANCE.HOTBARSWAP_CONFIGS.get("hotbarswap_block_ticks");
-            if (cfg != null && cfg.Data instanceof Integer) {
-                int v = (Integer) cfg.Data;
-                // Clamp to a small, safe maximum to avoid long movement locks
-                return Math.max(0, Math.min(20, v));
-            }
-        } catch (Throwable ignored) {}
-        return 10;
+        int v = ModConfig.hotbarswapBlockTicks;
+        return Math.max(0, Math.min(20, v));
     }
 
     /* ===================== Commands (deprecated) ===================== */
