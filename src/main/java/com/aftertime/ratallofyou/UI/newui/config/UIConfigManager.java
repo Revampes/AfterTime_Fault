@@ -162,7 +162,15 @@ public class UIConfigManager {
                     try { current = Float.parseFloat(String.valueOf(obj)); }
                     catch (Exception e) { current = slider.min(); }
                 }
-                String label = prettifyName(field.getName());
+                String annTitle;
+                try {
+                    annTitle = slider.title();
+                } catch (Throwable t) {
+                    annTitle = ""; // in case of mismatch
+                }
+                String label = (annTitle != null && !annTitle.trim().isEmpty())
+                        ? annTitle
+                        : prettifyName(field.getName());
                 modulePanel.addSlider(label, slider.min(), slider.max(), current, (val) -> {
                     try {
                         Class<?> type = field.getType();

@@ -8,4 +8,6 @@ public @interface Slider {
     String key();
     float min();
     float max();
+    // Optional display title shown above the slider bar; falls back to prettified field name when empty
+    String title() default "";
 }

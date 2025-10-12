@@ -33,7 +33,7 @@ public class NameTag {
 
     private float getScale() {
         try {
-            int percent = ModConfig.nametagScalePercent;
+            int percent = ModConfig.nametagScale;
             // Convert percent to a small scale factor; baseline at 0.02 for 20%
             float s = Math.max(1, Math.min(100, percent)) / 1000f;
             if (Float.isNaN(s) || s <= 0f) return 0.002f;

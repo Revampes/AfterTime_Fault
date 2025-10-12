@@ -34,7 +34,7 @@ public class CustomCape {
         instance = this;
         capeLocations = new ArrayList<>();
         // Load initial frame delay from ModConfig
-        frameDelay = Math.max(1, ModConfig.customCapeFrameDelay);
+        frameDelay = Math.max(1, ModConfig.frameDelay);
         loadCapeFromFile();
     }
 
@@ -224,7 +224,7 @@ public class CustomCape {
         if (event.phase != TickEvent.Phase.END) return;
 
         // Keep frameDelay in sync with config
-        int desiredDelay = Math.max(1, ModConfig.customCapeFrameDelay);
+        int desiredDelay = Math.max(1, ModConfig.frameDelay);
         if (desiredDelay != frameDelay) setFrameDelay(desiredDelay);
 
         if (!isEnabled()) {

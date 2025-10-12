@@ -15,7 +15,8 @@ public class ModConfig {
     @Slider(
             key = "render-dark-mode",
             min = 0,
-            max = 255
+            max = 255,
+            title = "Opacity"
     )
     public static int darkModeOpacity = 128;
 
@@ -33,7 +34,7 @@ public class ModConfig {
             min = 1,
             max = 20
     )
-    public static int customCapeFrameDelay = 5; // ticks between frames for animated GIF
+    public static int frameDelay = 5; // ticks between frames for animated GIF
 
     @NormalButton(
             key = "render-custom-cape",
@@ -53,19 +54,19 @@ public class ModConfig {
 
     @CheckBox(
             key = "render-etherwarpoverlay",
-            title = "Only show when sneaking"
+            title = "Sneak only"
     )
     public static boolean etherwarpOnlySneak = true;
 
     @CheckBox(
             key = "render-etherwarpoverlay",
-            title = "Sync with server position"
+            title = "Sync (faster)"
     )
     public static boolean etherwarpSyncWithServer = false;
 
     @CheckBox(
             key = "render-etherwarpoverlay",
-            title = "Show fail location"
+            title = "Show fail"
     )
     public static boolean etherwarpShowFailLocation = true;
 
@@ -103,11 +104,11 @@ public class ModConfig {
             min = 1,
             max = 100
     )
-    public static int nametagScalePercent = 20; // 20 -> 0.020, and we further reduce in renderer
+    public static int nametagScale = 20; // 20 -> 0.020, and we further reduce in renderer
 
     @CheckBox(
             key = "render-nametag",
-            title = "Only show for party members"
+            title = "PartyMems only"
     )
     public static boolean nametagOnlyParty = false;
 
@@ -122,19 +123,19 @@ public class ModConfig {
 
     @CheckBox(
             key = "render-nodebuff",
-            title = "Ignore blindness overlay"
+            title = "Blindness"
     )
     public static boolean nodebuffIgnoreBlindness = true;
 
     @CheckBox(
             key = "render-nodebuff",
-            title = "Remove fire overlay"
+            title = "Fire overlay"
     )
     public static boolean nodebuffRemoveFireOverlay = true;
 
     @CheckBox(
             key = "render-nodebuff",
-            title = "Clear water/lava vision"
+            title = "Liquid vision"
     )
     public static boolean nodebuffClearLiquidVision = true;
 
@@ -351,7 +352,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "dungeon-salvageitem",
-        name = "Salvage Item Highlighter",
+        name = "Salvage Item",
         description = "Highlight salvageable items in dungeons",
         category = "Dungeon"
     )
@@ -359,7 +360,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "dungeon-secretclicks",
-        name = "Secret Clicks Highlighter",
+        name = "Secret Clicks",
         description = "Highlight secret clickable blocks in dungeons",
         category = "Dungeon"
     )
@@ -373,7 +374,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "dungeon-starmobhighlighter",
-        name = "Star Mob Highlighter",
+        name = "Star Mob",
         description = "Highlight starred mobs in dungeons",
         category = "Dungeon"
     )
@@ -381,7 +382,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "dungeon-watcherclear",
-        name = "Watcher Clear Alert",
+        name = "Watcher",
         description = "Alert for Watcher clear in dungeons",
         category = "Dungeon"
     )
@@ -406,7 +407,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "performance-hideuselessmsg",
-        name = "Hide Useless Messages",
+        name = "Hide Useless Msg",
         description = "Filter out common spammy chat messages",
         category = "SkyBlock"
     )
@@ -447,7 +448,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "kuudra-kuudradirection",
-        name = "Kuudra Direction Title",
+        name = "Kuudra Direction",
         description = "Show LEFT/RIGHT/FRONT/BACK title near 25k HP",
         category = "Kuudra"
     )
@@ -455,7 +456,7 @@ public class ModConfig {
 
     @ToggleButton(
         key = "kuudra-freshmessage",
-        name = "Fresh Message Announce",
+        name = "Fresh Announce",
         description = "Announce Fresh Tools boost in Phase 2",
         category = "Kuudra"
     )
@@ -730,7 +731,7 @@ public class ModConfig {
     // === Slayer ===
     @ToggleButton(
         key = "slayer-miniboss",
-        name = "Slayer Miniboss ESP",
+        name = "Miniboss ESP",
         description = "Outline nearby slayer miniboss mobs",
         category = "Combat"
     )
@@ -739,7 +740,7 @@ public class ModConfig {
     // --- Dungeon Terminals Settings ---
     @ToggleButton(
         key = "dungeons-terminals",
-        name = "Dungeon Terminals",
+        name = "F7 Terminals",
         description = "Custom GUI and solver for terminals",
         category = "Dungeon"
     )
