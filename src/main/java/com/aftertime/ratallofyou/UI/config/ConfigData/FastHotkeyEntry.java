@@ -16,18 +16,4 @@ public class FastHotkeyEntry {
         this.Commandref = new PropertyRef(99, index + "_command");
     }
 
-    /**
-     * Persist current entries to the FastHotKey properties
-     */
-    public void SetProperty()
-    {
-        // Save full presets (also mirrors active preset into legacy keys)
-        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-    }
-    public void RemoveProperty()
-    {
-        // Caller removes from active entries already; persist updated presets
-        ConfigIO.INSTANCE.SaveFastHotKeyPresets(AllConfig.INSTANCE.FHK_PRESETS, AllConfig.INSTANCE.FHK_ACTIVE_PRESET);
-    }
-
 }
