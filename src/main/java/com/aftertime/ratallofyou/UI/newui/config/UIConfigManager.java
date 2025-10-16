@@ -15,7 +15,7 @@ public class UIConfigManager {
     public static Map<String, CategoryPanel> createUICategories() {
         // Define your desired category order here
         List<String> categoryOrder = Arrays.asList(
-                "Render", "Dungeon", "SkyBlock", "Kuudra", "Combat", "Layout"
+                "Render", "Dungeon", "SkyBlock", "Kuudra", "Combat", "Layout", "General", "Visual", "Controls"
         );
         Map<String, CategoryPanel> categories = new LinkedHashMap<>();
 
@@ -42,7 +42,7 @@ public class UIConfigManager {
             processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.DropdownBox.class, moduleFields);
             processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.TextInputField.class, moduleFields);
             processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.NormalButton.class, moduleFields);
-            // Add other annotation types as needed
+            processAnnotation(field, com.aftertime.ratallofyou.UI.newui.annotations.UILayout.class, moduleFields);
         }
 
         // Create UI panels from annotated fields
@@ -108,9 +108,9 @@ public class UIConfigManager {
             }
         }
         // Add any categories not in the list at the end
-        for (Map.Entry<String, CategoryPanel> entry : categories.entrySet()) {
-            if (!orderedCategories.containsKey(entry.getKey())) {
-                orderedCategories.put(entry.getKey(), entry.getValue());
+        for (Map.Entry<String, CategoryPanel> entry2 : categories.entrySet()) {
+            if (!orderedCategories.containsKey(entry2.getKey())) {
+                orderedCategories.put(entry2.getKey(), entry2.getValue());
             }
         }
         return orderedCategories;
@@ -271,6 +271,62 @@ public class UIConfigManager {
                 return;
             }
 
+            // New: UILayout grouped controls backed by a single String field value "x,y,scale"
+            com.aftertime.ratallofyou.UI.newui.annotations.UILayout uiLayout = field.getAnnotation(com.aftertime.ratallofyou.UI.newui.annotations.UILayout.class);
+            if (uiLayout != null) {
+                String stored = String.valueOf(field.get(null));
+                int defX = uiLayout.posx();
+                int defY = uiLayout.posy();
+                float defScale = uiLayout.scale();
+                int[] parsedXY = new int[]{defX, defY};
+                float[] parsedScale = new float[]{defScale};
+                parseLayout(stored, parsedXY, parsedScale);
+
+                // X control
+                modulePanel.addSlider(uiLayout.title() + " X", -500, 500, parsedXY[0], (val) -> {
+                    try {
+                        parsedXY[0] = Math.round(val);
+                        field.set(null, layoutString(parsedXY[0], parsedXY[1], parsedScale[0]));
+                        ModConfigIO.save();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                });
+                // Y control
+                modulePanel.addSlider(uiLayout.title() + " Y", -500, 500, parsedXY[1], (val) -> {
+                    try {
+                        parsedXY[1] = Math.round(val);
+                        field.set(null, layoutString(parsedXY[0], parsedXY[1], parsedScale[0]));
+                        ModConfigIO.save();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                });
+                // Scale control
+                modulePanel.addSlider(uiLayout.title() + " Scale", 0.5f, 3.0f, parsedScale[0], (val) -> {
+                    try {
+                        parsedScale[0] = Math.max(0.1f, Math.min(5.0f, val));
+                        field.set(null, layoutString(parsedXY[0], parsedXY[1], parsedScale[0]));
+                        ModConfigIO.save();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                });
+                // Optional: Reset button
+                modulePanel.addNormalButton("Reset " + uiLayout.title(), () -> {
+                    try {
+                        parsedXY[0] = defX;
+                        parsedXY[1] = defY;
+                        parsedScale[0] = defScale;
+                        field.set(null, layoutString(parsedXY[0], parsedXY[1], parsedScale[0]));
+                        ModConfigIO.save();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                });
+                return;
+            }
+
             // Add handling for other annotation types...
 
         } catch (IllegalAccessException e) {
@@ -318,5 +374,24 @@ public class UIConfigManager {
             sb.append(' ');
         }
         return sb.toString().trim();
+    }
+
+    // Helpers for UILayout string parsing
+    private static void parseLayout(String stored, int[] xyOut, float[] scaleOut) {
+        if (stored == null) return;
+        try {
+            String[] parts = stored.split(",");
+            if (parts.length >= 2) {
+                xyOut[0] = Integer.parseInt(parts[0].trim());
+                xyOut[1] = Integer.parseInt(parts[1].trim());
+            }
+            if (parts.length >= 3) {
+                scaleOut[0] = Float.parseFloat(parts[2].trim());
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private static String layoutString(int x, int y, float s) {
+        return x + "," + y + "," + (Math.round(s * 100f) / 100f);
     }
 }
