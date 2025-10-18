@@ -6,6 +6,11 @@ import org.lwjgl.input.Mouse;
 import java.awt.Color;
 import com.aftertime.ratallofyou.UI.newui.util.TextRender;
 
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import org.lwjgl.opengl.GL11;
+
 public class ColorPicker extends UIElement {
     private Color color;
     private String title;
@@ -59,15 +64,11 @@ public class ColorPicker extends UIElement {
         if (!visible || !picking) return;
 
         // Layout overlay below the element, clamp to screen
-        int overlayW = Math.max(170, Math.max(140, width));
         int svW = 120;
         int svH = 90;
         int hueW = 12;
         int alphaH = 12;
         int padding = 6;
-
-        int overlayH = padding + svH + padding + alphaH + padding; // base without hue bar
-        overlayH = Math.max(overlayH, padding + svH + padding) + padding; // ensure some padding
 
         // We'll place hue bar to the right of SV square
         int boxW = padding + svW + padding + hueW + padding;
@@ -98,19 +99,34 @@ public class ColorPicker extends UIElement {
         int alphaW = svW;
 
         // Draw SV square (full color range for current hue)
-        for (int yy = 0; yy < svH; yy++) {
-            float v = 1.0f - (yy / (float)(svH - 1));
-            for (int xx = 0; xx < svW; xx++) {
-                float s = xx / (float)(svW - 1);
-                int rgb = Color.HSBtoRGB(hue, s, v); // alpha implicit 255
-                int argb = ((int)(alpha * 255) << 24) | (rgb & 0x00FFFFFF);
-                Gui.drawRect(svX + xx, svY + yy, svX + xx + 1, svY + yy + 1, argb);
-            }
+        // Optimized: draw svW vertical 1px-wide gradient columns (vertical interpolation top->bottom)
+        for (int xx = 0; xx < svW; xx++) {
+            float s = xx / (float)(svW - 1);
+            // top = value = 1 (color at full brightness), bottom = value = 0 (black)
+            int topRgb = Color.HSBtoRGB(hue, s, 1f) & 0x00FFFFFF;
+            int bottomRgb = Color.HSBtoRGB(hue, s, 0f) & 0x00FFFFFF;
+            int topArgb = ((int)(alpha * 255) << 24) | topRgb;
+            int bottomArgb = ((int)(alpha * 255) << 24) | bottomRgb;
+            // drawGradientRectLocal interpolates vertically between top and bottom colors
+            drawGradientRectLocal(svX + xx, svY, svX + xx + 1, svY + svH, topArgb, bottomArgb);
         }
         // SV crosshair at current sat/val
         int cx = svX + Math.round(sat * (svW - 1));
         int cy = svY + Math.round((1 - val) * (svH - 1));
         drawCrosshair(cx, cy, 3, 0xFFFFFFFF, 0xFF000000);
+
+        // Draw labels for Hue and Alpha above the controls
+        int th = TextRender.height(fontRenderer);
+        // Hue label (centered over the hue bar)
+        String hueLabel = "Hue";
+        int hueLabelW = fontRenderer.getStringWidth(hueLabel);
+        int hueLabelX = hueX + (hueW / 2) - (hueLabelW / 2);
+        TextRender.draw(fontRenderer, hueLabel, hueLabelX, hueY - (th + 2), 0xFFFFFFFF);
+        // Alpha label (centered over the alpha bar)
+        String alphaLabel = "Alpha";
+        int alphaLabelW = fontRenderer.getStringWidth(alphaLabel);
+        int alphaLabelX = alphaX + (alphaW / 2) - (alphaLabelW / 2);
+        TextRender.draw(fontRenderer, alphaLabel, alphaLabelX, alphaY - (th + 2), 0xFFFFFFFF);
 
         // Draw hue bar (vertical gradient from 0..1)
         for (int yy = 0; yy < svH; yy++) {
@@ -122,6 +138,12 @@ public class ColorPicker extends UIElement {
         int hy = hueY + Math.round(hue * (svH - 1));
         Gui.drawRect(hueX - 1, hy - 1, hueX + hueW + 1, hy + 1, 0xFFFFFFFF);
         Gui.drawRect(hueX, hy, hueX + hueW, hy + 1, 0xFF000000);
+        // Draw current hue value inside the hue region (degrees)
+        String hueValue = String.valueOf(Math.round(hue * 360f));
+        int hueValueW = fontRenderer.getStringWidth(hueValue);
+        int hueValueX = hueX + (hueW / 2) - (hueValueW / 2);
+        int hueValueY = hy - (th / 2);
+        TextRender.draw(fontRenderer, hueValue, hueValueX, Math.max(hueY, Math.min(hueValueY, hueY + svH - th)), 0xFFFFFFFF);
 
         // Alpha bar with checkerboard background
         drawCheckerboard(alphaX, alphaY, alphaW, alphaH, 4, 0xFFBBBBBB, 0xFF888888);
@@ -135,6 +157,12 @@ public class ColorPicker extends UIElement {
         int ax = alphaX + Math.round(alpha * (alphaW - 1));
         Gui.drawRect(ax - 1, alphaY - 1, ax + 1, alphaY + alphaH + 1, 0xFFFFFFFF);
         Gui.drawRect(ax, alphaY, ax + 1, alphaY + alphaH, 0xFF000000);
+        // Draw current alpha value inside the alpha region (percentage)
+        String alphaValue = Math.round(alpha * 100f) + "%";
+        int alphaValueW = fontRenderer.getStringWidth(alphaValue);
+        int alphaValueX = alphaX + (alphaW / 2) - (alphaValueW / 2);
+        int alphaValueY = alphaY + ((alphaH - th) / 2);
+        TextRender.draw(fontRenderer, alphaValue, alphaValueX, alphaValueY, 0xFFFFFFFF);
 
         // Handle dragging updates
         boolean lmbDown = Mouse.isButtonDown(0);
@@ -305,4 +333,38 @@ public class ColorPicker extends UIElement {
         Gui.drawRect(cx - r, cy, cx + r + 1, cy + 1, color1);
         Gui.drawRect(cx, cy - r, cx + 1, cy + r + 1, color1);
     }
+
+    // Local gradient helper (replicates Gui.drawGradientRect, which is protected in MC 1.8.9)
+    private void drawGradientRectLocal(int left, int top, int right, int bottom, int startColor, int endColor) {
+        float a1 = (startColor >> 24 & 255) / 255.0F;
+        float r1 = (startColor >> 16 & 255) / 255.0F;
+        float g1 = (startColor >> 8 & 255) / 255.0F;
+        float b1 = (startColor & 255) / 255.0F;
+
+        float a2 = (endColor >> 24 & 255) / 255.0F;
+        float r2 = (endColor >> 16 & 255) / 255.0F;
+        float g2 = (endColor >> 8 & 255) / 255.0F;
+        float b2 = (endColor & 255) / 255.0F;
+
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        WorldRenderer wr = tessellator.getWorldRenderer();
+        wr.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        wr.pos(right, top, 0.0D).color(r1, g1, b1, a1).endVertex();
+        wr.pos(left, top, 0.0D).color(r1, g1, b1, a1).endVertex();
+        wr.pos(left, bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
+        wr.pos(right, bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
+        tessellator.draw();
+
+        GL11.glShadeModel(GL11.GL_FLAT);
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+    }
 }
+

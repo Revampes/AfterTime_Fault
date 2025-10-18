@@ -34,12 +34,12 @@ public class NameTag {
     private float getScale() {
         try {
             int percent = ModConfig.nametagScale;
-            // Convert percent to a small scale factor; baseline at 0.02 for 20%
-            float s = Math.max(1, Math.min(100, percent)) / 1000f;
-            if (Float.isNaN(s) || s <= 0f) return 0.002f;
+            // Map percent to scale so that 100 -> approximately 11px text height on-screen
+            float s = Math.max(1, Math.min(400, percent)) / 2f; // allow up to 400 -> s=200
+            if (Float.isNaN(s) || s <= 0f) return 10f;
             return s;
         } catch (Throwable ignored) { }
-        return 0.002f;
+        return 10f;
     }
 
     // Only-party toggle from ModConfig
@@ -108,8 +108,7 @@ public class NameTag {
         }
 
         float partial = event.partialTicks;
-        float scale = getScale();
-        float effectiveScale = scale * 0.05f; // strong reduction multiplier for small on-screen text
+        float baseScale = getScale();
         for (Object obj : mc.theWorld.playerEntities) {
             if (!(obj instanceof EntityPlayer)) continue;
             EntityPlayer p = (EntityPlayer) obj;
@@ -119,6 +118,13 @@ public class NameTag {
             double y = p.lastTickPosY + (p.posY - p.lastTickPosY) * partial + p.height + 0.4;
             double z = p.lastTickPosZ + (p.posZ - p.lastTickPosZ) * partial;
 
+            // compute distance to viewer and compensate because renderFloatingTextConstant multiplies pixelScale by distance
+            double dx = x - mc.getRenderManager().viewerPosX;
+            double dy = y - mc.getRenderManager().viewerPosY;
+            double dz = z - mc.getRenderManager().viewerPosZ;
+            float dist = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+            float pixelScale = baseScale / Math.max(dist, 0.1f); // avoid division by zero; this cancels RenderUtils' *dist
+
             String text;
             try {
                 text = p.getDisplayName() != null ? p.getDisplayName().getFormattedText() : p.getName();
@@ -126,7 +132,7 @@ public class NameTag {
                 text = p.getName();
             }
 
-            RenderUtils.renderFloatingTextConstant(text, x, y, z, effectiveScale, 0xFFFFFFFF, false);
+            RenderUtils.renderFloatingTextConstant(text, x, y, z, pixelScale, 0xFFFFFFFF, false);
         }
     }
 }

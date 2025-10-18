@@ -2,6 +2,7 @@ package com.aftertime.ratallofyou.modules.SkyBlock.StorageOverview;
 
 import com.aftertime.ratallofyou.UI.config.ConfigData.AllConfig;
 import com.aftertime.ratallofyou.UI.config.ConfigData.ModuleInfo;
+import com.aftertime.ratallofyou.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Slot;
@@ -24,8 +25,7 @@ public class StorageOverviewData {
     public final List<Storage> storages = new ArrayList<Storage>();
 
     private boolean isEnabled() {
-        ModuleInfo cfg = (ModuleInfo) AllConfig.INSTANCE.MODULES.get("skyblock_storageoverview");
-        return cfg != null && Boolean.TRUE.equals(cfg.Data);
+        return ModConfig.enableStorageOverview;
     }
 
     public static class Storage{

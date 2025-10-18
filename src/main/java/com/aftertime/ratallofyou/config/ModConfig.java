@@ -108,7 +108,7 @@ public class ModConfig {
 
     @CheckBox(
             key = "render-nametag",
-            title = "PartyMems only"
+            title = "Party Only"
     )
     public static boolean nametagOnlyParty = false;
 
@@ -163,28 +163,28 @@ public class ModConfig {
     )
     public static boolean enabledAutoFish = false;
 
-    @CheckBox(key = "fishing-auto-fish", title = "Hold Sneak while fishing")
+    @CheckBox(key = "fishing-auto-fish", title = "Hold Sneak")
     public static boolean autofishSneakHold = false;
 
-    @CheckBox(key = "fishing-auto-fish", title = "Throw if no hook out")
+    @CheckBox(key = "fishing-auto-fish", title = "Auto Throw")
     public static boolean autofishThrowIfNoHook = true;
 
-    @Slider(key = "fishing-auto-fish", min = 0, max = 10)
+    @Slider(key = "fishing-auto-fish", title = "AT Cooldown", min = 0, max = 10)
     public static int autofishThrowCooldownS = 2;
 
-    @CheckBox(key = "fishing-auto-fish", title = "Re-throw on timeout")
+    @CheckBox(key = "fishing-auto-fish", title = "Re-throw")
     public static boolean autofishRethrow = true;
 
-    @Slider(key = "fishing-auto-fish", min = 1, max = 120)
+    @Slider(key = "fishing-auto-fish", title = "RT Timeout", min = 1, max = 120)
     public static int autofishRethrowTimeoutS = 25;
 
-    @CheckBox(key = "fishing-auto-fish", title = "Slug mode (timeout only)")
+    @CheckBox(key = "fishing-auto-fish", title = "Slug mode")
     public static boolean autofishSlugMode = false;
 
-    @CheckBox(key = "fishing-auto-fish", title = "Show status messages")
+    @CheckBox(key = "fishing-auto-fish", title = "Status messages")
     public static boolean autofishMessages = false;
 
-    @CheckBox(key = "fishing-auto-fish", title = "Show timer HUD")
+    @CheckBox(key = "fishing-auto-fish", title = "Show timer")
     public static boolean autofishShowTimer = true;
 
     // Timer HUD position (managed via Layout editor)
@@ -194,11 +194,11 @@ public class ModConfig {
     // AutoShift option (reuse existing but keep grouped in the same module)
     @CheckBox(
             key = "fishing-auto-fish",
-            title = "AutoShift (periodically tap shift)"
+            title = "AutoShift"
     )
     public static boolean enabledAutoShift = false;
 
-    @Slider(key = "fishing-auto-fish", min = 1, max = 120)
+    @Slider(key = "fishing-auto-fish", title = "AS Intervals", min = 1, max = 120)
     public static int autofishAutoShiftIntervalS = 15;
 
     @KeyBindInput(key = "fishing-auto-fish", title = "Toggle Hotkey")
@@ -246,7 +246,7 @@ public class ModConfig {
 
     @CheckBox(
             key = "render-playeresp",
-            title = "Only show for party members"
+            title = "Party Only"
     )
     public static boolean playerESPOnlyParty = false;
 
@@ -276,13 +276,13 @@ public class ModConfig {
 
     @CheckBox(
         key = "dungeon-autosell",
-        title = "Use Default Item List"
+        title = "Default Item"
     )
     public static boolean autoSellUseDefaultItems = true;
 
     @TextInputField(
         key = "dungeon-autosell",
-        title = "Custom Items (comma separated)"
+        title = "Custom Items"
     )
     public static String autoSellCustomItems = "";
 
@@ -489,19 +489,19 @@ public class ModConfig {
 
     @CheckBox(
         key = "kuudra-chestopennotice",
-        title = "Auto open Paid Chest"
+        title = "Auto open"
     )
     public static boolean kuudraAutoOpenChest = false;
 
     @CheckBox(
         key = "kuudra-chestopennotice",
-        title = "Auto /instancerequeue at 4/4"
+        title = "rq at 4 (NWIP)"
     )
     public static boolean kuudraAutoRequeue = false;
 
     @TextInputField(
         key = "kuudra-chestopennotice",
-        title = "Chest Tag (party announce)"
+        title = "Chest Tag"
     )
     public static String kuudraChestTag = "IQ";
 
@@ -545,27 +545,28 @@ public class ModConfig {
     @ToggleButton(
         key = "skyblock-autoexperiment",
         name = "Auto Experiment",
-        description = "Assist Chronomatron/Ultrasequencer clicks",
+        description = "Auto Chronomatron/Ultrasequencer clicks",
         category = "SkyBlock"
     )
     public static boolean enableAutoExperiment = false;
 
     @Slider(
         key = "skyblock-autoexperiment",
+        title = "Click Delay(ms)",
         min = 60,
         max = 1000
     )
-    public static int autoExperimentDelayMs = 120;
+    public static int autoExperimentDelayMs = 250;
 
     @CheckBox(
         key = "skyblock-autoexperiment",
-        title = "Auto exit after long sequences"
+        title = "Auto exit"
     )
     public static boolean autoExperimentAutoExit = false;
 
     @CheckBox(
         key = "skyblock-autoexperiment",
-        title = "Debug chat"
+        title = "Debug"
     )
     public static boolean autoExperimentDebug = false;
 
@@ -578,38 +579,38 @@ public class ModConfig {
     )
     public static boolean enableChatCommands = false;
 
-    @CheckBox(key = "skyblock-chatcommands", title = "Coords (!coords)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Coords")
     public static boolean chatCmdCoords = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Boop (!boop)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Boop")
     public static boolean chatCmdBoop = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Coin Flip (!cf)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Coin Flip")
     public static boolean chatCmdCoinFlip = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "8 Ball (!8ball)")
+    @CheckBox(key = "skyblock-chatcommands", title = "8 Ball")
     public static boolean chatCmd8Ball = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Dice (!dice)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Dice")
     public static boolean chatCmdDice = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "TPS (!tps)")
+    @CheckBox(key = "skyblock-chatcommands", title = "TPS")
     public static boolean chatCmdTps = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Warp (leader) (!warp)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Warp")
     public static boolean chatCmdWarp = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Warp+Transfer (leader) (!wt)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Warp+Transfer")
     public static boolean chatCmdWarpTransfer = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Allinvite toggle (leader)")
+    @CheckBox(key = "skyblock-chatcommands", title = "allinv")
     public static boolean chatCmdAllInvite = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Party Transfer (leader) (!pt)")
+    @CheckBox(key = "skyblock-chatcommands", title = "pt")
     public static boolean chatCmdPartyTransfer = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Downtime tracker (!dt)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Downtime")
     public static boolean chatCmdDowntime = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Queue instance (leader)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Queue")
     public static boolean chatCmdQueueInstance = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Demote (leader)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Demote")
     public static boolean chatCmdDemote = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Promote (leader)")
+    @CheckBox(key = "skyblock-chatcommands", title = "Promote")
     public static boolean chatCmdPromote = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "Disband (leader)")
-    public static boolean chatCmdDisband = true;
-    @CheckBox(key = "skyblock-chatcommands", title = "PT and Warp (!ptw)")
-    public static boolean chatCmdPtAndWarp = true;
+    @CheckBox(key = "skyblock-chatcommands", title = "Disband")
+    public static boolean chatCmdDisband = false;
+    @CheckBox(key = "skyblock-chatcommands", title = "PT + Warp")
+    public static boolean chatCmdPtAndWarp = false;
 
     // Flux Flare Timer HUD
     @ToggleButton(
@@ -663,7 +664,7 @@ public class ModConfig {
 
     @CheckBox(
         key = "skyblock-storageoverview",
-        title = "Show in inventory"
+        title = "Show in inv"
     )
     public static boolean storageOverviewShowInInventory = true;
 
@@ -694,16 +695,16 @@ public class ModConfig {
 
     @NormalButton(
         key = "skyblock-fasthotkey",
-        title = "Open Fast Hotkey Editor",
+        title = "FastHotkey Editor",
         action = "com.aftertime.ratallofyou.modules.SkyBlock.FastHotKey.FastHotKeyGui#open"
     )
     public static boolean openFastHotKeyEditor = false;
 
-    @Slider(key = "skyblock-fasthotkey", min = 10, max = 400)
+    @Slider(key = "skyblock-fasthotkey", title = "Inner Radius", min = 10, max = 400)
     public static int fhkInnerRadius = 40;
-    @Slider(key = "skyblock-fasthotkey", min = 60, max = 600)
+    @Slider(key = "skyblock-fasthotkey", title = "Outer Radius", min = 60, max = 600)
     public static int fhkOuterRadius = 150;
-    @Slider(key = "skyblock-fasthotkey", min = 10, max = 2000)
+    @Slider(key = "skyblock-fasthotkey", title = "OutlineProx Range", min = 10, max = 2000)
     public static int fhkOutlineProxRange = 120;
 
     @ColorPicker(key = "skyblock-fasthotkey", title = "Inner Near Color")
@@ -715,17 +716,17 @@ public class ModConfig {
     @ColorPicker(key = "skyblock-fasthotkey", title = "Outer Far Color")
     public static int fhkOuterFarColor = new java.awt.Color(0,0,0,255).getRGB();
 
-    @CheckBox(key = "skyblock-fasthotkey", title = "Show Direction Arrow")
+    @CheckBox(key = "skyblock-fasthotkey", title = "Show Arrow")
     public static boolean fhkShowArrow = true;
 
-    @Slider(key = "skyblock-fasthotkey", min = 20, max = 1000)
+    @Slider(key = "skyblock-fasthotkey", title = "BG Radius", min = 20, max = 1000)
     public static int fhkBgInfluenceRadius = 30; // px
-    @Slider(key = "skyblock-fasthotkey", min = 0, max = 60)
+    @Slider(key = "skyblock-fasthotkey", title = "BG Extend", min = 0, max = 60)
     public static int fhkBgMaxExtend = 18; // px
 
-    @ColorPicker(key = "skyblock-fasthotkey", title = "Background Near Color")
+    @ColorPicker(key = "skyblock-fasthotkey", title = "BG Near")
     public static int fhkBgNearColor = new java.awt.Color(128,128,128,255).getRGB();
-    @ColorPicker(key = "skyblock-fasthotkey", title = "Background Far Color")
+    @ColorPicker(key = "skyblock-fasthotkey", title = "BG Far")
     public static int fhkBgFarColor = new java.awt.Color(128,128,128,255).getRGB();
 
     // === Slayer ===
@@ -748,7 +749,7 @@ public class ModConfig {
 
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Smooth Terminal (High Ping Mode)"
+        title = "Zero Ping"
     )
     public static boolean terminalHighPingMode = false;
 
@@ -761,6 +762,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "Timeout(ms)",
         min = 0,
         max = 2000
     )
@@ -768,6 +770,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "First Click(ms)",
         min = 0,
         max = 500
     )
@@ -775,6 +778,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "OffSet X",
         min = -500,
         max = 500
     )
@@ -782,6 +786,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "OffSet Y",
         min = -500,
         max = 500
     )
@@ -801,6 +806,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "Corner(r)(bg)",
         min = 0,
         max = 20
     )
@@ -808,6 +814,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "Corner(r)(cell)",
         min = 0,
         max = 20
     )
@@ -815,6 +822,7 @@ public class ModConfig {
 
     @Slider(
         key = "dungeons-terminals",
+        title = "Zero Ping(ms)",
         min = 0,
         max = 1000
     )
@@ -823,37 +831,37 @@ public class ModConfig {
     // Per-terminal toggles
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Enable Numbers Terminal"
+        title = "Numbers"
     )
     public static boolean terminalEnableNumbers = true;
 
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Enable Starts With Terminal"
+        title = "Starts With"
     )
     public static boolean terminalEnableStartsWith = true;
 
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Enable Colors Terminal"
+        title = "Colors"
     )
     public static boolean terminalEnableColors = true;
 
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Enable Red Green Terminal"
+        title = "Red Green"
     )
     public static boolean terminalEnableRedGreen = true;
 
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Enable Rubix Terminal"
+        title = "Rubix"
     )
     public static boolean terminalEnableRubix = true;
 
     @CheckBox(
         key = "dungeons-terminals",
-        title = "Enable Melody Terminal"
+        title = "Melody"
     )
     public static boolean terminalEnableMelody = true;
 
