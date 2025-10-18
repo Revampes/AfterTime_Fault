@@ -19,10 +19,6 @@ public class StarMobHighlighter {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final Pattern starredPattern = Pattern.compile(".*\u00a76\u272f.*\u00a7c\u2764.*");
 
-    // Colors for different mob types
-    private static final float[] STAR_COLOR = {1f, 1f, 0f}; // YELLOW
-    private static final float[] SHADOW_ASSASSIN_COLOR = {0.67f, 0f, 1f}; // Purple
-
     public static void register() {
         MinecraftForge.EVENT_BUS.register(new StarMobHighlighter());
     }
@@ -36,6 +32,13 @@ public class StarMobHighlighter {
     public void onRenderWorld(RenderWorldLastEvent event) {
         if (!ModConfig.enableStarMobHighlighter || mc.theWorld == null) return;
 
+        // Get colors from ModConfig
+        java.awt.Color starColor = new java.awt.Color(ModConfig.starMobHighlighterStarColor, true);
+        java.awt.Color shadowColor = new java.awt.Color(ModConfig.starMobHighlighterShadowColor, true);
+
+        float[] starRGB = {starColor.getRed() / 255f, starColor.getGreen() / 255f, starColor.getBlue() / 255f};
+        float[] shadowRGB = {shadowColor.getRed() / 255f, shadowColor.getGreen() / 255f, shadowColor.getBlue() / 255f};
+
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {
                 EntityArmorStand armorStand = (EntityArmorStand) entity;
@@ -46,7 +49,7 @@ public class StarMobHighlighter {
                     if (mob != null) {
                         RenderUtils.drawEntityBox(
                                 mob,
-                                STAR_COLOR[0], STAR_COLOR[1], STAR_COLOR[2],
+                                starRGB[0], starRGB[1], starRGB[2],
                                 1.0f, // alpha
                                 2.0f, // line width
                                 event.partialTicks
@@ -58,7 +61,7 @@ public class StarMobHighlighter {
                 EntityPlayer assassin = (EntityPlayer) entity;
                 RenderUtils.drawEntityBox(
                         assassin,
-                        SHADOW_ASSASSIN_COLOR[0], SHADOW_ASSASSIN_COLOR[1], SHADOW_ASSASSIN_COLOR[2],
+                        shadowRGB[0], shadowRGB[1], shadowRGB[2],
                         1.0f, // alpha
                         2.0f, // line width
                         event.partialTicks

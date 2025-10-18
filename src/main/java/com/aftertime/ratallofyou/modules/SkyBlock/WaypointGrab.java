@@ -75,7 +75,9 @@ public class WaypointGrab {
             }
         }
 
-        RenderUtils.Color color = new RenderUtils.Color(255, 200, 0, 255);
+        // Get color from ModConfig
+        java.awt.Color configColor = new java.awt.Color(ModConfig.waypointGrabBeamColor, true);
+        RenderUtils.Color color = new RenderUtils.Color(configColor.getRed(), configColor.getGreen(), configColor.getBlue(), configColor.getAlpha());
         beams.add(new Beam(pos, color, BEAM_HEIGHT, rx, ry, rz, sender, label, expiry));
     }
 

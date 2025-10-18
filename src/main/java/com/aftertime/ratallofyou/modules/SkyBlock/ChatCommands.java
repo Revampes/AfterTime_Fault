@@ -422,6 +422,98 @@ public class ChatCommands {
                 };
                 runWithSelfDelay(sender, processPtw);
                 break;
+
+            // Queue Instance Commands
+            case "f1":
+            case "f2":
+            case "f3":
+            case "f4":
+            case "f5":
+            case "f6":
+            case "f7":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    final String floor = command.substring(1); // Extract number (1-7)
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon catacombs " + floor);
+                        }
+                    });
+                }
+                break;
+
+            case "m1":
+            case "m2":
+            case "m3":
+            case "m4":
+            case "m5":
+            case "m6":
+            case "m7":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    final String floor = command.substring(1); // Extract number (1-7)
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon master_catacombs " + floor);
+                        }
+                    });
+                }
+                break;
+
+            case "t1":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon kuudra_normal");
+                        }
+                    });
+                }
+                break;
+
+            case "t2":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon kuudra_hot");
+                        }
+                    });
+                }
+                break;
+
+            case "t3":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon kuudra_burning");
+                        }
+                    });
+                }
+                break;
+
+            case "t4":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon kuudra_fiery");
+                        }
+                    });
+                }
+                break;
+
+            case "t5":
+                if (ModConfig.chatCmdQueueInstance && PartyUtils.isLeader()) {
+                    runWithSelfDelay(sender, new Runnable() {
+                        @Override
+                        public void run() {
+                            sendCommand("joindungeon kuudra_infernal");
+                        }
+                    });
+                }
+                break;
         }
     }
 

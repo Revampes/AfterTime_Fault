@@ -58,6 +58,10 @@ public class KeyHighlighter {
     public void onRenderWorld(RenderWorldLastEvent event) {
         if (!ModConfig.enableKeyHighlighter || bloodOpened || !DungeonUtils.isInDungeon()) return;
 
+        // Get colors from ModConfig
+        java.awt.Color witherColor = new java.awt.Color(ModConfig.keyHighlighterWitherColor, true);
+        java.awt.Color bloodColor = new java.awt.Color(ModConfig.keyHighlighterBloodColor, true);
+
         for (Object entity : mc.theWorld.loadedEntityList) {
             if (entity instanceof EntityArmorStand) {
                 EntityArmorStand armorStand = (EntityArmorStand) entity;
@@ -67,14 +71,14 @@ public class KeyHighlighter {
                     RenderUtils.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
                             0.8, 1.0,  // Width and height
-                            0.0f, 0.0f, 0.0f,   // Yellow color (R,G,B)
+                            witherColor.getRed() / 255f, witherColor.getGreen() / 255f, witherColor.getBlue() / 255f,
                             1.0f       // Y offset
                     );
                 } else if (name.contains("Blood Key")) {
                     RenderUtils.drawEntityEspBox(
                             armorStand.posX, armorStand.posY, armorStand.posZ,
                             0.8, 1.0,  // Width and height
-                            1.0f, 0.0f, 0.0f,   // Red color (R,G,B)
+                            bloodColor.getRed() / 255f, bloodColor.getGreen() / 255f, bloodColor.getBlue() / 255f,
                             1.0f       // Y offset
                     );
                 }

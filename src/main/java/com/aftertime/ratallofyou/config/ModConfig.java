@@ -334,6 +334,18 @@ public class ModConfig {
     )
     public static boolean enableKeyHighlighter = false;
 
+    @ColorPicker(
+        key = "dungeon-keyhighlighter",
+        title = "Wither Key Color"
+    )
+    public static int keyHighlighterWitherColor = new java.awt.Color(255, 255, 0, 255).getRGB(); // Yellow
+
+    @ColorPicker(
+        key = "dungeon-keyhighlighter",
+        title = "Blood Key Color"
+    )
+    public static int keyHighlighterBloodColor = new java.awt.Color(255, 0, 0, 255).getRGB(); // Red
+
     @ToggleButton(
         key = "dungeon-leapannounce",
         name = "Leap Announce",
@@ -367,7 +379,7 @@ public class ModConfig {
     public static boolean enableSecretClicks = false;
 
     @ColorPicker(
-        key = "dungeon-secretclicks-color",
+        key = "dungeon-secretclicks",
         title = "Secret Highlight Color"
     )
     public static int secretClicksHighlightColor = new java.awt.Color(0, 255, 0, 128).getRGB();
@@ -379,6 +391,18 @@ public class ModConfig {
         category = "Dungeon"
     )
     public static boolean enableStarMobHighlighter = false;
+
+    @ColorPicker(
+        key = "dungeon-starmobhighlighter",
+        title = "Star Mob Color"
+    )
+    public static int starMobHighlighterStarColor = new java.awt.Color(255, 255, 0, 255).getRGB(); // Yellow
+
+    @ColorPicker(
+        key = "dungeon-starmobhighlighter",
+        title = "Shadow Assassin Color"
+    )
+    public static int starMobHighlighterShadowColor = new java.awt.Color(170, 0, 255, 255).getRGB(); // Purple
 
     @ToggleButton(
         key = "dungeon-watcherclear",
@@ -652,6 +676,12 @@ public class ModConfig {
         category = "SkyBlock"
     )
     public static boolean enableWaypointGrab = false;
+
+    @ColorPicker(
+        key = "skyblock-waypointgrab",
+        title = "Beam Color"
+    )
+    public static int waypointGrabBeamColor = new java.awt.Color(255, 200, 0, 255).getRGB(); // Orange/Gold
 
     // Storage Overview
     @ToggleButton(
