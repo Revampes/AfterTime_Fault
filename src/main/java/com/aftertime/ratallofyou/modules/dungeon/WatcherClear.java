@@ -31,7 +31,7 @@ public class WatcherClear {
         if (msg == null) return;
 
         // Match any Watcher line
-        if (msg.contains("The Watcher:")) {
+        if (msg.contains("The Watcher")) {
             bloodOpen = true;
             if (mc.thePlayer != null) {
                 mc.thePlayer.addChatMessage(new ChatComponentText(
@@ -86,7 +86,7 @@ public class WatcherClear {
     private void showKillMobsMessage() {
         if (mc.thePlayer == null) return;
         mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "Kill Mobs"));
-        DungeonUtils.sendTitle(EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "Kill Blood Mobs", "", 0, 30, 0);
+        DungeonUtils.sendTitle(EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "Kill Blood Mobs", "", 0, 100, 0);
         // Play a twinkle sound as cue
 //        mc.thePlayer.playSound("fireworks.twinkle", 1.0f, 1.0f);
         // Mark sequence done and prevent retrigger
